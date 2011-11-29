@@ -1,6 +1,6 @@
 require 'rake'
 
-DIRS_TO_SYMLINK = ['ssh','skeletor','heroku','bin']
+DIRS_TO_SYMLINK = ['ssh','skeletor','heroku','bin','vim']
 $skip_all = false
 $overwrite_all = false
 $backup_all = false
