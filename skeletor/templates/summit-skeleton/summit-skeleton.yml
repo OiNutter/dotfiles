@@ -1,0 +1,3 @@
+﻿tasks:
+  - clone_skeleton, <skeleton_path>
+  - summit_capify, <skeleton_path>
