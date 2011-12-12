@@ -34,4 +34,22 @@ export PATH="$HOME/.rbenv/bin:$PATH"
 eval "$(rbenv init -)"
 export CYGWIN="winsymlinks:$CYGWIN"
 export PATH="$HOME/.bin:$PATH"
-cd /cygdrive/c/Users/Will/Documents/Projects	
+cd /cygdrive/c/Users/Will/Documents/Projects
+
+# Mintty color code resetting
+echo -ne '\e]4;0;#000000\a'   # black
+echo -ne '\e]4;1;#E52222\a'   # red
+echo -ne '\e]4;2;#A6E32D\a'   # green
+echo -ne '\e]4;3;#FC951E\a'   # yellow
+echo -ne '\e]4;4;#C4F0BA\a'   # blue
+echo -ne '\e]4;5;#FA2573\a'   # magenta
+echo -ne '\e]4;6;#0AD9F0\a'   # cyan
+echo -ne '\e]4;7;#F2F2F2\a'   # white (light grey really)
+echo -ne '\e]4;8;#404040\a'   # bold black (i.e. dark grey)
+echo -ne '\e]4;9;#E52222\a'   # bold red
+echo -ne '\e]4;10;#A6E32D\a'  # bold green
+echo -ne '\e]4;11;#FC951E\a'  # bold yellow
+echo -ne '\e]4;12;#C4F0BA\a'  # bold blue
+echo -ne '\e]4;13;#FA2573\a'  # bold magenta
+echo -ne '\e]4;14;#0AD9F0\a'  # bold cyan
+echo -ne '\e]4;15;#F2F2F2\a'  # bold white
