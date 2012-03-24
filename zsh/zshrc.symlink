@@ -34,4 +34,4 @@ export PATH="$HOME/.rbenv/bin:$PATH"
 eval "$(rbenv init -)"
 export PATH="$HOME/.bin:$PATH"
 
-cd ~
+export LANG="en_GB.utf8"
