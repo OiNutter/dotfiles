@@ -1,0 +1,19 @@
+﻿directory_structure:
+  - 
+    docs:
+    <skeleton_project>:
+      - 
+        - __init__.py
+    test:
+  -
+    - LICENSE
+    - README.md
+    - setup.py
+    - .gitignore
+includes:
+    LICENSE: includes/LICENSE
+    README.md: includes/README.md
+    setup.py: includes/setup.py
+    .gitignore: includes/.gitignore
+tasks:
+  - git_init, <skeleton_path>
