@@ -6,7 +6,7 @@ setup(name='<skeleton_project>',
 	  author='Will McKenzie',
 	  author_email='will@oinutter.co.uk',
 	  packages=['<skeleton_project>'],
-	  package_dir={'<skeleton_project>': '<skeleton_project'},
+	  package_dir={'<skeleton_project>': '<skeleton_project>'},
       package_data={},
       requires:[]
 	  )
