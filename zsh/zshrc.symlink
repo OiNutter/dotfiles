@@ -34,7 +34,6 @@ export PATH="$HOME/.rbenv/bin:$PATH"
 eval "$(rbenv init -)"
 export CYGWIN="winsymlinks:$CYGWIN"
 export PATH="$HOME/.bin:$PATH"
-cd /cygdrive/c/Users/Will/Documents/Projects
 
 # Mintty color code resetting
 echo -ne '\e]4;0;#000000\a'   # black

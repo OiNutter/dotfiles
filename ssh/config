@@ -3,8 +3,17 @@ Host github.com
   HostName github.com
   User git
   
-#Summit VPS
-Host vserver
-	HostName vserver.opiahost2.co.uk
-	User root
-	Port 8899
+#acrgame
+Host acrgame
+	HostName zbladew105
+	User wm
+
+#vs012
+Host vs012
+  HostName vs012
+  User u
+
+#racecr.com
+Host raceacr
+  Hostname zbladew106
+  User will
