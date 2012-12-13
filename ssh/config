@@ -15,5 +15,85 @@ Host vs012
 
 #racecr.com
 Host raceacr
-  Hostname zbladew106
+  HostName zbladew106
+  User will
+
+#acr1dev
+Host acr1
+  HostName acr1dev
+  User wm
+
+#acr2dev
+Host acr2
+  HostName acr2dev
+  User wm
+
+#acr3dev
+Host acr3
+  HostName acr3dev
+  User wm
+
+#acr4dev
+Host acr4
+  HostName acr4dev
+  User wm
+
+#acr5dev
+Host acr5
+  HostName acr5dev
+  User wm
+
+#acr6dev
+Host acr6dev
+  HostName acr6dev
+  User wm
+
+#node1-acr
+Host node1
+  HostName node1-acr
+  User will
+  
+#node2-acr
+Host node2
+  HostName node2-acr
+  User will
+
+#node3-acr
+Host node3
+  HostName node3-acr
+  User will
+  
+#node4-acr
+Host node4
+  HostName node4-acr
+  User will
+  
+#node5-acr
+Host node5
+  HostName node5-acr
+  User will
+  
+#node9-acr
+Host node9
+  HostName node9-acr
+  User will
+  
+#node10-acr
+Host node10
+  HostName node10-acr
+  User will
+  
+#node11-acr
+Host node11
+  HostName node11-acr
+  User will
+  
+#node12-acr
+Host node12
+  HostName node12-acr
+  User will
+  
+#ha1
+Host ha1
+  HostName ha1-acr
   User will

@@ -52,3 +52,4 @@ echo -ne '\e]4;12;#C4F0BA\a'  # bold blue
 echo -ne '\e]4;13;#FA2573\a'  # bold magenta
 echo -ne '\e]4;14;#0AD9F0\a'  # bold cyan
 echo -ne '\e]4;15;#F2F2F2\a'  # bold white
+export PATH=$HOME/bin:$PATH

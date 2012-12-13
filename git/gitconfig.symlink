@@ -3,4 +3,4 @@
 	email = willmckenzie@oinutter.co.uk
 
 [core]
-	fileMode = true
+	filemode = false
