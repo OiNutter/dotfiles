@@ -3,8 +3,7 @@ Host github.com
   HostName github.com
   User git
   
-#Summit VPS
-Host vserver
-	HostName vserver.opiahost2.co.uk
-	User root
-	Port 8899
+#RaspberryPi
+Host rpi
+  HostName openelec
+  User root
