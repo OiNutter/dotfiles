@@ -9,9 +9,22 @@ module Heroku::Command
     #
     # list installed plugins
     #
+    #Example:
+    #
+    # $ heroku plugins
+    # === Installed Plugins
+    # heroku-accounts
+    #
     def index
-      ::Heroku::Plugin.list.each do |plugin|
-        display plugin
+      validate_arguments!
+
+      plugins = ::Heroku::Plugin.list
+
+      if plugins.length > 0
+        styled_header("Installed Plugins")
+        styled_array(plugins)
+      else
+        display("You have no installed plugins.")
       end
     end
 
@@ -19,17 +32,24 @@ module Heroku::Command
     #
     # install a plugin
     #
+    #Example:
+    #
+    # $ heroku plugins:install https://github.com/ddollar/heroku-accounts.git
+    # Installing heroku-accounts... done
+    #
     def install
-      plugin = Heroku::Plugin.new(args.shift)
-      if plugin.install
-        begin
-          Heroku::Plugin.load_plugin(plugin.name)
-        rescue Exception => ex
-          installation_failed(plugin, ex.message)
+      plugin = Heroku::Plugin.new(shift_argument)
+      validate_arguments!
+
+      action("Installing #{plugin.name}") do
+        if plugin.install
+          unless Heroku::Plugin.load_plugin(plugin.name)
+            plugin.uninstall
+            exit(1)
+          end
+        else
+          error("Could not install #{plugin.name}. Please check the URL and try again.")
         end
-        display "#{plugin} installed"
-      else
-        error "Could not install #{plugin}. Please check the URL and try again"
       end
     end
 
@@ -37,27 +57,54 @@ module Heroku::Command
     #
     # uninstall a plugin
     #
+    #Example:
+    #
+    # $ heroku plugins:uninstall heroku-accounts
+    # Uninstalling heroku-accounts... done
+    #
     def uninstall
-      plugin = Heroku::Plugin.new(args.shift)
-      plugin.uninstall
-      display "#{plugin} uninstalled"
+      plugin = Heroku::Plugin.new(shift_argument)
+      validate_arguments!
+
+      action("Uninstalling #{plugin.name}") do
+        plugin.uninstall
+      end
     end
 
-    protected
-
-      def installation_failed(plugin, message)
-        plugin.uninstall
-        error <<-ERROR
-Could not initialize #{plugin}: #{message}
-
-Are you attempting to install a Rails plugin? If so, use the following:
-
-Rails 2.x:
-script/plugin install #{plugin.uri}
-
-Rails 3.x:
-rails plugin install #{plugin.uri}
-        ERROR
+    # plugins:update [PLUGIN]
+    #
+    # updates all plugins or a single plugin by name
+    #
+    #Example:
+    #
+    # $ heroku plugins:update
+    # Updating heroku-accounts... done
+    #
+    # $ heroku plugins:update heroku-accounts
+    # Updating heroku-accounts... done
+    #
+    def update
+      plugins = if plugin = shift_argument
+        [plugin]
+      else
+        ::Heroku::Plugin.list
       end
+      validate_arguments!
+
+      plugins.each do |plugin|
+        begin
+          action("Updating #{plugin}") do
+            begin
+              Heroku::Plugin.new(plugin).update
+            rescue Heroku::Plugin::ErrorUpdatingSymlinkPlugin
+              status "skipped symlink"
+            end
+          end
+        rescue SystemExit
+          # ignore so that other plugins still update
+        end
+      end
+    end
+
   end
 end

@@ -1,94 +1,137 @@
 require "heroku/command/base"
 
-module Heroku::Command
+# manage app config vars
+#
+class Heroku::Command::Config < Heroku::Command::Base
 
-  # manage app config vars
+  # config
   #
-  class Config < BaseWithApp
+  # display the config vars for an app
+  #
+  # -s, --shell  # output config vars in shell format
+  #
+  #Examples:
+  #
+  # $ heroku config
+  # A: one
+  # B: two
+  #
+  # $ heroku config --shell
+  # A=one
+  # B=two
+  #
+  def index
+    validate_arguments!
 
-    # config
-    #
-    # display the config vars for an app
-    #
-    # -s, --shell  # output config vars in shell format
-    #
-    def index
-      shell = options[:shell]
-      vars  = heroku.config_vars(app)
-      display_vars(vars, :long => true, :shell => shell)
-    end
-
-    # config:add KEY1=VALUE1 ...
-    #
-    # add one or more config vars
-    #
-    def add
-      unless args.size > 0 and args.all? { |a| a.include?('=') }
-        raise CommandFailed, "Usage: heroku config:add <key>=<value> [<key2>=<value2> ...]"
-      end
-
-      vars = args.inject({}) do |vars, arg|
-        key, value = arg.split('=', 2)
-        vars[key] = value
-        vars
-      end
-
-      # try to get the app to fail fast
-      detected_app = app
-
-      display "Adding config vars and restarting app...", false
-      heroku.add_config_vars(detected_app, vars)
-      display " done", false
-
-      begin
-        release = heroku.releases(detected_app).last
-        display(", #{release["name"]}", false) if release
-      rescue RestClient::RequestFailed => e
-      end
-
-      display
-      display_vars(vars, :indent => 2)
-    end
-
-    alias_command "config:set", "config:add"
-
-    # config:remove KEY1 [KEY2 ...]
-    #
-    # remove a config var
-    #
-    def remove
-      raise CommandFailed, "Usage: heroku config:remove KEY1 [KEY2 ...]" if args.empty?
-
-      args.each do |key|
-        display "Removing #{key} and restarting app...", false
-        heroku.remove_config_var(app, key)
-
-        display " done", false
-        begin
-          release = heroku.releases(app).last
-          display(", #{release["name"]}", false) if release
-        rescue RestClient::RequestFailed => e
-        end
-        display ".\n"
-      end
-    end
-
-    protected
-      def display_vars(vars, options={})
-        max_length = vars.map { |v| v[0].to_s.size }.max
+    vars = api.get_config_vars(app).body
+    if vars.empty?
+      display("#{app} has no config vars.")
+    else
+      vars.each {|key, value| vars[key] = value.to_s}
+      if options[:shell]
         vars.keys.sort.each do |key|
-          if options[:shell]
-            display "#{key}=#{vars[key]}"
-          else
-            spaces = ' ' * (max_length - key.to_s.size)
-            display "#{' ' * (options[:indent] || 0)}#{key}#{spaces} => #{format(vars[key], options)}"
+          display(%{#{key}=#{vars[key]}})
+        end
+      else
+        styled_header("#{app} Config Vars")
+        styled_hash(vars)
+      end
+    end
+  end
+
+  # config:set KEY1=VALUE1 [KEY2=VALUE2 ...]
+  #
+  # set one or more config vars
+  #
+  #Example:
+  #
+  # $ heroku config:set A=one
+  # Setting config vars and restarting example... done, v123
+  # A: one
+  #
+  # $ heroku config:set A=one B=two
+  # Setting config vars and restarting example... done, v123
+  # A: one
+  # B: two
+  #
+  def set
+    unless args.size > 0 and args.all? { |a| a.include?('=') }
+      error("Usage: heroku config:set KEY1=VALUE1 [KEY2=VALUE2 ...]\nMust specify KEY and VALUE to set.")
+    end
+
+    vars = args.inject({}) do |vars, arg|
+      key, value = arg.split('=', 2)
+      vars[key] = value
+      vars
+    end
+
+    action("Setting config vars and restarting #{app}") do
+      api.put_config_vars(app, vars)
+
+      @status = begin
+        if release = api.get_release(app, 'current').body
+          release['name']
+        end
+      rescue Heroku::API::Errors::RequestFailed => e
+      end
+    end
+
+    vars.each {|key, value| vars[key] = value.to_s}
+    styled_hash(vars)
+  end
+
+  alias_command "config:add", "config:set"
+
+  # config:get KEY
+  #
+  # display a config value for an app
+  #
+  #Examples:
+  #
+  # $ heroku config:get A
+  # one
+  #
+  def get
+    unless key = shift_argument
+      error("Usage: heroku config:get KEY\nMust specify KEY.")
+    end
+    validate_arguments!
+
+    vars = api.get_config_vars(app).body
+    key, value = vars.detect {|k,v| k == key}
+    display(value.to_s)
+  end
+
+  # config:unset KEY1 [KEY2 ...]
+  #
+  # unset one or more config vars
+  #
+  # $ heroku config:unset A
+  # Unsetting A and restarting example... done, v123
+  #
+  # $ heroku config:unset A B
+  # Unsetting A and restarting example... done, v123
+  # Unsetting B and restarting example... done, v124
+  #
+  def unset
+    if args.empty?
+      error("Usage: heroku config:unset KEY1 [KEY2 ...]\nMust specify KEY to unset.")
+    end
+
+    args.each do |key|
+      action("Unsetting #{key} and restarting #{app}") do
+        api.delete_config_var(app, key)
+
+        @status = begin
+          if release = api.get_release(app, 'current').body
+            release['name']
           end
+        rescue Heroku::API::Errors::RequestFailed => e
         end
       end
-
-      def format(value, options)
-        return value if options[:long] || value.to_s.size < 36
-        value[0, 16] + '...' + value[-16, 16]
-      end
+    end
   end
+
+  alias_command "config:remove", "config:unset"
+
 end

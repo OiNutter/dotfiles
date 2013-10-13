@@ -1,10 +1,32 @@
+require "cgi"
 require "heroku"
 require "heroku/client"
 require "heroku/helpers"
 
+require "netrc"
+
 class Heroku::Auth
   class << self
+    include Heroku::Helpers
+
     attr_accessor :credentials
+
+    def api
+      @api ||= begin
+        require("heroku-api")
+        api = Heroku::API.new(default_params.merge(:api_key => password))
+
+        def api.request(params, &block)
+          response = super
+          if response.headers.has_key?('X-Heroku-Warning')
+            Heroku::Command.warnings.concat(response.headers['X-Heroku-Warning'].split("\n"))
+          end
+          response
+        end
+
+        api
+      end
+    end
 
     def client
       @client ||= begin
@@ -23,20 +45,17 @@ class Heroku::Auth
       delete_credentials
     end
 
-    def clear
-      @credentials = nil
-      @client = nil
-    end
-
-    include Heroku::Helpers
-
     # just a stub; will raise if not authenticated
     def check
-      client.list
+      api.get_user
     end
 
     def default_host
       "heroku.com"
+    end
+
+    def git_host
+      ENV['HEROKU_GIT_HOST'] || host
     end
 
     def host
@@ -48,16 +67,36 @@ class Heroku::Auth
     end
 
     def user    # :nodoc:
-      get_credentials
-      @credentials[0]
+      get_credentials[0]
     end
 
     def password    # :nodoc:
-      get_credentials
-      @credentials[1]
+      get_credentials[1]
     end
 
-    def credentials_file
+    def api_key(user = get_credentials[0], password = get_credentials[1])
+      require("heroku-api")
+      api = Heroku::API.new(default_params)
+      api.post_login(user, password).body["api_key"]
+    end
+
+    def get_credentials    # :nodoc:
+      @credentials ||= (read_credentials || ask_for_and_save_credentials)
+    end
+
+    def delete_credentials
+      if File.exists?(legacy_credentials_path)
+        FileUtils.rm_f(legacy_credentials_path)
+      end
+      if netrc
+        netrc.delete("api.#{host}")
+        netrc.delete("code.#{host}")
+        netrc.save
+      end
+      @api, @client, @credentials = nil, nil
+    end
+
+    def legacy_credentials_path
       if host == default_host
         "#{home_directory}/.heroku/credentials"
       else
@@ -65,16 +104,65 @@ class Heroku::Auth
       end
     end
 
-    def get_credentials    # :nodoc:
-      return if @credentials
-      unless @credentials = read_credentials
-        ask_for_and_save_credentials
+    def netrc_path
+      default = Netrc.default_path
+      encrypted = default + ".gpg"
+      if File.exists?(encrypted)
+        encrypted
+      else
+        default
       end
-      @credentials
+    end
+
+    def netrc   # :nodoc:
+      @netrc ||= begin
+        File.exists?(netrc_path) && Netrc.read(netrc_path)
+      rescue => error
+        if error.message =~ /^Permission bits for/
+          perm = File.stat(netrc_path).mode & 0777
+          abort("Permissions #{perm} for '#{netrc_path}' are too open. You should run `chmod 0600 #{netrc_path}` so that your credentials are NOT accessible by others.")
+        else
+          raise error
+        end
+      end
     end
 
     def read_credentials
-      File.exists?(credentials_file) and File.read(credentials_file).split("\n")
+      if ENV['HEROKU_API_KEY']
+        ['', ENV['HEROKU_API_KEY']]
+      else
+        # convert legacy credentials to netrc
+        if File.exists?(legacy_credentials_path)
+          @api, @client = nil
+          @credentials = File.read(legacy_credentials_path).split("\n")
+          write_credentials
+          FileUtils.rm_f(legacy_credentials_path)
+        end
+
+        # read netrc credentials if they exist
+        if netrc
+          # force migration of long api tokens (80 chars) to short ones (40)
+          # #write_credentials rewrites both api.* and code.*
+          credentials = netrc["api.#{host}"]
+          if credentials && credentials[1].length > 40
+            @credentials = [ credentials[0], credentials[1][0,40] ]
+            write_credentials
+          end
+
+          netrc["api.#{host}"]
+        end
+      end
+    end
+
+    def write_credentials
+      FileUtils.mkdir_p(File.dirname(netrc_path))
+      FileUtils.touch(netrc_path)
+      unless running_on_windows?
+        FileUtils.chmod(0600, netrc_path)
+      end
+      netrc["api.#{host}"] = self.credentials
+      netrc["code.#{host}"] = self.credentials
+      netrc.save
     end
 
     def echo_off
@@ -95,11 +183,10 @@ class Heroku::Auth
       print "Email: "
       user = ask
 
-      print "Password: "
+      print "Password (typing will be hidden): "
       password = running_on_windows? ? ask_for_password_on_windows : ask_for_password
-      api_key = Heroku::Client.auth(user, password, host)['api_key']
 
-      [user, api_key]
+      [user, api_key(user, password)]
     end
 
     def ask_for_password_on_windows
@@ -122,10 +209,6 @@ class Heroku::Auth
 
     def ask_for_password
       echo_off
-      trap("INT") do
-        echo_on
-        exit
-      end
       password = ask
       puts
       echo_on
@@ -133,13 +216,13 @@ class Heroku::Auth
     end
 
     def ask_for_and_save_credentials
+      require("heroku-api") # for the errors
       begin
         @credentials = ask_for_credentials
         write_credentials
         check
-      rescue ::RestClient::Unauthorized, ::RestClient::ResourceNotFound => e
+      rescue Heroku::API::Errors::NotFound, Heroku::API::Errors::Unauthorized => e
         delete_credentials
-        clear
         display "Authentication failed."
         retry if retry_login?
         exit 1
@@ -148,15 +231,17 @@ class Heroku::Auth
         raise e
       end
       check_for_associated_ssh_key unless Heroku::Command.current_command == "keys:add"
+      @credentials
     end
 
     def check_for_associated_ssh_key
-      return unless client.keys.length.zero?
-      associate_or_generate_ssh_key
+      if api.get_keys.body.empty?
+        associate_or_generate_ssh_key
+      end
     end
 
     def associate_or_generate_ssh_key
-      public_keys = available_ssh_public_keys.sort
+      public_keys = Dir.glob("#{home_directory}/.ssh/*.pub").sort
 
       case public_keys.length
       when 0 then
@@ -176,7 +261,11 @@ class Heroku::Auth
           display "#{index+1}) #{File.basename(key)}"
         end
         display "Which would you like to use with your Heroku account? ", false
-        chosen = public_keys[ask.to_i-1] rescue error("Invalid choice")
+        choice = ask.to_i - 1
+        chosen = public_keys[choice]
+        if choice == -1 || chosen.nil?
+          error("Invalid choice")
+        end
         associate_key(chosen)
       end
     end
@@ -185,23 +274,24 @@ class Heroku::Auth
       ssh_dir = File.join(home_directory, ".ssh")
       unless File.exists?(ssh_dir)
         FileUtils.mkdir_p ssh_dir
-        File.chmod(0700, ssh_dir)
+        unless running_on_windows?
+          File.chmod(0700, ssh_dir)
+        end
       end
-      `ssh-keygen -t rsa -N "" -f \"#{home_directory}/.ssh/#{keyfile}\" 2>&1`
+      output = `ssh-keygen -t rsa -N "" -f \"#{home_directory}/.ssh/#{keyfile}\" 2>&1`
+      if ! $?.success?
+        error("Could not generate key: #{output}")
+      end
     end
 
     def associate_key(key)
-      display "Uploading ssh public key #{key}"
-      client.add_key(File.read(key))
-    end
-
-    def available_ssh_public_keys
-      keys = [
-        "#{home_directory}/.ssh/id_rsa.pub",
-        "#{home_directory}/.ssh/id_dsa.pub"
-      ]
-      keys.concat(Dir["#{home_directory}/.ssh/*.pub"])
-      keys.select { |d| File.exists?(d) }.uniq
+      action("Uploading SSH public key #{key}") do
+        if File.exists?(key)
+          api.post_key(File.read(key))
+        else
+          error("Could not upload SSH public key: key file '" + key + "' does not exist")
+        end
+      end
     end
 
     def retry_login?
@@ -210,22 +300,40 @@ class Heroku::Auth
       @login_attempts < 3
     end
 
-    def write_credentials
-      FileUtils.mkdir_p(File.dirname(credentials_file))
-      f = File.open(credentials_file, 'w')
-      f.puts self.credentials
-      f.close
-      set_credentials_permissions
+    def verified_hosts
+      %w( heroku.com heroku-shadow.com )
     end
 
-    def set_credentials_permissions
-      FileUtils.chmod 0700, File.dirname(credentials_file)
-      FileUtils.chmod 0600, credentials_file
+    def base_host(host)
+      parts = URI.parse(full_host(host)).host.split(".")
+      return parts.first if parts.size == 1
+      parts[-2..-1].join(".")
     end
 
-    def delete_credentials
-      FileUtils.rm_f(credentials_file)
-      clear
+    def full_host(host)
+      (host =~ /^http/) ? host : "https://api.#{host}"
+    end
+
+    def verify_host?(host)
+      hostname = base_host(host)
+      verified = verified_hosts.include?(hostname)
+      verified = false if ENV["HEROKU_SSL_VERIFY"] == "disable"
+      verified
+    end
+
+    protected
+
+    def default_params
+      uri = URI.parse(full_host(host))
+      {
+        :headers          => {
+          'User-Agent'    => Heroku.user_agent
+        },
+        :host             => uri.host,
+        :port             => uri.port.to_s,
+        :scheme           => uri.scheme,
+        :ssl_verify_peer  => verify_host?(host)
+      }
     end
   end
 end

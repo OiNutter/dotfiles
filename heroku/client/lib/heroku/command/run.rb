@@ -1,5 +1,6 @@
 require "readline"
 require "heroku/command/base"
+require "heroku/helpers/log_displayer"
 
 # run one-off commands (console, rake)
 #
@@ -9,55 +10,73 @@ class Heroku::Command::Run < Heroku::Command::Base
   #
   # run an attached process
   #
+  # -s, --size SIZE      # specifiy dyno size for process
+  #
+  #Example:
+  #
+  # $ heroku run bash
+  # Running `bash` attached to terminal... up, run.1
+  # ~ $
+  #
   def index
-    app = extract_app
     command = args.join(" ")
-    fail "Usage: heroku run COMMAND" if command.empty?
-    opts = { :attach => true, :command => command, :ps_env => get_terminal_environment }
-    display "Running #{command} attached to terminal... ", false
+    error("Usage: heroku run COMMAND") if command.empty?
+    run_attached(command)
+  end
 
-    begin
-      ps = heroku.ps_run(app, opts)
-    rescue
-      puts "failed"
-      raise
+  # run:detached COMMAND
+  #
+  # run a detached process, where output is sent to your logs
+  #
+  # -s, --size SIZE      # specifiy dyno size for process
+  # -t, --tail           # stream logs for the process
+  #
+  #Example:
+  #
+  # $ heroku run:detached ls
+  # Running `ls` detached... up, run.1
+  # Use `heroku logs -p run.1` to view the output.
+  #
+  def detached
+    command = args.join(" ")
+    error("Usage: heroku run COMMAND") if command.empty?
+    opts = { :attach => false, :command => command }
+    opts[:size] = get_size if options[:size]
+
+    app_name = app
+    process_data = action("Running `#{command}` detached", :success => "up") do
+      process_data = api.post_ps(app_name, command, opts).body
+      status(process_data['process'])
+      process_data
     end
-
-    begin
-      set_buffer(false)
-      $stdin.sync = $stdout.sync = true
-      rendezvous = Heroku::Client::Rendezvous.new(
-        :rendezvous_url => ps["rendezvous_url"],
-        :connect_timeout => (ENV['HEROKU_CONNECT_TIMEOUT'] || 120).to_i,
-        :activity_timeout => nil,
-        :input => $stdin,
-        :output => $stdout)
-      rendezvous.on_connect { display "up, #{ps["process"]}" }
-      rendezvous.start
-    rescue Timeout::Error
-      error "\nTimeout awaiting process"
-    rescue Errno::ECONNREFUSED, Errno::ECONNRESET, OpenSSL::SSL::SSLError
-      error "\nError connecting to process"
-    rescue Interrupt
-    ensure
-      set_buffer(true)
+    if options[:tail]
+      opts = []
+      opts << "tail=1"
+      opts << "ps=#{process_data['process']}"
+      log_displayer = ::Heroku::Helpers::LogDisplayer.new(heroku, app, opts)
+      log_displayer.display_logs
+    else
+      display("Use `heroku logs -p #{process_data['process']}` to view the output.")
     end
   end
 
   # run:rake COMMAND
   #
+  # WARNING: `heroku run:rake` has been deprecated. Please use `heroku run rake` instead."
+  #
   # remotely execute a rake command
   #
+  #Example:
+  #
+  # $ heroku run:rake -T
+  # Running `rake -T` attached to terminal... up, run.1
+  # (in /app)
+  # rake test  # run tests
+  #
   def rake
-    app = extract_app
-    cmd = args.join(' ')
-    if cmd.length == 0
-      raise Heroku::Command::CommandFailed, "Usage: heroku run:rake COMMAND"
-    else
-      heroku.start(app, "rake #{cmd}", :attached).each { |chunk| display(chunk, false) }
-    end
-  rescue Heroku::Client::AppCrashed => e
-    error "Couldn't run rake\n#{e.message}"
+    deprecate("`heroku #{current_command}` has been deprecated. Please use `heroku run rake` instead.")
+    command = "rake #{args.join(' ')}"
+    run_attached(command)
   end
 
   alias_command "rake", "run:rake"
@@ -68,23 +87,60 @@ class Heroku::Command::Run < Heroku::Command::Base
   #
   # if COMMAND is specified, run the command and exit
   #
+  # NOTE: For Cedar apps, use `heroku run console`
+  #
+  #Examples:
+  #
+  # $ heroku console
+  # Ruby console for example.heroku.com
+  # >>
+  #
   def console
-    app = extract_app
-    cmd = args.join(' ').strip
-    if cmd.empty?
-      console_session(app)
-    else
-      display heroku.console(app, cmd)
-    end
-  rescue RestClient::RequestTimeout
-    error "Timed out. Long running requests are not supported on the console.\nPlease consider creating a rake task instead."
-  rescue Heroku::Client::AppCrashed => e
-    error e.message
+    puts "`heroku #{current_command}` has been removed. Please use: `heroku run` instead."
+    puts "For more information, please see:"
+    puts " * https://devcenter.heroku.com/articles/one-off-dynos"
+    puts " * https://devcenter.heroku.com/articles/rails3#console"
+    puts " * https://devcenter.heroku.com/articles/console-bamboo"
   end
-
   alias_command "console", "run:console"
 
 protected
+
+  def run_attached(command)
+    app_name = app
+    opts = { :attach => true, :ps_env => get_terminal_environment }
+    opts[:size] = get_size if options[:size]
+
+    process_data = action("Running `#{command}` attached to terminal", :success => "up") do
+      process_data = api.post_ps(app_name, command, opts).body
+      status(process_data["process"])
+      process_data
+    end
+    rendezvous_session(process_data["rendezvous_url"])
+  end
+
+  def rendezvous_session(rendezvous_url, &on_connect)
+    begin
+      set_buffer(false)
+      rendezvous = Heroku::Client::Rendezvous.new(
+        :rendezvous_url => rendezvous_url,
+        :connect_timeout => (ENV["HEROKU_CONNECT_TIMEOUT"] || 120).to_i,
+        :activity_timeout => nil,
+        :input => $stdin,
+        :output => $stdout)
+      rendezvous.on_connect(&on_connect)
+      rendezvous.start
+    rescue Timeout::Error
+      error "\nTimeout awaiting process"
+    rescue OpenSSL::SSL::SSLError
+      error "Authentication error"
+    rescue Errno::ECONNREFUSED, Errno::ECONNRESET
+      error "\nError connecting to process"
+    rescue Interrupt
+    ensure
+      set_buffer(true)
+    end
+  end
 
   def console_history_dir
     FileUtils.mkdir_p(path = "#{home_directory}/.heroku/console_history")
@@ -128,5 +184,11 @@ protected
   def console_history_add(app, cmd)
     Readline::HISTORY.push(cmd)
     File.open(console_history_file(app), "a") { |f| f.puts cmd + "\n" }
+  end
+
+  def get_size
+    size = options[:size].to_i
+    error("Must specify SIZE in format '1X' or '2X'.") if size <= 0
+    size
   end
 end

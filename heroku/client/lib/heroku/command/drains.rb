@@ -4,7 +4,7 @@ module Heroku::Command
 
   # display syslog drains for an app
   #
-  class Drains < BaseWithApp
+  class Drains < Base
 
     # drains
     #
@@ -24,7 +24,7 @@ module Heroku::Command
         puts heroku.add_drain(app, url)
         return
       else
-        raise(CommandFailed, "usage: heroku drains:add URL")
+        error("Usage: heroku drains:add URL")
       end
     end
 
@@ -37,7 +37,7 @@ module Heroku::Command
         puts heroku.remove_drain(app, url)
         return
       else
-        raise(CommandFailed, "usage: heroku drains remove URL")
+        error("Usage: heroku drains remove URL")
       end
     end
 

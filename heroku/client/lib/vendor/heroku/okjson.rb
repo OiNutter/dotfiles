@@ -1,4 +1,6 @@
-# Copyright 2011 Keith Rarick
+# encoding: UTF-8
+#
+# Copyright 2011, 2012 Keith Rarick
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -29,7 +31,6 @@ module Heroku
   module OkJson
     extend self
 
-    class ParserError < ::StandardError; end
 
     # Decodes a json document in string s and
     # returns the corresponding ruby value.
@@ -43,7 +44,7 @@ module Heroku
       ts = lex(s)
       v, ts = textparse(ts)
       if ts.length > 0
-        raise Heroku::OkJson::ParserError, 'trailing garbage'
+        raise Error, 'trailing garbage'
       end
       v
     end
@@ -55,14 +56,15 @@ module Heroku
     # except that it does not accept atomic values.
     def textparse(ts)
       if ts.length < 0
-        raise Heroku::OkJson::ParserError, 'empty'
+        raise Error, 'empty'
       end
 
       typ, _, val = ts[0]
       case typ
       when '{' then objparse(ts)
       when '[' then arrparse(ts)
-      else valparse(ts)
+      else
+        raise Error, "unexpected #{val.inspect}"
       end
     end
 
@@ -71,7 +73,7 @@ module Heroku
     # Returns the parsed value and any trailing tokens.
     def valparse(ts)
       if ts.length < 0
-        raise Heroku::OkJson::ParserError, 'empty'
+        raise Error, 'empty'
       end
 
       typ, _, val = ts[0]
@@ -80,7 +82,7 @@ module Heroku
       when '[' then arrparse(ts)
       when :val,:str then [val, ts[1..-1]]
       else
-        raise Heroku::OkJson::ParserError, "unexpected #{val.inspect}"
+        raise Error, "unexpected #{val.inspect}"
       end
     end
 
@@ -116,11 +118,11 @@ module Heroku
 
 
     # Parses a "member" in the sense of RFC 4627.
-    # Returns the parsed value and any trailing tokens.
+    # Returns the parsed values and any trailing tokens.
     def pairparse(ts)
       (typ, _, k), ts = ts[0], ts[1..-1]
       if typ != :str
-        raise Heroku::OkJson::ParserError, "unexpected #{k.inspect}"
+        raise Error, "unexpected #{k.inspect}"
       end
       ts = eat(':', ts)
       v, ts = valparse(ts)
@@ -160,20 +162,20 @@ module Heroku
 
     def eat(typ, ts)
       if ts[0][0] != typ
-        raise Heroku::OkJson::ParserError, "expected #{typ} (got #{ts[0].inspect})"
+        raise Error, "expected #{typ} (got #{ts[0].inspect})"
       end
       ts[1..-1]
     end
 
 
-    # Sans s and returns a list of json tokens,
+    # Scans s and returns a list of json tokens,
     # excluding white space (as defined in RFC 4627).
     def lex(s)
       ts = []
       while s.length > 0
         typ, lexeme, val = tok(s)
         if typ == nil
-          raise Heroku::OkJson::ParserError, "invalid character at #{s[0,10].inspect}"
+          raise Error, "invalid character at #{s[0,10].inspect}"
         end
         if typ != :space
           ts << [typ, lexeme, val]
@@ -186,7 +188,7 @@ module Heroku
 
     # Scans the first token in s and
     # returns a 3-element list, or nil
-    # if no such token exists.
+    # if s does not begin with a valid token.
     #
     # The first list element is one of
     # '{', '}', ':', ',', '[', ']',
@@ -218,9 +220,9 @@ module Heroku
     end
 
 
-    def nulltok(s);  s[0,4] == 'null'  && [:val, 'null',  nil]   end
-    def truetok(s);  s[0,4] == 'true'  && [:val, 'true',  true]  end
-    def falsetok(s); s[0,5] == 'false' && [:val, 'false', false] end
+    def nulltok(s);  s[0,4] == 'null'  ? [:val, 'null',  nil]   : [] end
+    def truetok(s);  s[0,4] == 'true'  ? [:val, 'true',  true]  : [] end
+    def falsetok(s); s[0,5] == 'false' ? [:val, 'false', false] : [] end
 
 
     def numtok(s)
@@ -233,6 +235,8 @@ module Heroku
         else
           [:val, m[0], Integer(m[0])]
         end
+      else
+        []
       end
     end
 
@@ -240,7 +244,7 @@ module Heroku
     def strtok(s)
       m = /"([^"\\]|\\["\/\\bfnrt]|\\u[0-9a-fA-F]{4})*"/.match(s)
       if ! m
-        raise Heroku::OkJson::ParserError, "invalid string literal at #{abbrev(s)}"
+        raise Error, "invalid string literal at #{abbrev(s)}"
       end
       [:str, m[0], unquote(m[0])]
     end
@@ -257,9 +261,15 @@ module Heroku
 
     # Converts a quoted json string literal q into a UTF-8-encoded string.
     # The rules are different than for Ruby, so we cannot use eval.
-    # Unquote will raise Heroku::OkJson::ParserError, an error if q contains control characters.
+    # Unquote will raise an error if q contains control characters.
     def unquote(q)
       q = q[1...-1]
+      rubydoesenc = false
+      # In ruby >= 1.9, a[w] is a codepoint, not a byte.
+      if q.class.method_defined?(:force_encoding)
+        q.force_encoding('UTF-8')
+        rubydoesenc = true
+      end
       a = q.dup # allocate a big enough string
       r, w = 0, 0
       while r < q.length
@@ -268,7 +278,7 @@ module Heroku
         when c == ?\\
           r += 1
           if r >= q.length
-            raise Heroku::OkJson::ParserError, "string literal ends with a \"\\\": \"#{q}\""
+            raise Error, "string literal ends with a \"\\\": \"#{q}\""
           end
 
           case q[r]
@@ -285,7 +295,7 @@ module Heroku
             uchar = begin
               hexdec4(q[r,4])
             rescue RuntimeError => e
-              raise Heroku::OkJson::ParserError, "invalid escape sequence \\u#{q[r,4]}: #{e}"
+              raise Error, "invalid escape sequence \\u#{q[r,4]}: #{e}"
             end
             r += 4
             if surrogate? uchar
@@ -298,210 +308,29 @@ module Heroku
                 end
               end
             end
-            w += ucharenc(a, w, uchar)
+            if rubydoesenc
+              a[w] = '' << uchar
+              w += 1
+            else
+              w += ucharenc(a, w, uchar)
+            end
           else
-            raise Heroku::OkJson::ParserError, "invalid escape char #{q[r]} in \"#{q}\""
+            raise Error, "invalid escape char #{q[r]} in \"#{q}\""
           end
         when c == ?", c < Spc
-          raise Heroku::OkJson::ParserError, "invalid character in string literal \"#{q}\""
+          raise Error, "invalid character in string literal \"#{q}\""
         else
           # Copy anything else byte-for-byte.
           # Valid UTF-8 will remain valid UTF-8.
           # Invalid UTF-8 will remain invalid UTF-8.
+          # In ruby >= 1.9, c is a codepoint, not a byte,
+          # in which case this is still what we want.
           a[w] = c
           r += 1
           w += 1
         end
       end
       a[0,w]
-    end
-
-
-    def hexdec4(s)
-      if s.length != 4
-        raise Heroku::OkJson::ParserError, 'short'
-      end
-      (nibble(s[0])<<12) | (nibble(s[1])<<8) | (nibble(s[2])<<4) | nibble(s[3])
-    end
-
-
-    def subst(u1, u2)
-      if Usurr1 <= u1 && u1 < Usurr2 && Usurr2 <= u2 && u2 < Usurr3
-        return ((u1-Usurr1)<<10) | (u2-Usurr2) + Usurrself
-      end
-      return Ucharerr
-    end
-
-
-    def unsubst(u)
-      if u < Usurrself || u > Umax || surrogate?(u)
-        return Ucharerr, Ucharerr
-      end
-      u -= Usurrself
-      [Usurr1 + ((u>>10)&0x3ff), Usurr2 + (u&0x3ff)]
-    end
-
-
-    def surrogate?(u)
-      Usurr1 <= u && u < Usurr3
-    end
-
-
-    def nibble(c)
-      case true
-      when ?0 <= c && c <= ?9 then c.ord - ?0.ord
-      when ?a <= c && c <= ?z then c.ord - ?a.ord + 10
-      when ?A <= c && c <= ?Z then c.ord - ?A.ord + 10
-      else
-        raise Heroku::OkJson::ParserError, "invalid hex code #{c}"
-      end
-    end
-
-
-    # Encodes x into a json text. It may contain only
-    # Array, Hash, String, Numeric, true, false, nil.
-    # (Note, this list excludes Symbol.)
-    # Strings contained in x must be valid UTF-8.
-    # Values that cannot be represented, such as
-    # Nan, Infinity, Symbol, and Proc, are encoded
-    # as null, in accordance with ECMA-262, 5th ed.
-    def encode(x)
-      case x
-      when Hash    then objenc(x)
-      when Array   then arrenc(x)
-      when String  then strenc(x)
-      when Numeric then numenc(x)
-      when Symbol  then strenc(x.to_s)
-      when true    then "true"
-      when false   then "false"
-      when nil     then "null"
-      else              "null"
-      end
-    end
-
-
-    def objenc(x)
-      '{' + x.map{|k,v| encode(k) + ':' + encode(v)}.join(',') + '}'
-    end
-
-
-    def arrenc(a)
-      '[' + a.map{|x| encode(x)}.join(',') + ']'
-    end
-
-
-    def strenc(s)
-      t = StringIO.new
-      t.putc(?")
-      r = 0
-      while r < s.length
-        case s[r]
-        when ?"  then t.print('\\"')
-        when ?\\ then t.print('\\\\')
-        when ?\b then t.print('\\b')
-        when ?\f then t.print('\\f')
-        when ?\n then t.print('\\n')
-        when ?\r then t.print('\\r')
-        when ?\t then t.print('\\t')
-        else
-          c = s[r]
-          case true
-          when Spc <= c && c <= ?~
-            t.putc(c)
-          when true
-            u, size = uchardec(s, r)
-            r += size - 1 # we add one more at the bottom of the loop
-            if u < 0x10000
-              t.print('\\u')
-              hexenc4(t, u)
-            else
-              u1, u2 = unsubst(u)
-              t.print('\\u')
-              hexenc4(t, u1)
-              t.print('\\u')
-              hexenc4(t, u2)
-            end
-          else
-            # invalid byte; skip it
-          end
-        end
-        r += 1
-      end
-      t.putc(?")
-      t.string
-    end
-
-
-    def hexenc4(t, u)
-      t.putc(Hex[(u>>12)&0xf])
-      t.putc(Hex[(u>>8)&0xf])
-      t.putc(Hex[(u>>4)&0xf])
-      t.putc(Hex[u&0xf])
-    end
-
-
-    def numenc(x)
-      if x.nan? || x.infinite?
-        return 'null'
-      end rescue nil
-      "#{x}"
-    end
-
-
-    # Decodes unicode character u from UTF-8
-    # bytes in string s at position i.
-    # Returns u and the number of bytes read.
-    def uchardec(s, i)
-      n = s.length - i
-      return [Ucharerr, 1] if n < 1
-
-      c0 = s[i].ord
-
-      # 1-byte, 7-bit sequence?
-      if c0 < Utagx
-        return [c0, 1]
-      end
-
-      # unexpected continuation byte?
-      return [Ucharerr, 1] if c0 < Utag2
-
-      # need continuation byte
-      return [Ucharerr, 1] if n < 2
-      c1 = s[i+1].ord
-      return [Ucharerr, 1] if c1 < Utagx || Utag2 <= c1
-
-      # 2-byte, 11-bit sequence?
-      if c0 < Utag3
-        u = (c0&Umask2)<<6 | (c1&Umaskx)
-        return [Ucharerr, 1] if u <= Uchar1max
-        return [u, 2]
-      end
-
-      # need second continuation byte
-      return [Ucharerr, 1] if n < 3
-      c2 = s[i+2].ord
-      return [Ucharerr, 1] if c2 < Utagx || Utag2 <= c2
-
-      # 3-byte, 16-bit sequence?
-      if c0 < Utag4
-        u = (c0&Umask3)<<12 | (c1&Umaskx)<<6 | (c2&Umaskx)
-        return [Ucharerr, 1] if u <= Uchar2max
-        return [u, 3]
-      end
-
-      # need third continuation byte
-      return [Ucharerr, 1] if n < 4
-      c3 = s[i+3].ord
-      return [Ucharerr, 1] if c3 < Utagx || Utag2 <= c3
-
-      # 4-byte, 21-bit sequence?
-      if c0 < Utag5
-        u = (c0&Umask4)<<18 | (c1&Umaskx)<<12 | (c2&Umaskx)<<6 | (c3&Umaskx)
-        return [Ucharerr, 1] if u <= Uchar3max
-        return [u, 4]
-      end
-
-      return [Ucharerr, 1]
     end
 
 
@@ -531,6 +360,219 @@ module Heroku
       end
     end
 
+
+    def hexdec4(s)
+      if s.length != 4
+        raise Error, 'short'
+      end
+      (nibble(s[0])<<12) | (nibble(s[1])<<8) | (nibble(s[2])<<4) | nibble(s[3])
+    end
+
+
+    def subst(u1, u2)
+      if Usurr1 <= u1 && u1 < Usurr2 && Usurr2 <= u2 && u2 < Usurr3
+        return ((u1-Usurr1)<<10) | (u2-Usurr2) + Usurrself
+      end
+      return Ucharerr
+    end
+
+
+    def surrogate?(u)
+      Usurr1 <= u && u < Usurr3
+    end
+
+
+    def nibble(c)
+      case true
+      when ?0 <= c && c <= ?9 then c.ord - ?0.ord
+      when ?a <= c && c <= ?z then c.ord - ?a.ord + 10
+      when ?A <= c && c <= ?Z then c.ord - ?A.ord + 10
+      else
+        raise Error, "invalid hex code #{c}"
+      end
+    end
+
+
+    # Encodes x into a json text. It may contain only
+    # Array, Hash, String, Numeric, true, false, nil.
+    # (Note, this list excludes Symbol.)
+    # X itself must be an Array or a Hash.
+    # No other value can be encoded, and an error will
+    # be raised if x contains any other value, such as
+    # Nan, Infinity, Symbol, and Proc, or if a Hash key
+    # is not a String.
+    # Strings contained in x must be valid UTF-8.
+    def encode(x)
+      case x
+      when Hash    then objenc(x)
+      when Array   then arrenc(x)
+      else
+        raise Error, 'root value must be an Array or a Hash'
+      end
+    end
+
+
+    def valenc(x)
+      case x
+      when Hash    then objenc(x)
+      when Array   then arrenc(x)
+      when String  then strenc(x)
+      when Numeric then numenc(x)
+      when true    then "true"
+      when false   then "false"
+      when nil     then "null"
+      else
+        raise Error, "cannot encode #{x.class}: #{x.inspect}"
+      end
+    end
+
+
+    def objenc(x)
+      '{' + x.map{|k,v| keyenc(k) + ':' + valenc(v)}.join(',') + '}'
+    end
+
+
+    def arrenc(a)
+      '[' + a.map{|x| valenc(x)}.join(',') + ']'
+    end
+
+
+    def keyenc(k)
+      case k
+      when String then strenc(k)
+      else
+        raise Error, "Hash key is not a string: #{k.inspect}"
+      end
+    end
+
+
+    def strenc(s)
+      t = StringIO.new
+      t.putc(?")
+      r = 0
+
+      # In ruby >= 1.9, s[r] is a codepoint, not a byte.
+      rubydoesenc = s.class.method_defined?(:encoding)
+
+      while r < s.length
+        case s[r]
+        when ?"  then t.print('\\"')
+        when ?\\ then t.print('\\\\')
+        when ?\b then t.print('\\b')
+        when ?\f then t.print('\\f')
+        when ?\n then t.print('\\n')
+        when ?\r then t.print('\\r')
+        when ?\t then t.print('\\t')
+        else
+          c = s[r]
+          case true
+          when rubydoesenc
+            begin
+              c.ord # will raise an error if c is invalid UTF-8
+              t.write(c)
+            rescue
+              t.write(Ustrerr)
+            end
+          when Spc <= c && c <= ?~
+            t.putc(c)
+          else
+            n = ucharcopy(t, s, r) # ensure valid UTF-8 output
+            r += n - 1 # r is incremented below
+          end
+        end
+        r += 1
+      end
+      t.putc(?")
+      t.string
+    end
+
+
+    def numenc(x)
+      if ((x.nan? || x.infinite?) rescue false)
+        raise Error, "Numeric cannot be represented: #{x}"
+      end
+      "#{x}"
+    end
+
+
+    # Copies the valid UTF-8 bytes of a single character
+    # from string s at position i to I/O object t, and
+    # returns the number of bytes copied.
+    # If no valid UTF-8 char exists at position i,
+    # ucharcopy writes Ustrerr and returns 1.
+    def ucharcopy(t, s, i)
+      n = s.length - i
+      raise Utf8Error if n < 1
+
+      c0 = s[i].ord
+
+      # 1-byte, 7-bit sequence?
+      if c0 < Utagx
+        t.putc(c0)
+        return 1
+      end
+
+      raise Utf8Error if c0 < Utag2 # unexpected continuation byte?
+
+      raise Utf8Error if n < 2 # need continuation byte
+      c1 = s[i+1].ord
+      raise Utf8Error if c1 < Utagx || Utag2 <= c1
+
+      # 2-byte, 11-bit sequence?
+      if c0 < Utag3
+        raise Utf8Error if ((c0&Umask2)<<6 | (c1&Umaskx)) <= Uchar1max
+        t.putc(c0)
+        t.putc(c1)
+        return 2
+      end
+
+      # need second continuation byte
+      raise Utf8Error if n < 3
+
+      c2 = s[i+2].ord
+      raise Utf8Error if c2 < Utagx || Utag2 <= c2
+
+      # 3-byte, 16-bit sequence?
+      if c0 < Utag4
+        u = (c0&Umask3)<<12 | (c1&Umaskx)<<6 | (c2&Umaskx)
+        raise Utf8Error if u <= Uchar2max
+        t.putc(c0)
+        t.putc(c1)
+        t.putc(c2)
+        return 3
+      end
+
+      # need third continuation byte
+      raise Utf8Error if n < 4
+      c3 = s[i+3].ord
+      raise Utf8Error if c3 < Utagx || Utag2 <= c3
+
+      # 4-byte, 21-bit sequence?
+      if c0 < Utag5
+        u = (c0&Umask4)<<18 | (c1&Umaskx)<<12 | (c2&Umaskx)<<6 | (c3&Umaskx)
+        raise Utf8Error if u <= Uchar3max
+        t.putc(c0)
+        t.putc(c1)
+        t.putc(c2)
+        t.putc(c3)
+        return 4
+      end
+
+      raise Utf8Error
+    rescue Utf8Error
+      t.write(Ustrerr)
+      return 1
+    end
+
+
+    class Utf8Error < ::StandardError
+    end
+
+
+    class Error < ::StandardError
+    end
+
+
     Utagx = 0x80 # 1000 0000
     Utag2 = 0xc0 # 1100 0000
     Utag3 = 0xe0 # 1110 0000
@@ -544,14 +586,13 @@ module Heroku
     Uchar2max = (1<<11) - 1
     Uchar3max = (1<<16) - 1
     Ucharerr = 0xFFFD # unicode "replacement char"
+    Ustrerr = "\xef\xbf\xbd" # unicode "replacement char"
     Usurrself = 0x10000
     Usurr1 = 0xd800
     Usurr2 = 0xdc00
     Usurr3 = 0xe000
-    Umax = 0x10ffff
 
     Spc = ' '[0]
     Unesc = {?b=>?\b, ?f=>?\f, ?n=>?\n, ?r=>?\r, ?t=>?\t}
-    Hex = '0123456789abcdef'
   end
 end

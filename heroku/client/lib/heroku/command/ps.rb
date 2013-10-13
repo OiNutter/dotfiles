@@ -6,18 +6,36 @@ class Heroku::Command::Ps < Heroku::Command::Base
 
   # ps:dynos [QTY]
   #
+  # DEPRECATED: use `heroku ps:scale dynos=N`
+  #
   # scale to QTY web processes
   #
   # if QTY is not specified, display the number of web processes currently running
   #
+  #Example:
+  #
+  # $ heroku ps:dynos 3
+  # Scaling dynos... done, now running 3
+  #
   def dynos
-    app = extract_app
-    if dynos = args.shift
-      current = heroku.set_dynos(app, dynos)
-      display "#{app} now running #{quantify("dyno", current)}"
+    # deprecation notice added to v2.21.3 on 03/16/12
+    display("~ `heroku ps:dynos QTY` has been deprecated and replaced with `heroku ps:scale dynos=QTY`")
+
+    dynos = shift_argument
+    validate_arguments!
+
+    if dynos
+      action("Scaling dynos") do
+        new_dynos = api.put_dynos(app, dynos).body["dynos"]
+        status("now running #{new_dynos}")
+      end
     else
-      dynos = heroku.dynos(app)
-      display "#{app} is running #{quantify("dyno", dynos)}"
+      app_data = api.get_app(app).body
+      if app_data["stack"] == "cedar"
+        raise(Heroku::Command::CommandFailed, "For Cedar apps, use `heroku ps`")
+      else
+        display("#{app} is running #{quantify("dyno", app_data["dynos"])}")
+      end
     end
   end
 
@@ -25,18 +43,36 @@ class Heroku::Command::Ps < Heroku::Command::Base
 
   # ps:workers [QTY]
   #
+  # DEPRECATED: use `heroku ps:scale workers=N`
+  #
   # scale to QTY background processes
   #
   # if QTY is not specified, display the number of background processes currently running
   #
+  #Example:
+  #
+  # $ heroku ps:dynos 3
+  # Scaling workers... done, now running 3
+  #
   def workers
-    app = extract_app
-    if workers = args.shift
-      current = heroku.set_workers(app, workers)
-      display "#{app} now running #{quantify("worker", current)}"
+    # deprecation notice added to v2.21.3 on 03/16/12
+    display("~ `heroku ps:workers QTY` has been deprecated and replaced with `heroku ps:scale workers=QTY`")
+
+    workers = shift_argument
+    validate_arguments!
+
+    if workers
+      action("Scaling workers") do
+        new_workers = api.put_workers(app, workers).body["workers"]
+        status("now running #{new_workers}")
+      end
     else
-      workers = heroku.workers(app)
-      display "#{app} is running #{quantify("worker", workers)}"
+      app_data = api.get_app(app).body
+      if app_data["stack"] == "cedar"
+        raise(Heroku::Command::CommandFailed, "For Cedar apps, use `heroku ps`")
+      else
+        display("#{app} is running #{quantify("worker", app_data["workers"])}")
+      end
     end
   end
 
@@ -46,23 +82,47 @@ class Heroku::Command::Ps < Heroku::Command::Base
   #
   # list processes for an app
   #
+  #Example:
+  #
+  # $ heroku ps
+  # === run: one-off processes
+  # run.1: up for 5m: `bash`
+  #
+  # === web: `bundle exec thin start -p $PORT`
+  # web.1: created for 30s
+  #
   def index
-    app = extract_app
-    ps = heroku.ps(app)
+    validate_arguments!
+    processes = api.get_ps(app).body
 
-    objects = ps.sort_by do |p|
-      t,n = p['process'].split('.')
-      [t, n.to_i]
-    end.each do |p|
-      p['state'] << ' for ' << time_ago(p['elapsed']).gsub(/ ago/, '')
-      p['command'] = truncate(p['command'], 36)
+    processes_by_command = Hash.new {|hash,key| hash[key] = []}
+    processes.each do |process|
+      name    = process["process"].split(".").first
+      elapsed = time_ago(Time.now - process['elapsed'])
+      size    = process.fetch("size", 1)
+
+      if name == "run"
+        key  = "run: one-off processes"
+        item = "%s (%sX): %s %s: `%s`" % [ process["process"], size, process["state"], elapsed, process["command"] ]
+      else
+        key  = "#{name} (#{size}X): `#{process["command"]}`"
+        item = "%s: %s %s" % [ process["process"], process["state"], elapsed ]
+      end
+
+      processes_by_command[key] << item
     end
 
-    display_table(
-      objects,
-      ['process', 'state', 'command'],
-      ['Process', 'State', 'Command']
-    )
+    extract_run_id = /\.(\d+).*:/
+    processes_by_command.keys.each do |key|
+      processes_by_command[key] = processes_by_command[key].sort do |x,y|
+        x.match(extract_run_id).captures.first.to_i <=> y.match(extract_run_id).captures.first.to_i
+      end
+    end
+
+    processes_by_command.keys.sort.each do |key|
+      styled_header(key)
+      styled_array(processes_by_command[key], :sort => false)
+    end
   end
 
   # ps:restart [PROCESS]
@@ -71,51 +131,68 @@ class Heroku::Command::Ps < Heroku::Command::Base
   #
   # if PROCESS is not specified, restarts all processes on the app
   #
+  #Examples:
+  #
+  # $ heroku ps:restart web.1
+  # Restarting web.1 process... done
+  #
+  # $ heroku ps:restart web
+  # Restarting web processes... done
+  #
+  # $ heroku ps:restart
+  # Restarting processes... done
+  #
   def restart
-    app = extract_app
+    process = shift_argument
+    validate_arguments!
 
-    opts = case args.first
-    when NilClass then
-      display "Restarting processes... ", false
-      {}
+    message, options = case process
+    when NilClass
+      ["Restarting processes", {}]
     when /.+\..+/
       ps = args.first
-      display "Restarting #{ps} process... ", false
-      { :ps => ps }
+      ["Restarting #{ps} process", { :ps => ps }]
     else
       type = args.first
-      display "Restarting #{type} processes... ", false
-      { :type => type }
+      ["Restarting #{type} processes", { :type => type }]
     end
-    heroku.ps_restart(app, opts)
-    display "done"
+
+    action(message) do
+      api.post_ps_restart(app, options)
+    end
   end
 
   alias_command "restart", "ps:restart"
 
-  # ps:scale PROCESS1=AMOUNT1 ...
+  # ps:scale PROCESS1=AMOUNT1 [PROCESS2=AMOUNT2 ...]
   #
   # scale processes by the given amount
   #
-  # Example: heroku scale web=3 worker+1
+  #Examples:
+  #
+  # $ heroku ps:scale web=3 worker+1
+  # Scaling web processes... done, now running 3
+  # Scaling worker processes... done, now running 1
   #
   def scale
-    app = extract_app
-    current_process = nil
-    changes = args.inject({}) do |hash, process_amount|
-      if process_amount =~ /^([a-zA-Z0-9_]+)([=+-]\d+)$/
-        hash[$1] = $2
+    changes = {}
+    args.each do |arg|
+      if arg =~ /^([a-zA-Z0-9_]+)([=+-]\d+)$/
+        changes[$1] = $2
       end
-      hash
     end
 
-    error "Usage: heroku ps:scale web=2 worker+1" if changes.empty?
+    if changes.empty?
+      error("Usage: heroku ps:scale PROCESS1=AMOUNT1 [PROCESS2=AMOUNT2 ...]\nMust specify PROCESS and AMOUNT to scale.")
+    end
 
-    changes.each do |process, amount|
-      display "Scaling #{process} processes... ", false
-      amount.gsub!("=", "")
-      new_qty = heroku.ps_scale(app, :type => process, :qty => amount)
-      display "done, now running #{new_qty}"
+    changes.keys.sort.each do |process|
+      amount = changes[process]
+      action("Scaling #{process} processes") do
+        amount.gsub!("=", "")
+        new_qty = api.post_ps_scale(app, process, amount).body
+        status("now running #{new_qty}")
+      end
     end
   end
 
@@ -125,26 +202,78 @@ class Heroku::Command::Ps < Heroku::Command::Base
   #
   # stop an app process
   #
-  # Example: heroku stop run.3
+  # Examples:
+  #
+  # $ heroku stop run.3
+  # Stopping run.3 process... done
+  #
+  # $ heroku stop run
+  # Stopping run processes... done
   #
   def stop
-    app = extract_app
-    opt =
-      if (args.first =~ /.+\..+/)
-        ps = args.first
-        display "Stopping #{ps} process... ", false
-        {:ps => ps}
-      elsif args.first
-        type = args.first
-        display "Stopping #{type} processes... ", false
-        {:type => type}
-      else
-        error "Usage: heroku ps:stop PROCESS"
-      end
+    process = shift_argument
+    validate_arguments!
 
-    heroku.ps_stop(app, opt)
-    display "done"
+    message, options = case process
+    when NilClass
+      error("Usage: heroku ps:stop PROCESS\nMust specify PROCESS to stop.")
+    when /.+\..+/
+      ps = args.first
+      ["Stopping #{ps} process", { :ps => ps }]
+    else
+      type = args.first
+      ["Stopping #{type} processes", { :type => type }]
+    end
+
+    action(message) do
+      api.post_ps_stop(app, options)
+    end
   end
 
   alias_command "stop", "ps:stop"
+
+  # ps:resize PROCESS1=1X|2X [PROCESS2=1X|2X ...]
+  #
+  # resize dynos to the given size
+  #
+  # Example:
+  #
+  # $ heroku ps:resize web=2X worker=1X
+  # Resizing dynos and restarting specified processes... done
+  # web dynos now 2X ($0.10/dyno-hour)
+  # worker dynos now 1X ($0.05/dyno-hour)
+  #
+  def resize
+    app
+    changes = {}
+    args.each do |arg|
+      if arg =~ /^([a-zA-Z0-9_]+)=(\d+)([xX]?)$/
+        changes[$1] = { "size" => $2.to_i }
+      end
+    end
+
+    if changes.empty?
+      message = [
+          "Usage: heroku ps:resize PROCESS1=1X|2X [PROCESS2=1X|2X ...]",
+          "Must specify PROCESS and SIZE to resize."
+      ]
+      error(message.join("\n"))
+    end
+
+    action("Resizing dynos and restarting specified processes") do
+      api.request(
+        :expects  => 200,
+        :method   => :put,
+        :path     => "/apps/#{app}/formation",
+        :body     => json_encode(changes)
+      )
+    end
+    changes.each do |type, options|
+      size  = options["size"]
+      price = sprintf("%.2f", 0.05 * size)
+      display "#{type} dynos now #{size}X ($#{price}/dyno-hour)"
+    end
+  end
+
+  alias_command "resize", "ps:resize"
 end

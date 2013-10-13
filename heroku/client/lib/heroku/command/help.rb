@@ -13,6 +13,33 @@ class Heroku::Command::Help < Heroku::Command::Base
   #
   # list available commands or display help for a specific command
   #
+  #Examples:
+  #
+  # $ heroku help
+  # Usage: heroku COMMAND [--app APP] [command-specific-options]
+  #
+  # Primary help topics, type "heroku help TOPIC" for more details:
+  #
+  #   addons    #  manage addon resources
+  #   apps      #  manage apps (create, destroy)
+  #   ...
+  #
+  # Additional topics:
+  #
+  #   account      #  manage heroku account options
+  #   accounts     #  manage multiple heroku accounts
+  #   ...
+  #
+  # $ heroku help apps:create
+  # Usage: heroku apps:create [NAME]
+  #
+  #  create a new app
+  #
+  #      --addons ADDONS        # a comma-delimited list of addons to install
+  #  -b, --buildpack BUILDPACK  # a buildpack url to use for this app
+  #  -r, --remote REMOTE        # the git remote to create, default "heroku"
+  #  -s, --stack STACK          # the stack on which to create the app
+  #
   def index
     if command = args.shift
       help_for_command(command)
@@ -23,11 +50,6 @@ class Heroku::Command::Help < Heroku::Command::Base
 
   alias_command "-h", "help"
   alias_command "--help", "help"
-
-  def self.usage_for_command(command)
-    command = new.send(:commands)[command]
-    "Usage: heroku #{command[:banner]}" if command
-  end
 
 private
 
@@ -44,14 +66,7 @@ private
   end
 
   def commands
-    commands = Heroku::Command.commands
-    Heroku::Command.command_aliases.each do |new, old|
-      commands[new] = commands[old].dup
-      commands[new][:command] = new
-      commands[new][:namespace] = nil
-      commands[new][:alias_for] = old
-    end
-    commands
+    Heroku::Command.commands
   end
 
   def legacy_help_for_namespace(namespace)
@@ -72,6 +87,18 @@ private
     nil
   end
 
+  def skip_namespace?(ns)
+    return true if ns[:description] =~ /DEPRECATED:/
+    return true if ns[:description] =~ /HIDDEN:/
+    false
+  end
+
+  def skip_command?(command)
+    return true if command[:help] =~ /DEPRECATED:/
+    return true if command[:help] =~ /^ HIDDEN:/
+    false
+  end
+
   def primary_namespaces
     PRIMARY_NAMESPACES.map { |name| namespaces[name] }.compact
   end
@@ -83,6 +110,7 @@ private
   def summary_for_namespaces(namespaces)
     size = longest(namespaces.map { |n| n[:name] })
     namespaces.sort_by {|namespace| namespace[:name]}.each do |namespace|
+      next if skip_namespace?(namespace)
       name = namespace[:name]
       namespace[:description] ||= legacy_help_for_namespace(name)
       puts "  %-#{size}s  # %s" % [ name, namespace[:description] ]
@@ -108,7 +136,7 @@ private
     unless namespace_commands.empty?
       size = longest(namespace_commands.map { |c| c[:banner] })
       namespace_commands.sort_by { |c| c[:banner].to_s }.each do |command|
-        next if command[:help] =~ /DEPRECATED/
+        next if skip_command?(command)
         command[:summary] ||= legacy_help_for_command(command[:command])
         puts "  %-#{size}s  # %s" % [ command[:banner], command[:summary] ]
       end
@@ -116,13 +144,18 @@ private
   end
 
   def help_for_command(name)
-    command = commands[name]
-
-    if command
+    if command_alias = Heroku::Command.command_aliases[name]
+      display("Alias: #{name} redirects to #{command_alias}")
+      name = command_alias
+    end
+    if command = commands[name]
       puts "Usage: heroku #{command[:banner]}"
 
       if command[:help].strip.length > 0
-        puts command[:help].split("\n")[1..-1].join("\n")
+        help = command[:help].split("\n").reject do |line|
+          line =~ /HIDDEN/
+        end
+        puts help[1..-1].join("\n")
       else
         puts
         puts " " + legacy_help_for_command(name).to_s
@@ -130,13 +163,17 @@ private
       puts
     end
 
-    if commands_for_namespace(name).size > 0
+    namespace_commands = commands_for_namespace(name).reject do |command|
+      command[:help] =~ /DEPRECATED/
+    end
+
+    if !namespace_commands.empty?
       puts "Additional commands, type \"heroku help COMMAND\" for more details:"
       puts
       help_for_namespace(name)
       puts
     elsif command.nil?
-      error "#{name} is not a heroku command. See 'heroku help'."
+      error "#{name} is not a heroku command. See `heroku help`."
     end
   end
 end

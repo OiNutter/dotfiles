@@ -1,15 +1,10 @@
 require "heroku/command/base"
 
-require 'erb'
-require 'yaml'
-require 'logger'
-require 'uri'
-
 module Heroku::Command
 
   # manage the database for an app
   #
-  class Db < BaseWithApp
+  class Db < Base
 
     # db:push [DATABASE_URL]
     #
@@ -65,6 +60,8 @@ module Heroku::Command
 
     def parse_database_yml
       return "" unless File.exists?(Dir.pwd + '/config/database.yml')
+      require 'erb'
+      require 'yaml'
 
       environment = ENV['RAILS_ENV'] || ENV['MERB_ENV'] || ENV['RACK_ENV']
       environment = 'development' if environment.nil? or environment.empty?
@@ -91,7 +88,7 @@ module Heroku::Command
       uri['scheme'] = conf['adapter']
       uri['username'] = conf['user'] || conf['username']
       uri['password'] = conf['password']
-      uri['host'] = conf['host'] || conf['hostname']
+      uri['host'] = conf['host'] || conf['hostname'] || '127.0.0.1'
       uri['port'] = conf['port']
       uri['path'] = conf['database']
 
@@ -113,11 +110,13 @@ module Heroku::Command
     end
 
     def uri_hash_to_url(uri)
+      host = uri['host']
+      host ||= '127.0.0.1' unless uri['scheme'] == 'postgres'
       uri_parts = {
         :scheme   => uri['scheme'],
         :userinfo => userinfo_from_uri(uri),
         :password => uri['password'],
-        :host     => uri['host'] || '127.0.0.1',
+        :host     => host,
         :port     => uri['port'],
         :path     => "/%s" % uri['path'],
         :query    => uri['query'],
@@ -128,29 +127,29 @@ module Heroku::Command
 
     def parse_taps_opts
       opts = {}
-      opts[:default_chunksize] = extract_option("--chunksize") || 1000
+      opts[:default_chunksize] = options[:chunksize] || 1000
       opts[:default_chunksize] = opts[:default_chunksize].to_i rescue 1000
 
-      if filter = extract_option("--filter")
+      if filter = options[:filter]
         opts[:table_filter] = filter
-      elsif tables = extract_option("--tables")
+      elsif tables = options[:tables]
         r_tables = tables.split(",").collect { |t| "^#{t.strip}$" }
         opts[:table_filter] = "(#{r_tables.join("|")})"
       end
 
-      if extract_option("--disable-compression")
+      if options[:'disable-compression']
         opts[:disable_compression] = true
       end
 
-      if excluded_tables = extract_option("--exclude")
+      if excluded_tables = options[:exclude]
         opts[:exclude_tables] = excluded_tables
       end
 
-      if resume_file = extract_option("--resume")
+      if resume_file = options[:resume]
         opts[:resume_filename] = resume_file
       end
 
-      opts[:indexes_first] = !extract_option("--indexes-last")
+      opts[:indexes_first] = !options[:'indexes-last']
 
       opts[:database_url] = args.detect { |a| URI.parse(a).scheme } rescue nil
 
@@ -160,7 +159,8 @@ module Heroku::Command
       end
       raise(CommandFailed, "Invalid database url") if opts[:database_url] == ''
 
-      if extract_option("--debug")
+      if options[:debug]
+        require 'logger'
         Taps.log.level = Logger::DEBUG
       end
 
@@ -200,6 +200,10 @@ module Heroku::Command
     end
 
     def load_taps
+      begin
+        require "rubygems"
+      rescue LoadError
+      end
       require 'taps/operation'
       require 'taps/cli'
       enforce_taps_version "0.3.23"

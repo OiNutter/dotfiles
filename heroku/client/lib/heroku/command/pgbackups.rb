@@ -1,30 +1,41 @@
+require "heroku/client/pgbackups"
 require "heroku/command/base"
-require "heroku/pg_resolver"
-require "heroku/pgutils"
-require "pgbackups/client"
+require "heroku/helpers/heroku_postgresql"
 
 module Heroku::Command
 
   # manage backups of heroku postgresql databases
-  class Pgbackups < BaseWithApp
-    include PGResolver
-    include PgUtils
+  class Pgbackups < Base
+
+    include Heroku::Helpers::HerokuPostgresql
 
     # pgbackups
     #
     # list captured backups
     #
     def index
+      validate_arguments!
+
       backups = []
       pgbackup_client.get_transfers.each { |t|
         next unless backup_types.member?(t['to_name']) && !t['error_at'] && !t['destroyed_at']
-        backups << [backup_name(t['to_url']), t['created_at'], t['size'], t['from_name'], ]
+        backups << {
+          'id'          => backup_name(t['to_url']),
+          'created_at'  => t['created_at'],
+          'status'      => transfer_status(t),
+          'size'        => t['size'],
+          'database'    => t['from_name']
+        }
       }
 
       if backups.empty?
         no_backups_error!
       else
-        display Display.new.render([["ID", "Backup Time", "Size", "Database"]], backups)
+        display_table(
+          backups,
+          %w{ id created_at status size database },
+          ["ID", "Backup Time", "Status", "Size", "Database"]
+        )
       end
     end
 
@@ -33,13 +44,18 @@ module Heroku::Command
     # get a temporary URL for a backup
     #
     def url
-      if name = args.shift
+      name = shift_argument
+      validate_arguments!
+
+      if name
         b = pgbackup_client.get_backup(name)
       else
         b = pgbackup_client.get_latest_backup
       end
-      abort("No backup found.") unless b['public_url']
-      if STDOUT.tty?
+      unless b['public_url']
+        error("No backup found.")
+      end
+      if $stdout.isatty
         display '"'+b['public_url']+'"'
       else
         display b['public_url']
@@ -52,29 +68,30 @@ module Heroku::Command
     #
     # if no DATABASE is specified, defaults to DATABASE_URL
     #
-    # -e, --expire  # if no slots are available to capture, destroy the oldest backup to make room
+    # -e, --expire  # if no slots are available, destroy the oldest manual backup to make room
     #
     def capture
-      deprecate_dash_dash_db("pgbackups:capture")
+      attachment = hpg_resolve(shift_argument, "DATABASE_URL")
+      validate_arguments!
 
-      db = resolve_db(:allow_default => true)
-
-      from_url  = db[:url]
-      from_name = db[:name]
+      from_name = attachment.display_name
+      from_url  = attachment.url
       to_url    = nil # server will assign
       to_name   = "BACKUP"
-      opts      = {:expire => extract_option("--expire")}
+
+      opts      = {:expire => options[:expire]}
 
       backup = transfer!(from_url, from_name, to_url, to_name, opts)
 
       to_uri = URI.parse backup["to_url"]
       backup_id = to_uri.path.empty? ? "error" : File.basename(to_uri.path, '.*')
-      display "\n#{db[:pretty_name]}  ----backup--->  #{backup_id}"
+      display "\n#{from_name}  ----backup--->  #{backup_id}"
 
       backup = poll_transfer!(backup)
 
       if backup["error_at"]
         message  =   "An error occurred and your backup did not finish."
+        message += "\nPlease run `heroku logs --ps pgbackups` for details."
         message += "\nThe database is not yet online. Please try again." if backup['log'] =~ /Name or service not known/
         message += "\nThe database credentials are incorrect."           if backup['log'] =~ /psql: FATAL:/
         error(message)
@@ -89,21 +106,22 @@ module Heroku::Command
     # if DATABASE is specified, but no BACKUP_ID, defaults to latest backup
     #
     def restore
-      deprecate_dash_dash_db("pgbackups:restore")
-
       if 0 == args.size
-        db = resolve_db(:allow_default => true)
+        attachment = hpg_resolve(nil, "DATABASE_URL")
+        to_name = attachment.display_name
+        to_url  = attachment.url
         backup_id = :latest
       elsif 1 == args.size
-        db = resolve_db
+        attachment = hpg_resolve(shift_argument)
+        to_name = attachment.display_name
+        to_url  = attachment.url
         backup_id = :latest
       else
-        db = resolve_db
-        backup_id = args.shift
+        attachment = hpg_resolve(shift_argument)
+        to_name = attachment.display_name
+        to_url  = attachment.url
+        backup_id = shift_argument
       end
-
-      to_name = db[:name]
-      to_url  = db[:url]
 
       if :latest == backup_id
         backup = pgbackup_client.get_latest_backup
@@ -126,7 +144,7 @@ module Heroku::Command
         from_name = "BACKUP"
       end
 
-      message = "#{db[:pretty_name]}  <---restore---  "
+      message = "#{to_name}  <---restore---  "
       padding = " " * message.length
       display "\n#{message}#{backup_id}"
       if backup
@@ -141,7 +159,11 @@ module Heroku::Command
 
         if restore["error_at"]
           message  =   "An error occurred and your restore did not finish."
-          message += "\nThe backup url is invalid. Use `pgbackups:url` to generate a new temporary URL." if restore['log'] =~ /Invalid dump format: .*: XML  document text/
+          if restore['log'] =~ /Invalid dump format: .*: XML  document text/
+            message += "\nThe backup url is invalid. Use `pgbackups:url` to generate a new temporary URL."
+          else
+            message += "\nPlease run `heroku logs --ps pgbackups` for details."
+          end
           error(message)
         end
       end
@@ -152,29 +174,40 @@ module Heroku::Command
     # destroys a backup
     #
     def destroy
-      name = args.shift
-      abort("Backup name required") unless name
+      unless name = shift_argument
+        error("Usage: heroku pgbackups:destroy BACKUP_ID\nMust specify BACKUP_ID to destroy.")
+      end
       backup = pgbackup_client.get_backup(name)
-      abort("Backup #{name} already destroyed.") if backup["destroyed_at"]
+      if backup["destroyed_at"]
+        error("Backup #{name} already destroyed.")
+      end
 
-      result = pgbackup_client.delete_backup(name)
-      if result
-        display("Backup #{name} destroyed.")
-      else
-        abort("Error deleting backup #{name}.")
+      action("Destroying #{name}") do
+        pgbackup_client.delete_backup(name)
       end
     end
 
     protected
 
+    def transfer_status(t)
+      if t['finished_at']
+        "Finished @ #{t["finished_at"]}"
+      elsif t['started_at']
+        step = t['progress'] && t['progress'].split[0]
+        step.nil? ? 'Unknown' : step_map[step]
+      else
+        "Unknown"
+      end
+    end
+
     def config_vars
-      @config_vars ||= heroku.config_vars(app)
+      @config_vars ||= api.get_config_vars(app).body
     end
 
     def pgbackup_client
       pgbackups_url = ENV["PGBACKUPS_URL"] || config_vars["PGBACKUPS_URL"]
       error("Please add the pgbackups addon first via:\nheroku addons:add pgbackups") unless pgbackups_url
-      @pgbackup_client ||= PGBackups::Client.new(pgbackups_url)
+      @pgbackup_client ||= Heroku::Client::Pgbackups.new(pgbackups_url)
     end
 
     def backup_name(to_url)
@@ -185,6 +218,14 @@ module Heroku::Command
 
     def transfer!(from_url, from_name, to_url, to_name, opts={})
       pgbackup_client.create_transfer(from_url, from_name, to_url, to_name, opts)
+    end
+
+    def poll_error(app)
+      error <<-EOM
+Failed to query the PGBackups status API. Your backup may still be running.
+Verify the status of your backup with `heroku pgbackups -a #{app}`
+You can also watch progress with `heroku logs --tail --ps pgbackups -a #{app}`
+      EOM
     end
 
     def poll_transfer!(transfer)
@@ -201,13 +242,34 @@ module Heroku::Command
         update_display(transfer)
         break if transfer["finished_at"]
 
-        sleep 1
-        transfer = pgbackup_client.get_transfer(transfer["id"])
+        sleep_time = 1
+        begin
+          sleep(sleep_time)
+          transfer = pgbackup_client.get_transfer(transfer["id"])
+        rescue
+          if sleep_time > 300
+            poll_error(app)
+          else
+            sleep_time *= 2
+            retry
+          end
+        end
       end
 
       display "\n"
 
       return transfer
+    end
+
+    def step_map
+      @step_map ||= {
+        "dump"      => "Capturing",
+        "upload"    => "Storing",
+        "download"  => "Retrieving",
+        "restore"   => "Restoring",
+        "gunzip"    => "Uncompressing",
+        "load"      => "Restoring",
+      }
     end
 
     def update_display(transfer)
@@ -217,15 +279,6 @@ module Heroku::Command
       @last_progress    ||= ["", 0]
 
       @ticks += 1
-
-      step_map = {
-        "dump"      => "Capturing",
-        "upload"    => "Storing",
-        "download"  => "Retrieving",
-        "restore"   => "Restoring",
-        "gunzip"    => "Uncompressing",
-        "load"      => "Restoring",
-      }
 
       if !transfer["log"]
         @last_progress = ['pending', nil]
@@ -254,59 +307,6 @@ module Heroku::Command
         step, amount = @last_progress
         unless ['done', 'error'].include? amount
           redisplay "#{step.capitalize}... #{amount} #{spinner(@ticks)}"
-        end
-      end
-    end
-
-    class Display
-      attr_reader :columns, :rows
-
-      def initialize(columns=nil, rows=nil, opts={})
-        @columns = columns
-        @rows = rows
-        @opts = opts.update(:display_columns => @columns, :display_rows => @rows)
-      end
-
-      def render(*data)
-        _data = data
-        data = DataSource.new(data, @opts)
-
-        # join in grid lines
-        lines = []
-        data.rows.each { |row|
-          lines << row.join(@opts[:delimiter] || " | ")
-        }
-
-        # insert header grid line
-        if _data.length > 1
-          grid_row = data.rows.first.map { |datum| "-" * datum.length }
-          grid_line = grid_row.join("-+-")
-          lines.insert(1, grid_line)
-          lines << "" # trailing newline
-        end
-        return lines.join("\n")
-      end
-
-      class DataSource
-        attr_reader :rows, :columns
-
-        def initialize(data, opts={})
-          rows = []
-          data.each { |d| rows += d }
-          columns = rows.transpose
-
-          max_widths = columns.map { |c|
-            c.map { |datum| datum.length }.max
-          }
-
-          max_widths = [10, 10] if opts[:display_columns]
-
-          @columns = []
-          columns.each_with_index { |c,i|
-            column = @columns[i] = []
-            c.each { |d| column << d.ljust(max_widths[i]) }
-          }
-          @rows = @columns.transpose
         end
       end
     end

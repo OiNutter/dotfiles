@@ -8,18 +8,55 @@ class Heroku::Command::Apps < Heroku::Command::Base
   #
   # list your apps
   #
+  #Example:
+  #
+  # $ heroku apps
+  # === My Apps
+  # example
+  # example2
+  #
+  # === Collaborated Apps
+  # theirapp   other@owner.name
+  #
   def index
-    list = heroku.list
-    if list.size > 0
-      display list.map {|name, owner|
-        if heroku.user == owner
-          name
-        else
-          "#{name.ljust(25)} #{owner}"
+    validate_arguments!
+    apps = api.get_apps.body
+    unless apps.empty?
+      my_apps, collaborated_apps = apps.partition do |app|
+        app["owner_email"] == Heroku::Auth.user
+      end
+
+      unless my_apps.empty?
+        non_legacy_apps = my_apps.select do |app|
+          app["tier"] != "legacy"
         end
-      }.join("\n")
+
+        unless non_legacy_apps.empty?
+          production_basic_apps, dev_legacy_apps = my_apps.partition do |app|
+            ["production", "basic"].include?(app["tier"])
+          end
+
+          unless production_basic_apps.empty?
+            styled_header("Basic & Production Apps")
+            styled_array(production_basic_apps.map { |app| regionized_app_name(app) })
+          end
+
+          unless dev_legacy_apps.empty?
+            styled_header("Dev & Legacy Apps")
+            styled_array(dev_legacy_apps.map { |app| regionized_app_name(app) })
+          end
+        else
+          styled_header("My Apps")
+          styled_array(my_apps.map { |app| regionized_app_name(app) })
+        end
+      end
+
+      unless collaborated_apps.empty?
+        styled_header("Collaborated Apps")
+        styled_array(collaborated_apps.map { |app| [regionized_app_name(app), app["owner_email"]] })
+      end
     else
-      display "You have no apps."
+      display("You have no apps.")
     end
   end
 
@@ -29,77 +66,109 @@ class Heroku::Command::Apps < Heroku::Command::Base
   #
   # show detailed app information
   #
-  # -r, --raw  # output info as raw key/value pairs
+  # -s, --shell  # output more shell friendly key/value pairs
+  #
+  #Examples:
+  #
+  # $ heroku apps:info
+  # === example
+  # Git URL:   git@heroku.com:example.git
+  # Repo Size: 5M
+  # ...
+  #
+  # $ heroku apps:info --shell
+  # git_url=git@heroku.com:example.git
+  # repo_size=5000000
+  # ...
   #
   def info
-    name = extract_app
-    attrs = heroku.info(name)
+    validate_arguments!
+    app_data = api.get_app(app).body
 
-    attrs[:web_url] ||= "http://#{attrs[:name]}.#{heroku.host}/"
-    attrs[:git_url] ||= "git@#{heroku.host}:#{attrs[:name]}.git"
+    unless options[:shell]
+      styled_header(app_data["name"])
+    end
 
-    if options[:raw] then
-      attrs.keys.sort_by { |a| a.to_s }.each do |key|
-        case key
-        when :addons then
-          display "addons=#{attrs[:addons].map { |a| a["name"] }.sort.join(",")}"
-        when :collaborators then
-          display "collaborators=#{attrs[:collaborators].map { |c| c[:email] }.sort.join(",")}"
-        else
-          display "#{key}=#{attrs[key]}"
-        end
+    addons_data = api.get_addons(app).body.map {|addon| addon['name']}.sort
+    collaborators_data = api.get_collaborators(app).body.map {|collaborator| collaborator["email"]}.sort
+    collaborators_data.reject! {|email| email == app_data["owner_email"]}
+
+    if options[:shell]
+      if app_data['domain_name']
+        app_data['domain_name'] = app_data['domain_name']['domain']
+      end
+      unless addons_data.empty?
+        app_data['addons'] = addons_data.join(',')
+      end
+      unless collaborators_data.empty?
+        app_data['collaborators'] = collaborators_data.join(',')
+      end
+      app_data.keys.sort_by { |a| a.to_s }.each do |key|
+        hputs("#{key}=#{app_data[key]}")
       end
     else
-      display "=== #{attrs[:name]}"
-      display "Web URL:        #{attrs[:web_url]}"
-      display "Domain name:    http://#{attrs[:domain_name]}/" if attrs[:domain_name]
-      display "Git Repo:       #{attrs[:git_url]}"
-      display "Dynos:          #{attrs[:dynos]}" unless attrs[:stack] == "cedar"
-      display "Workers:        #{attrs[:workers]}" unless attrs[:stack] == "cedar"
-      display "Repo size:      #{format_bytes(attrs[:repo_size])}" if attrs[:repo_size]
-      display "Slug size:      #{format_bytes(attrs[:slug_size])}" if attrs[:slug_size]
-      display "Stack:          #{attrs[:stack]}" if attrs[:stack]
+      data = {}
 
-      if attrs[:dyno_hours].is_a?(Hash)
-        formatted_hours = attrs[:dyno_hours].keys.map do |type|
-          "%s - %0.2f dyno-hours" % [ type.to_s.capitalize, attrs[:dyno_hours][type] ]
-        end
-        display "Dyno usage:     %s" % formatted_hours.join("\n                ")
+      unless addons_data.empty?
+        data["Addons"] = addons_data
       end
 
-      if attrs[:database_size]
-        data = format_bytes(attrs[:database_size])
-        if tables = attrs[:database_tables]
-          data = data.gsub('(empty)', '0K') + " in #{quantify("table", tables)}"
-        end
-        display "Data size:      #{data}"
+      data["Collaborators"] = collaborators_data
+
+      if app_data["create_status"] && app_data["create_status"] != "complete"
+        data["Create Status"] = app_data["create_status"]
       end
 
-      if attrs[:cron_next_run]
-        display "Next cron:      #{format_date(attrs[:cron_next_run])} (scheduled)"
-      end
-      if attrs[:cron_finished_at]
-        display "Last cron:      #{format_date(attrs[:cron_finished_at])} (finished)"
+      if app_data["cron_finished_at"]
+        data["Cron Finished At"] = format_date(app_data["cron_finished_at"])
       end
 
-      unless attrs[:addons].empty?
-        display "Addons:         " + attrs[:addons].map { |a| a['description'] }.join(', ')
+      if app_data["cron_next_run"]
+        data["Cron Next Run"] = format_date(app_data["cron_next_run"])
       end
 
-      display "Owner:          #{attrs[:owner]}"
-      collaborators = attrs[:collaborators].delete_if { |c| c[:email] == attrs[:owner] }
-      unless collaborators.empty?
-        first = true
-        lead = "Collaborators:"
-        attrs[:collaborators].each do |collaborator|
-          display "#{first ? lead : ' ' * lead.length}  #{collaborator[:email]}"
-          first = false
+      if app_data["database_size"]
+        data["Database Size"] = format_bytes(app_data["database_size"])
+      end
+
+      data["Git URL"] = app_data["git_url"]
+
+      if app_data["database_tables"]
+        data["Database Size"].gsub!('(empty)', '0K') + " in #{quantify("table", app_data["database_tables"])}"
+      end
+
+      if app_data["dyno_hours"].is_a?(Hash)
+        data["Dyno Hours"] = app_data["dyno_hours"].keys.map do |type|
+          "%s - %0.2f dyno-hours" % [ type.to_s.capitalize, app_data["dyno_hours"][type] ]
         end
       end
 
-      if attrs[:create_status] != "complete"
-        display "Create Status:  #{attrs[:create_status]}"
+      data["Owner Email"] = app_data["owner_email"]
+
+      if app_data["region"]
+        data["Region"] = app_data["region"]
       end
+
+      if app_data["repo_size"]
+        data["Repo Size"] = format_bytes(app_data["repo_size"])
+      end
+
+      if app_data["slug_size"]
+        data["Slug Size"] = format_bytes(app_data["slug_size"])
+      end
+
+      data["Stack"] = app_data["stack"]
+      if data["Stack"] != "cedar"
+        data.merge!("Dynos" => app_data["dynos"], "Workers" => app_data["workers"])
+      end
+
+      data["Web URL"] = app_data["web_url"]
+
+      if app_data["tier"]
+        data["Tier"] = app_data["tier"].capitalize
+      end
+
+      styled_hash(data)
     end
   end
 
@@ -109,46 +178,79 @@ class Heroku::Command::Apps < Heroku::Command::Base
   #
   # create a new app
   #
-  #     --addons ADDONS        # a list of addons to install
+  #     --addons ADDONS        # a comma-delimited list of addons to install
   # -b, --buildpack BUILDPACK  # a buildpack url to use for this app
+  # -n, --no-remote            # don't create a git remote
   # -r, --remote REMOTE        # the git remote to create, default "heroku"
   # -s, --stack STACK          # the stack on which to create the app
+  #     --region REGION        # HIDDEN: specify region for this app to run on
+  # -t, --tier TIER            # HIDDEN: the tier for this app
+  #
+  #Examples:
+  #
+  # $ heroku apps:create
+  # Creating floating-dragon-42... done, stack is cedar
+  # http://floating-dragon-42.heroku.com/ | git@heroku.com:floating-dragon-42.git
+  #
+  # $ heroku apps:create -s bamboo
+  # Creating floating-dragon-42... done, stack is bamboo-mri-1.9.2
+  # http://floating-dragon-42.herokuapp.com/ | git@heroku.com:floating-dragon-42.git
+  #
+  # # specify a name
+  # $ heroku apps:create example
+  # Creating example... done, stack is cedar
+  # http://example.heroku.com/ | git@heroku.com:example.git
+  #
+  # # create a staging app
+  # $ heroku apps:create example-staging --remote staging
   #
   def create
-    remote  = extract_option('--remote', 'heroku')
-    stack   = extract_option('--stack', 'aspen-mri-1.8.6')
-    timeout = extract_option('--timeout', 30).to_i
-    name    = args.shift.downcase.strip rescue nil
-    name    = heroku.create_request(name, {:stack => stack})
-    display("Creating #{name}...", false)
-    info    = heroku.info(name)
+    name    = shift_argument || options[:app] || ENV['HEROKU_APP']
+    validate_arguments!
+
+    info    = api.post_app({
+      "name" => name,
+      "region" => options[:region],
+      "stack" => options[:stack],
+      "tier" => options[:tier]
+    }).body
     begin
-      Timeout::timeout(timeout) do
-        loop do
-          break if heroku.create_complete?(name)
-          display(".", false)
-          sleep 1
+      action("Creating #{info['name']}") do
+        if info['create_status'] == 'creating'
+          Timeout::timeout(options[:timeout].to_i) do
+            loop do
+              break if api.get_app(info['name']).body['create_status'] == 'complete'
+              sleep 1
+            end
+          end
+        end
+        if info['region']
+          status("region is #{info['region']}")
+        else
+          status("stack is #{info['stack']}")
         end
       end
-      display " done, stack is #{info[:stack]}"
 
       (options[:addons] || "").split(",").each do |addon|
         addon.strip!
-        display "Adding #{addon} to #{name}... ", false
-        heroku.install_addon(name, addon)
-        display "done"
+        action("Adding #{addon} to #{info["name"]}") do
+          api.post_addon(info["name"], addon)
+        end
       end
 
       if buildpack = options[:buildpack]
-        heroku.add_config_vars(name, "BUILDPACK_URL" => buildpack)
+        api.put_config_vars(info["name"], "BUILDPACK_URL" => buildpack)
+        display("BUILDPACK_URL=#{buildpack}")
       end
 
-      display [ info[:web_url], info[:git_url] ].join(" | ")
+      hputs([ info["web_url"], info["git_url"] ].join(" | "))
     rescue Timeout::Error
-      display "Timed Out! Check heroku info for status updates."
+      hputs("Timed Out! Run `heroku status` to check for known platform issues.")
     end
 
-    create_git_remote(name, remote || "heroku")
+    unless options[:no_remote].is_a? FalseClass
+      create_git_remote(options[:remote] || "heroku", info["git_url"])
+    end
   end
 
   alias_command "create", "apps:create"
@@ -157,27 +259,35 @@ class Heroku::Command::Apps < Heroku::Command::Base
   #
   # rename the app
   #
+  #Example:
+  #
+  # $ heroku apps:rename example-newname
+  # http://example-newname.herokuapp.com/ | git@heroku.com:example-newname.git
+  # Git remote heroku updated
+  #
   def rename
-    name    = extract_app
-    newname = args.shift.downcase.strip rescue ''
-    raise(Heroku::Command::CommandFailed, "Must specify a new name.") if newname == ''
+    newname = shift_argument
+    if newname.nil? || newname.empty?
+      error("Usage: heroku apps:rename NEWNAME\nMust specify NEWNAME to rename.")
+    end
+    validate_arguments!
 
-    heroku.update(name, :name => newname)
+    action("Renaming #{app} to #{newname}") do
+      api.put_app(app, "name" => newname)
+    end
 
-    info = heroku.info(newname)
-    display [ info[:web_url], info[:git_url] ].join(" | ")
+    app_data = api.get_app(newname).body
+    hputs([ app_data["web_url"], app_data["git_url"] ].join(" | "))
 
     if remotes = git_remotes(Dir.pwd)
       remotes.each do |remote_name, remote_app|
-        next if remote_app != name
-        if has_git?
-          git "remote rm #{remote_name}"
-          git "remote add #{remote_name} git@#{heroku.host}:#{newname}.git"
-          display "Git remote #{remote_name} updated"
-        end
+        next if remote_app != app
+        git "remote rm #{remote_name}"
+        git "remote add #{remote_name} #{app_data["git_url"]}"
+        hputs("Git remote #{remote_name} updated")
       end
     else
-      display "Don't forget to update your Git remotes on any local checkouts."
+      hputs("Don't forget to update your Git remotes on any local checkouts.")
     end
   end
 
@@ -187,11 +297,16 @@ class Heroku::Command::Apps < Heroku::Command::Base
   #
   # open the app in a web browser
   #
+  #Example:
+  #
+  # $ heroku apps:open
+  # Opening example... done
+  #
   def open
-    app = heroku.info(extract_app)
-    url = app[:web_url]
-    display "Opening #{url}"
-    Launchy.open url
+    validate_arguments!
+
+    app_data = api.get_app(app).body
+    launchy("Opening #{app}", app_data['web_url'])
   end
 
   alias_command "open", "apps:open"
@@ -200,23 +315,79 @@ class Heroku::Command::Apps < Heroku::Command::Base
   #
   # permanently destroy an app
   #
+  #Example:
+  #
+  # $ heroku apps:destroy -a example --confirm example
+  # Destroying example (including all add-ons)... done
+  #
   def destroy
-    app = extract_app
-    heroku.info(app) # fail fast if no access or doesn't exist
+    @app = shift_argument || options[:app] || options[:confirm]
+    validate_arguments!
 
-    if confirm_command(app)
-      redisplay "Destroying #{app} (including all add-ons)... "
-      heroku.destroy(app)
-      if remotes = git_remotes(Dir.pwd)
-        remotes.each do |remote_name, remote_app|
-          next if app != remote_app
-          git "remote rm #{remote_name}"
+    unless @app
+      error("Usage: heroku apps:destroy --app APP\nMust specify APP to destroy.")
+    end
+
+    api.get_app(@app) # fail fast if no access or doesn't exist
+
+    message = "WARNING: Potentially Destructive Action\nThis command will destroy #{@app} (including all add-ons)."
+    if confirm_command(@app, message)
+      action("Destroying #{@app} (including all add-ons)") do
+        api.delete_app(@app)
+        if remotes = git_remotes(Dir.pwd)
+          remotes.each do |remote_name, remote_app|
+            next if @app != remote_app
+            git "remote rm #{remote_name}"
+          end
         end
       end
-      display "done"
     end
   end
 
   alias_command "destroy", "apps:destroy"
+  alias_command "apps:delete", "apps:destroy"
+
+  # apps:upgrade TIER
+  #
+  # HIDDEN: upgrade an app's pricing tier
+  #
+  def upgrade
+    tier = shift_argument
+    error("Usage: heroku apps:upgrade TIER\nMust specify TIER to upgrade.") if tier.nil? || tier.empty?
+    validate_arguments!
+
+    action("Upgrading #{app} to #{tier}") do
+      api.put_app(app, "tier" => tier)
+    end
+  end
+
+  alias_command "upgrade", "apps:upgrade"
+
+  # apps:downgrade TIER
+  #
+  # HIDDEN: downgrade an app's pricing tier
+  #
+  def downgrade
+    tier = shift_argument
+    error("Usage: heroku apps:downgrade TIER\nMust specify TIER to downgrade.") if tier.nil? || tier.empty?
+    validate_arguments!
+
+    action("Upgrading #{app} to #{tier}") do
+      api.put_app(app, "tier" => tier)
+    end
+  end
+
+  alias_command "downgrade", "apps:downgrade"
+
+  private
+
+  def regionized_app_name(app)
+    # temporary, show region for non-us apps
+    if app["region"] && app["region"] != 'us'
+      "#{app["name"]} (#{app["region"]})"
+    else
+      app["name"]
+    end
+  end
 
 end
