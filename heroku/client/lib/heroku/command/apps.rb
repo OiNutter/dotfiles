@@ -113,6 +113,10 @@ class Heroku::Command::Apps < Heroku::Command::Base
         data["Addons"] = addons_data
       end
 
+      if app_data["archived_at"]
+        data["Archived At"] = format_date(app_data["archived_at"])
+      end
+
       data["Collaborators"] = collaborators_data
 
       if app_data["create_status"] && app_data["create_status"] != "complete"
@@ -157,6 +161,10 @@ class Heroku::Command::Apps < Heroku::Command::Base
         data["Slug Size"] = format_bytes(app_data["slug_size"])
       end
 
+      if app_data["cache_size"]
+        data["Cache Size"] = format_bytes(app_data["cache_size"])
+      end
+
       data["Stack"] = app_data["stack"]
       if data["Stack"] != "cedar"
         data.merge!("Dynos" => app_data["dynos"], "Workers" => app_data["workers"])
@@ -183,7 +191,7 @@ class Heroku::Command::Apps < Heroku::Command::Base
   # -n, --no-remote            # don't create a git remote
   # -r, --remote REMOTE        # the git remote to create, default "heroku"
   # -s, --stack STACK          # the stack on which to create the app
-  #     --region REGION        # HIDDEN: specify region for this app to run on
+  #     --region REGION        # specify region for this app to run in
   # -t, --tier TIER            # HIDDEN: the tier for this app
   #
   #Examples:
@@ -203,6 +211,9 @@ class Heroku::Command::Apps < Heroku::Command::Base
   #
   # # create a staging app
   # $ heroku apps:create example-staging --remote staging
+  #
+  # # create an app in the eu region
+  # $ heroku apps:create --region eu
   #
   def create
     name    = shift_argument || options[:app] || ENV['HEROKU_APP']
@@ -224,7 +235,7 @@ class Heroku::Command::Apps < Heroku::Command::Base
             end
           end
         end
-        if info['region']
+        if options[:region]
           status("region is #{info['region']}")
         else
           status("stack is #{info['stack']}")

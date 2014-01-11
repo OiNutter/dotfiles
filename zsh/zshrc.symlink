@@ -29,6 +29,8 @@ plugins=(git capistrano heroku brew node)
 
 source $ZSH/oh-my-zsh.sh
 
+export PATH="/usr/local/bin:$PATH"
+
 # Customize to your needs...
 export RBENV_ROOT=/usr/local/opt/rbenv
 eval "$(rbenv init -)"

@@ -169,7 +169,7 @@ class Heroku::Client
   def list_domains(app_name)
     deprecate # 08/02/2012
     doc = xml(get("/apps/#{app_name}/domains").to_s)
-    doc.elements.to_a("//domain-names/*").map do |d|
+    doc.elements.to_a("//domains/*").map do |d|
       attrs = { :domain => d.elements['domain'].text }
       if cert = d.elements['cert']
         attrs[:cert] = {
@@ -249,13 +249,13 @@ class Heroku::Client
     doc.elements["//app/workers"].text.to_i
   end
 
-  # Scales the web processes.
+  # Scales the web dynos.
   def set_dynos(app_name, qty)
     deprecate # 07/31/2012
     put("/apps/#{app_name}/dynos", :dynos => qty).to_s
   end
 
-  # Scales the background processes.
+  # Scales the background dynos.
   def set_workers(app_name, qty)
     deprecate # 07/31/2012
     put("/apps/#{app_name}/workers", :workers => qty).to_s
@@ -539,15 +539,18 @@ Check the output of "heroku ps" and "heroku logs" for more information.
   end
 
   def add_drain(app_name, url)
-    post("/apps/#{app_name}/logs/drains", "url=#{url}").to_s
+    post("/apps/#{app_name}/logs/drains", "url=#{CGI.escape(url)}").to_s
   end
 
   def remove_drain(app_name, url)
-    delete("/apps/#{app_name}/logs/drains?url=#{URI.escape(url)}").to_s
+    delete("/apps/#{app_name}/logs/drains?url=#{CGI.escape(url)}").to_s
   end
 
-  def addons
-    json_decode get("/addons", :accept => 'application/json').to_s
+  def addons(filters = {})
+    url = "/addons"
+    params = filters.map{|k,v| "#{k}=#{v}"}.join("&")
+    params = nil if params.empty?
+    json_decode get([url,params].compact.join("?"), :accept => 'application/json').to_s
   end
 
   def installed_addons(app_name)
@@ -565,14 +568,6 @@ Check the output of "heroku ps" and "heroku logs" for more information.
 
   def uninstall_addon(app_name, addon, options={})
     configure_addon :uninstall, app_name, addon, options
-  end
-
-  def database_session(app_name)
-    json_decode(post("/apps/#{app_name}/database/session2", '', :x_taps_version => ::Taps.version).to_s)
-  end
-
-  def database_reset(app_name)
-    post("/apps/#{app_name}/database/reset", '').to_s
   end
 
   def httpcache_purge(app_name)
