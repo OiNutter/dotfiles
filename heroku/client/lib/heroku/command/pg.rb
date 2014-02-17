@@ -82,6 +82,7 @@ class Heroku::Command::Pg < Heroku::Command::Base
       if command = options[:command]
         command = "-c '#{command}'"
       end
+      puts "---> Connecting to #{attachment.display_name}"
       exec "psql -U #{uri.user} -h #{uri.host} -p #{uri.port || 5432} #{command} #{uri.path[1..-1]}"
     rescue Errno::ENOENT
       output_with_bang "The local psql command could not be located"
@@ -203,8 +204,9 @@ class Heroku::Command::Pg < Heroku::Command::Base
     sql = %Q(
     SELECT
       #{pid_column},
+      #{"state," if nine_two?}
       application_name AS source,
-      age(now(),query_start) AS running_for,
+      age(now(),xact_start) AS running_for,
       waiting,
       #{query_column} AS query
      FROM pg_stat_activity
@@ -332,7 +334,13 @@ private
 
     @resolver = generate_resolver
     dbs = @resolver.all_databases
-    @hpg_databases_with_info = Hash[ dbs.map { |config, att| [att.display_name, hpg_info(att, options[:extended])] } ]
+
+    @hpg_databases_with_info = Hash[
+      dbs.map do |config, att|
+        next if 'DATABASE_URL' == config
+        [att.display_name, hpg_info(att, options[:extended])]
+      end.compact
+    ]
 
     return @hpg_databases_with_info
   end

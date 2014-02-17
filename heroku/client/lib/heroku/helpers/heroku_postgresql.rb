@@ -33,7 +33,7 @@ module Heroku::Helpers::HerokuPostgresql
   end
 
   def hpg_resolve(identifier, default=nil)
-    $stderr.puts " !    #hpg_resolve is deprecated. Update your plugins."
+    $stderr.puts " !    #hpg_resolve is deprecated. Please run `heroku plugins:update` to update your plugins."
     $stderr.puts " !    from: #{caller.first}"
     Resolver.new(app, api).resolve(identifier , default)
   end
@@ -168,7 +168,7 @@ module Heroku::Helpers::HerokuPostgresql
 
   def hpg_translate_db_opts_to_urls(addon, config)
     app_name = app rescue nil
-    resolver = Resolver.new(app, api)
+    resolver = Resolver.new(app_name, api)
     if addon =~ /^#{resolver.hpg_addon_name}/
       %w[fork follow rollback].each do |opt|
         if val = config[opt]

@@ -21,7 +21,7 @@ module Heroku::Command
         next unless backup_types.member?(t['to_name']) && !t['error_at'] && !t['destroyed_at']
         backups << {
           'id'          => backup_name(t['to_url']),
-          'created_at'  => t['created_at'],
+          'started_at'  => t['started_at'],
           'status'      => transfer_status(t),
           'size'        => t['size'],
           'database'    => t['from_name']
@@ -33,7 +33,7 @@ module Heroku::Command
       else
         display_table(
           backups,
-          %w{ id created_at status size database },
+          %w{ id started_at status size database },
           ["ID", "Backup Time", "Status", "Size", "Database"]
         )
       end
@@ -238,14 +238,18 @@ You can also watch progress with `heroku logs --tail --ps pgbackups -a #{app}`
         abort
       end
 
+      transfer_id = transfer["id"]
+
       while true
-        update_display(transfer)
-        break if transfer["finished_at"]
+        unless transfer.nil?
+          update_display(transfer)
+          break if transfer["finished_at"]
+        end
 
         sleep_time = 1
         begin
           sleep(sleep_time)
-          transfer = pgbackup_client.get_transfer(transfer["id"])
+          transfer = pgbackup_client.get_transfer(transfer_id)
         rescue
           if sleep_time > 300
             poll_error(app)
