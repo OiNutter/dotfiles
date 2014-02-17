@@ -1,6 +1,6 @@
 require 'rake'
 
-DIRS_TO_SYMLINK = ['ssh','skeletor','heroku','bin','vim',"jshint"]
+DIRS_TO_SYMLINK = ['ssh','skeletor','heroku','bin','vim']
 $skip_all = false
 $overwrite_all = false
 $backup_all = false
@@ -28,7 +28,9 @@ def link_file(file,path)
       FileUtils.rm_rf(target) if overwrite || $overwrite_all
       `mv "$HOME/.#{file}" "$HOME/.#{file}.backup"` if backup || $backup_all
     end
-    `ln -s "$PWD/#{path}" "#{target}"`
+	if !$skip_all
+	    `ln -s "$PWD/#{path}" "#{target}"`
+	end
 	
 end
 
