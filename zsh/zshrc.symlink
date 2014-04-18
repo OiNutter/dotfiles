@@ -51,3 +51,10 @@ export PATH="/usr/local/heroku/bin:$PATH"
 
 ### Add Postgress bin
 export PATH="/Applications/Postgres.app/Contents/MacOS/bin:$PATH"
+
+### Add Pebble SDK
+export PATH=$HOME/pebble-dev/PebbleSDK-2.0.1/bin:$PATH
+
+### Add Android SDK
+export PATH=$PATH:$HOME/.android/tools
+export PATH=$PATH:$HOME/.android/platform-tools

@@ -1,0 +1,28 @@
+'.text.html.handlebars':
+  'bindAttr':
+    'prefix': 'ba'
+    'body': '{{bindAttr ${1:class}=${2:"${3:isSelected}"}}}'
+  'checkbox':
+    'prefix': 'chb'
+    'body': '{{view SC.Checkbox title="${1:Title}" class="${2:class}"\n  valueBinding="${3:App.controller.property}"}}\n'
+  'collection':
+    'prefix': 'coll'
+    'body': '{{#collection ${1:SC.TemplateCollectionView}${2: contentBinding="${3:App.${4:${5:array}ListController}}"}}}\n  $0\n{{/collection}}\n'
+  'content.field':
+    'prefix': 'c'
+    'body': '{{content.${1:field}}}'
+  'if...end':
+    'prefix': 'if'
+    'body': '{{#if ${1:condition}}}\n\t$0\n{{/if}}'
+  'if...else...end':
+    'prefix': 'ife'
+    'body': '{{#if ${1:condition}}}\n\t$0\n{{else}}\n\t\n{{/if}}'
+  'unless':
+    'prefix': 'unl'
+    'body': '{{#unless ${1:condition}}}\n\t$0\n{{/unless}}'
+  'view':
+    'prefix': 'view'
+    'body': '{{#view ${1:SC.TemplateView}}}\n\t$0\n{{/view}}\n'
+  'ember-action':
+    'prefix': 'ema'
+    'body': '{{action ${1:\'${2:name}\'}}}'

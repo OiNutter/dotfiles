@@ -1,0 +1,16 @@
+{
+  "name": "atom-jshint",
+  "main": "./index.js",
+  "version": "1.2.0",
+  "private": true,
+  "description": "Validates your JS against JSHint as you type. The original and most used.",
+  "repository": "https://github.com/Joezo/atom-jshint",
+  "license": "MIT",
+  "engines": {
+    "atom": ">0.50.0"
+  },
+  "dependencies": {
+    "emissary": "1.x",
+    "underscore-plus": "~1.0.4"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "name": "sparkline",
+  "main": "./lib/sparkline",
+  "version": "0.1.2",
+  "description": "Generate Sparklines from number data",
+  "activationEvents": [
+    "sparkline:spark"
+  ],
+  "repository": "https://github.com/remixz/sparkline",
+  "license": "MIT",
+  "engines": {
+    "atom": ">0.50.0"
+  }
+}

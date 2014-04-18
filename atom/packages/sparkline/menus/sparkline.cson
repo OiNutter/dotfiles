@@ -1,0 +1,11 @@
+'menu': [
+  {
+    'label': 'Edit'
+    'submenu': [
+      'label': 'Text'
+      'submenu': [
+        { 'label': 'Convert to Sparkline', 'command': 'sparkline:spark' }
+      ]
+    ]
+  }
+]

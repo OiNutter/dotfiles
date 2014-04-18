@@ -1,0 +1,27 @@
+{
+  "name": "monokai-soda",
+  "theme": "syntax",
+  "version": "0.3.0",
+  "private": true,
+  "description": "A modified version of monokai theme for Atom",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AbeEstrada/monokai-soda"
+  },
+  "license": "MIT",
+  "engines": {
+    "atom": ">0.50.0"
+  },
+  "readme": "# Monokai Soda theme\n\nA modified version of monokai syntax theme for Atom\n\nOriginally converted from the [TextMate](https://github.com/buymeasoda/soda-theme/) theme using [TextMate bundle converter](http://atom.io/docs/latest/converting-a-text-mate-theme).\n\n![Screenshot](https://f.cloud.github.com/assets/7937/2347992/f478d74c-a552-11e3-9071-2c92f83f0108.png)\n",
+  "readmeFilename": "README.md",
+  "bugs": {
+    "url": "https://github.com/AbeEstrada/monokai-soda/issues"
+  },
+  "homepage": "https://github.com/AbeEstrada/monokai-soda",
+  "_id": "monokai-soda@0.3.0",
+  "dist": {
+    "shasum": "7b1e1f30d750d27454f4dc0e9a99949f55d965ba"
+  },
+  "_resolved": "/var/folders/m7/z8yrf0_1493blj1bl9nb2fc40000gn/T/d-114228-30593-hz2une/package.tgz",
+  "_from": "/var/folders/m7/z8yrf0_1493blj1bl9nb2fc40000gn/T/d-114228-30593-hz2une/package.tgz"
+}

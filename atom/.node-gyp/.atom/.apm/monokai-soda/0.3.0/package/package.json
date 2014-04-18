@@ -1,0 +1,12 @@
+{
+  "name": "monokai-soda",
+  "theme": "syntax",
+  "version": "0.3.0",
+  "private": true,
+  "description": "A modified version of monokai theme for Atom",
+  "repository": "https://github.com/AbeEstrada/monokai-soda",
+  "license": "MIT",
+  "engines": {
+    "atom": ">0.50.0"
+  }
+}

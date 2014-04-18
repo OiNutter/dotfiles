@@ -1,0 +1,41 @@
+{
+  "name": "tabs-to-spaces",
+  "main": "./lib/tabs-to-spaces",
+  "version": "0.3.2",
+  "description": "Provides the ability to convert between leading tabs and spaces in a document",
+  "activationEvents": [
+    "tabs-to-spaces:tabify",
+    "tabs-to-spaces:untabify"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lee-dohm/tabs-to-spaces"
+  },
+  "license": "MIT",
+  "engines": {
+    "atom": ">0.60.0"
+  },
+  "dependencies": {
+    "emissary": "1.x"
+  },
+  "devDependencies": {
+    "grunt": "~0.4.2",
+    "grunt-contrib-jshint": "~0.6.3",
+    "grunt-contrib-nodeunit": "~0.2.0",
+    "grunt-contrib-uglify": "~0.2.2",
+    "grunt-codo": "~0.1.0",
+    "text-buffer": ">1.4.0"
+  },
+  "readme": "# Tabs to Spaces\n\nAn Atom package for converting between leading tabs and leading spaces.\n\n## Installation\n\nThe package can be installed by using the Settings screen and searching for `tabs-to-spaces`.\n\nIt can also be installed from the command line with the command:\n\n```bash\napm install tabs-to-spaces\n```\n\n## Use\n\nIt can convert between leading tabs and spaces in the current editor window. It can be executed from:\n\n* Command Palette\n    * `Tabs To Spaces: Tabify`\n    * `Tabs To Spaces: Untabify`\n* Packages Menu\n    * `Packages > Tabs to Spaces > Tabify`\n    * `Packages > Tabs to Spaces > Untabify`\n* Context Menu\n    * `Tabify`\n    * `Untabify`\n\n## Configuration\n\nTabs to Spaces uses the following configuration values:\n\n* `editor.tabLength` &mdash; sets the number of space characters a tab character is equivalent to\n* `tabs-to-spaces.onSave` &mdash; if set to either \"tabify\" or \"untabify\" it performs that operation on save\n    * Previously this was named `on-save`, but this conflicts with the humanizing algorithm used for configuration options, so it was changed to follow the standard.\n\n### Keybinding\n\nI have not set keybindings for this package. They can easily be added by referencing the following commands:\n\n* `tabs-to-spaces:tabify`\n* `tabs-to-spaces:untabify`\n\nFor example, to map the Untabify command to <kbd>⌘⌥T</kbd>:\n\n```cson\n'.editor:not(.mini)':\n  'alt-cmd-t': 'tabs-to-spaces:untabify'\n```\n\n## Copyright\n\nCopyright &copy; 2014 by Lee Dohm, Lifted Studios. See [LICENSE](https://github.com/lee-dohm/tabs-to-spaces/blob/master/LICENSE.md) for details.\n",
+  "readmeFilename": "README.md",
+  "bugs": {
+    "url": "https://github.com/lee-dohm/tabs-to-spaces/issues"
+  },
+  "homepage": "https://github.com/lee-dohm/tabs-to-spaces",
+  "_id": "tabs-to-spaces@0.3.2",
+  "dist": {
+    "shasum": "c394a896dde80897679783b655832b0c264e5ca9"
+  },
+  "_resolved": "/var/folders/m7/z8yrf0_1493blj1bl9nb2fc40000gn/T/d-114231-2710-c24a65/package.tgz",
+  "_from": "/var/folders/m7/z8yrf0_1493blj1bl9nb2fc40000gn/T/d-114231-2710-c24a65/package.tgz"
+}

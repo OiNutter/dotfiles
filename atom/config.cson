@@ -1,0 +1,44 @@
+'exception-reporting':
+  'userId': '93535cdb-5825-29b0-6ce2-cd1915af470d'
+'release-notes':
+  'viewedVersion': '0.85.0'
+'welcome':
+  'showOnStartup': false
+'metrics':
+  'userId': '8786426681610c19f7a7733ec10b1f73d29f4d4c'
+'editor':
+  'preferredLineLength': 100
+  'fontSize': 13
+  'fontFamily': 'Inconsolata'
+  'showInvisibles': true
+  'showIndentGuide': true
+  'tabLength': 4
+  'softTabs': false
+'core':
+  'themes': [
+    'atom-soda-dark-ui'
+    'monokai-soda'
+  ]
+  'ignoredNames': [
+    '.git'
+    '.svn'
+    '.DS_Store'
+  ]
+  'projectHome': '/Users/will/Documents/workspace'
+  'disabledPackages': [
+    'atom-lint'
+  ]
+'tree-view': {}
+'markdown-preview':
+  'grammars': [
+    'source.gfm'
+    'source.litcoffee'
+    'text.plain'
+    'text.plain.null-grammar'
+  ]
+'git-diff':
+  'showIconsInEditorGutter': true
+'travis-ci-status':
+  'personalAccessToken': 'BgNxxWjJPSUR2eqW5L5s'
+'atom-jshint':
+  'hintOnModify': false
