@@ -1,4 +1,5 @@
 id_rsa*
 environment-*
 .project
-.atom/compile-cache/*
+atom/compile-cache/*
+atom/storage/editor-*
