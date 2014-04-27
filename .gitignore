@@ -1,5 +1,6 @@
 id_rsa*
 environment-*
 .project
-atom/compile-cache/*
-atom/storage/editor-*
+atom.symlink/compile-cache/*
+atom.symlink/storage/editor-*
+atom.symlink/.node-gyp/*
