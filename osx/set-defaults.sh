@@ -52,10 +52,4 @@ defaults write com.apple.finder FXPreferredViewStyle -string "Nlsv"
 # Show the ~/Library folder
 chflags nohidden ~/Library
 
-# Use a modified version of the Pro theme by default in Terminal.app
-open "${HOME}/.dotfiles/terminal/OiNutter.terminal"
-sleep 1 # Wait a bit to make sure the theme is loaded
-defaults write com.apple.terminal "Default Window Settings" -string "OiNutter"
-defaults write com.apple.terminal "Startup Window Settings" -string "OiNutter"
-
 echo "Done. Note that some of these changes require a logout/restart to take effect."
