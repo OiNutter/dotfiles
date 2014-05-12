@@ -1,7 +1,7 @@
 'exception-reporting':
   'userId': '93535cdb-5825-29b0-6ce2-cd1915af470d'
 'release-notes':
-  'viewedVersion': '0.92.0'
+  'viewedVersion': '0.94.0'
 'welcome':
   'showOnStartup': false
 'metrics':
@@ -13,16 +13,10 @@
   'showInvisibles': true
   'showIndentGuide': true
   'tabLength': 4
-  'softTabs': false
 'core':
   'themes': [
     'atom-soda-dark-ui'
     'monokai-soda'
-  ]
-  'ignoredNames': [
-    '.git'
-    '.svn'
-    '.DS_Store'
   ]
   'projectHome': '/Users/will/Documents/workspace'
   'disabledPackages': [
