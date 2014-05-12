@@ -1,0 +1,6 @@
+[ui]
+username = Will McKenzie <will@komododigital.co.uk>
+editor = vim
+
+[alias]
+nukethesitefromorbit = revert --no-backup --all
