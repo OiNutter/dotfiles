@@ -1,4 +1,4 @@
-id_rsa*
+*_rsa*
 environment-*
 .project
 atom.symlink/compile-cache/*
