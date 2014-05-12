@@ -42,9 +42,12 @@ eval "$(pyenv init -)"
 export PATH="$HOME/.bin:$PATH"
 
 export LANG="en_GB.utf8"
-export NODENV_ROOT=$HOME/Documents/workspace/nodenv
-export PATH="$HOME/Documents/workspace/nodenv/bin:$PATH"
+export NODENV_ROOT=$HOME/.nodenv
+export PATH="$HOME/.nodenv/bin:$PATH"
 eval "$(nodenv init -)"
+
+export PATH="$HOME/.phpenv/bin:$PATH"
+eval "$(phpenv init -)"
 
 ### Added by the Heroku Toolbelt
 export PATH="/usr/local/heroku/bin:$PATH"
