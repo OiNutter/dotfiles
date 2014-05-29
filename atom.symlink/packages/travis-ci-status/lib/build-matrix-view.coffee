@@ -80,7 +80,6 @@ class BuildMatrixView extends View
   #
   # Returns nothing.
   addBuild: (build) =>
-    console.log build
     status = if build['state'] is 'passed' then 'success' else 'fail'
 
     started = new Date(build['started_at'])

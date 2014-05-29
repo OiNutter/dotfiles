@@ -80,26 +80,23 @@ class ViolationTooltip extends Tooltip
     @applyAdditionalStyle()
 
   autoPlace: (orgPlacement, actualWidth, actualHeight) ->
-    $parent = @$element.parent()
+    $editor = @getEditorUnderLayer()
+    editorWidth = $editor.outerWidth()
+    editorHeight = $editor.outerHeight()
+    editorLeft = $editor.offset().left
 
-    parentWidth =
-      if @options.container == 'body' then window.innerWidth  else $parent.outerWidth()
-    parentHeight =
-      if @options.container == 'body' then window.innerHeight else $parent.outerHeight()
-    parentLeft =
-      if @options.container == 'body' then 0                  else $parent.offset().left
     pos = @getLogicalPosition()
 
     placement = orgPlacement.split('-')
 
-    if      placement[0] == 'bottom' && (pos.top + pos.height + actualHeight > parentHeight)
+    if      placement[0] == 'bottom' && (pos.top + pos.height + actualHeight > editorHeight)
       placement[0] = 'top'
     else if placement[0] == 'top'    && (pos.top - actualHeight < 0)
       placement[0] = 'bottom'
 
-    if      placement[1] == 'right'  && (pos.right + actualWidth > parentWidth)
+    if      placement[1] == 'right'  && (pos.right + actualWidth > editorWidth)
       placement[1] = 'left'
-    else if placement[1] == 'left'   && (pos.left - actualWidth < parentLeft)
+    else if placement[1] == 'left'   && (pos.left - actualWidth < editorLeft)
       placement[1] = 'right'
 
     placement.join('-')
@@ -207,12 +204,15 @@ class ViolationTooltip extends Tooltip
     shadow = "0 0 3px #{editorBackgroundColor.clearer(0.1).rgbaString()}"
     $tip.find('.tooltip-inner').css('box-shadow', shadow)
 
-    $pre = $tip.find('.tooltip-inner pre')
-    if $pre.length > 0
+    $code = $tip.find('.tooltip-inner code, pre')
+    if $code.length > 0
       frontColor = Color($tip.find('.tooltip-inner').css('color'))
-      $pre.css('color', frontColor.clone().rgbaString())
-      $pre.css('background-color', frontColor.clone().clearer(0.96).rgbaString())
-      $pre.css('border-color', frontColor.clone().clearer(0.86).rgbaString())
+      $code.css('color', frontColor.clone().rgbaString())
+      $code.css('background-color', frontColor.clone().clearer(0.96).rgbaString())
+      $code.css('border-color', frontColor.clone().clearer(0.86).rgbaString())
+
+  getEditorUnderLayer: ->
+    @editorUnderlayer ?= @getEditorView().find('.underlayer')
 
   getEditorView: ->
     @getViolationView().lintView.editorView

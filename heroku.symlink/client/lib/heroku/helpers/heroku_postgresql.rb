@@ -6,9 +6,11 @@ module Heroku::Helpers::HerokuPostgresql
   extend Heroku::Helpers
 
   class Attachment
-    attr_reader :config_var, :resource_name, :url, :addon, :plan
+    attr_reader :app, :name, :config_var, :resource_name, :url, :addon, :plan
     def initialize(raw)
       @raw = raw
+      @app           = raw['app']['name']
+      @name          = raw['name'] || raw['config_var'].sub(/_URL\Z/, '')
       @config_var    = raw['config_var']
       @resource_name = raw['resource']['name']
       @url           = raw['resource']['value']
@@ -80,11 +82,20 @@ module Heroku::Helpers::HerokuPostgresql
 
     private
 
+    def protect_missing_app
+      # in the case where --app was left out, AND app::db shorthand was not used, AND no app autodetect
+      unless app_name
+        error("No app specified.\nRun this command from an app folder or specify which app to use with --app APP.")
+      end
+    end
+
     def app_config_vars
+      protect_missing_app
       @app_config_vars ||= api.get_config_vars(app_name).body
     end
 
     def app_attachments
+      protect_missing_app
       @app_attachments ||= api.get_attachments(app_name).body.map { |raw| Attachment.new(raw) }
     end
 
@@ -121,7 +132,11 @@ module Heroku::Helpers::HerokuPostgresql
       primary_db_url = raw_primary_db_url.split("?").first
       return unless primary_db_url && !primary_db_url.empty?
 
-      real_config = app_config_vars.detect {|k,v| k != 'DATABASE_URL' && v == primary_db_url }
+      real_config = app_attachments.map { |a|
+        [a.config_var, a.url]
+      }.detect { |k,v|
+        k != 'DATABASE_URL' && v == primary_db_url
+      }
       if real_config
         real = hpg_databases[real_config.first]
         real.primary_attachment! if real

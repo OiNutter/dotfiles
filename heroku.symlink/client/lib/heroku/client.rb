@@ -520,8 +520,10 @@ Check the output of "heroku ps" and "heroku logs" for more information.
 
       begin
         http.start do
-          http.request_get(uri.path + (uri.query ? "?" + uri.query : "")) do |request|
-            request.read_body do |chunk|
+          http.request_get(uri.path + (uri.query ? "?" + uri.query : "")) do |response|
+            error(response.message) if response.is_a? Net::HTTPServerError
+            response["Tail-warning"] && $stderr.puts(response["X-Heroku-Warning"])
+            response.read_body do |chunk|
               yield chunk
             end
           end
@@ -572,10 +574,6 @@ Check the output of "heroku ps" and "heroku logs" for more information.
 
   def httpcache_purge(app_name)
     delete("/apps/#{app_name}/httpcache").to_s
-  end
-
-  def confirm_billing
-    post("/user/#{escape(@user)}/confirm_billing").to_s
   end
 
   def on_warning(&blk)

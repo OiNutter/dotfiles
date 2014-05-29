@@ -40,6 +40,9 @@ class LintView extends View
   onLinterActivation: ->
     # http://discuss.atom.io/t/decorating-the-left-gutter/1321/4
     @editorDisplayUpdateSubscription = @subscribe @editorView, 'editor:display-updated', =>
+      if @pendingViolations?
+        @addViolationViews(@pendingViolations)
+        @pendingViolations = null
       @updateGutterMarkers()
 
   onLinterDeactivation: ->
@@ -48,13 +51,19 @@ class LintView extends View
     @updateGutterMarkers()
 
   onLint: (error, violations) ->
-    @updateGutterMarkers()
     @removeViolationViews()
 
     if error?
       console.log(error)
-    else
+    else if @editorView.active
       @addViolationViews(violations)
+    else
+      # ViolationViews won't be placed properly when the editor (tab) is not active and the file is
+      # reloaded by a modification by another process. So we make them pending for now and place
+      # them when the editor become active.
+      @pendingViolations = violations
+
+    @updateGutterMarkers()
 
   addViolationViews: (violations) ->
     for violation in violations
@@ -65,17 +74,21 @@ class LintView extends View
     while view = @violationViews.shift()
       view.remove()
 
+  getValidViolationViews: ->
+    @violationViews.filter (violationView) ->
+      violationView.isValid
+
   updateGutterMarkers: ->
     return unless @gutterView.isVisible()
 
     for severity in Violation.SEVERITIES
       @gutterView.removeClassFromAllLines("lint-#{severity}")
 
-    return unless @getLastViolations()
+    return if @violationViews.length == 0
 
-    for violation in @getLastViolations()
-      line = violation.bufferRange.start.row
-      klass = "lint-#{violation.severity}"
+    for violationView in @getValidViolationViews()
+      line = violationView.getCurrentBufferStartPosition().row
+      klass = "lint-#{violationView.violation.severity}"
       @gutterView.addClassToLine(line, klass)
 
   moveToNextViolation: ->
@@ -85,7 +98,7 @@ class LintView extends View
     @moveToNeighborViolation('previous')
 
   moveToNeighborViolation: (direction) ->
-    unless @getLastViolations()?
+    if @violationViews.length == 0
       atom.beep()
       return
 
@@ -96,16 +109,14 @@ class LintView extends View
       enumerationMethod = 'findLast'
       comparingMethod = 'isLessThan'
 
-    currentCursorPosition = @editor.getCursor().getBufferPosition()
+    currentCursorPosition = @editor.getCursor().getScreenPosition()
 
     # OPTIMIZE: Consider using binary search.
-    neighborViolation = _[enumerationMethod] @getLastViolations(), (violation) ->
-      violation.bufferRange.start[comparingMethod](currentCursorPosition)
+    neighborViolationView = _[enumerationMethod] @getValidViolationViews(), (violationView) ->
+      violationPosition = violationView.screenStartPosition
+      violationPosition[comparingMethod](currentCursorPosition)
 
-    if neighborViolation?
-      @editor.setCursorBufferPosition(neighborViolation.bufferRange.start)
+    if neighborViolationView?
+      @editor.setCursorScreenPosition(neighborViolationView.screenStartPosition)
     else
       atom.beep()
-
-  getLastViolations: ->
-    @lintRunner.getLastViolations()

@@ -4,3 +4,7 @@ editor = vim
 
 [alias]
 nukethesitefromorbit = revert --no-backup --all
+
+[extensions]
+shelve=
+hggit=

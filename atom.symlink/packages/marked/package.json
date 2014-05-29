@@ -1,7 +1,7 @@
 {
   "name": "marked",
   "main": "./lib/marked",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "private": true,
   "description": "Opens the current file in Marked.app",
   "activationEvents": [
@@ -22,10 +22,10 @@
     "url": "https://github.com/cliffrowley/atom-marked/issues"
   },
   "homepage": "https://github.com/cliffrowley/atom-marked",
-  "_id": "marked@0.1.3",
+  "_id": "marked@0.1.4",
   "dist": {
-    "shasum": "66c7942d4246b7684c10c190cc541f993cd6294c"
+    "shasum": "e4377a5a4207d74570198679131c7530d2c27169"
   },
-  "_resolved": "/var/folders/m7/z8yrf0_1493blj1bl9nb2fc40000gn/T/d-114228-30849-1fxyb1n/package.tgz",
-  "_from": "/var/folders/m7/z8yrf0_1493blj1bl9nb2fc40000gn/T/d-114228-30849-1fxyb1n/package.tgz"
+  "_resolved": "/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-114421-13523-ha966a/package.tgz",
+  "_from": "/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-114421-13523-ha966a/package.tgz"
 }

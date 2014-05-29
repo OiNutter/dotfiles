@@ -91,7 +91,7 @@ class BuildStatusView extends View
   # Internal: Fallback to non-pro Travis CI.
   #
   # Returns nothing.
-  failback: ->
+  fallback: ->
     atom.travis = new TravisCi({
       version: '2.0.0',
       pro: false

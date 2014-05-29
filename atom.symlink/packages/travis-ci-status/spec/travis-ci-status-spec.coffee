@@ -14,7 +14,7 @@ class StatusBarMock extends View
 
 describe "TravisCiStatus", ->
   beforeEach ->
-    spyOn(TravisCiStatus, "isTravisProject").andReturn(true)
+    spyOn(TravisCiStatus, "isTravisProject").andCallFake((cb) -> cb(true))
 
     atom.workspaceView = new WorkspaceView
     atom.workspaceView.statusBar = new StatusBarMock()

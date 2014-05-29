@@ -9,7 +9,7 @@ class Heroku::Auth
   class << self
     include Heroku::Helpers
 
-    attr_accessor :credentials
+    attr_accessor :credentials, :two_factor_code
 
     def api
       @api ||= begin
@@ -78,6 +78,19 @@ class Heroku::Auth
       require("heroku-api")
       api = Heroku::API.new(default_params)
       api.post_login(user, password).body["api_key"]
+    rescue Heroku::API::Errors::Unauthorized => e
+      id = json_decode(e.response.body)["id"]
+      raise if id != "invalid_two_factor_code"
+      delete_credentials
+      display "Authentication failed due to an invalid two-factor code."
+      display "Please check your code was typed correctly and that your"
+      display "authenticator's time keeping is accurate."
+      exit 1
+    rescue Heroku::API::Errors::Forbidden => e
+      if e.response.headers.has_key?("Heroku-Two-Factor-Required")
+        ask_for_second_factor
+        retry
+      end
     end
 
     def get_credentials    # :nodoc:
@@ -189,6 +202,14 @@ class Heroku::Auth
       [user, api_key(user, password)]
     end
 
+    def ask_for_second_factor
+      print "Two-factor code: "
+      @two_factor_code = ask
+      @two_factor_code = nil if @two_factor_code == ""
+      @api = nil # reset it
+      @two_factor_code
+    end
+
     def ask_for_password_on_windows
       require "Win32API"
       char = nil
@@ -208,10 +229,13 @@ class Heroku::Auth
     end
 
     def ask_for_password
-      echo_off
-      password = ask
-      puts
-      echo_on
+      begin
+        echo_off
+        password = ask
+        puts
+      ensure
+        echo_on
+      end
       return password
     end
 
@@ -325,10 +349,12 @@ class Heroku::Auth
 
     def default_params
       uri = URI.parse(full_host(host))
+      headers = { 'User-Agent' => Heroku.user_agent }
+      if two_factor_code
+        headers.merge!("Heroku-Two-Factor-Code" => two_factor_code)
+      end
       {
-        :headers          => {
-          'User-Agent'    => Heroku.user_agent
-        },
+        :headers          => headers,
         :host             => uri.host,
         :port             => uri.port.to_s,
         :scheme           => uri.scheme,

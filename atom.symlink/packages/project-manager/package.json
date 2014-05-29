@@ -1,0 +1,29 @@
+{
+  "name": "project-manager",
+  "main": "./lib/project-manager",
+  "version": "1.3.1",
+  "description": "Project Manager for easy access and switching between projects in Atom.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/danielbrodin/atom-project-manager"
+  },
+  "license": "MIT",
+  "engines": {
+    "atom": ">0.50.0"
+  },
+  "dependencies": {
+    "season": "1.x"
+  },
+  "readme": "# Project Manager\n\n![Project Manager](https://raw.github.com/danielbrodin/atom-project-manager/master/project-manager.gif)\n\nA package for saving your projects for fast and easy access, similiar to the one in Sublime Text.\n\n## Installation\n```sh\napm install project-manager\n```\nor find it in the Packages tab under settings\n\n## Usage\nAll commands can also be found in the Packages menu\n### List projects\n`ctrl-cmd-p` (mac) / `ctrl-shift-alt-p` (win & linux) or **Project Manager** in the Command Palette.\n\n### Save project\n**Save Project** in the Command Palette and write the title you want to save the project as.\n\n### Edit projects\nAll projects are saved in a `.cson` file which you can easily reach by searching for **Edit Projects** in the Command Palette.\n\n## Settings\n### Editor `settings:`\nAtom allows some editor specific settings which can now manually be added to the `projects.cson` file under a `settings` object.\nThe settings currently available are `setSoftTabs`, `setSoftWrap`and `setTabLength`. After making a change to the settings they can be updated by searching for **Reload Project Settings** under the Command Palette.\n\n### List `icon:`\nThis changes the icon displayed next to the project title in the list view. The icon is class-based, so you can either use the classes already provided by Atom like `icon-squirrel` or make your own class (target `:before`). The GitHub [octicon](https://github.com/styleguide/css/7.0) font is available to use, and most, if not all classes, just replace `octicon-` with `icon-`.\n\n### Example\n```CoffeeScript\n'Project Manager':\n  'title': 'Project Manager'\n  'icon': 'icon-squirrel'\n  'paths': [\n    '/path/to/project-manager'\n  ]\n  'settings':\n    'setSoftTabs': true  # Enable or disable soft tabs for this editor\n    'setSoftWrap': true  # Enable or disable soft wrap for this editor.\n    'setTabLength': 2    # Set the on-screen length of tab characters.\n```\n\n### Atom Settings\n**Show Path:** Shows the path in the list view\n\n**Close Current:** Closes the current window before opening the new project\n\n## Todo\n- Add multiple directories to a project (Can not currently be done in Atom)\n",
+  "readmeFilename": "README.md",
+  "bugs": {
+    "url": "https://github.com/danielbrodin/atom-project-manager/issues"
+  },
+  "homepage": "https://github.com/danielbrodin/atom-project-manager",
+  "_id": "project-manager@1.3.1",
+  "dist": {
+    "shasum": "466d8e64506d2952b35e884b8b3018e3b459d0ae"
+  },
+  "_resolved": "/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-114421-13640-1she7ti/package.tgz",
+  "_from": "/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-114421-13640-1she7ti/package.tgz"
+}

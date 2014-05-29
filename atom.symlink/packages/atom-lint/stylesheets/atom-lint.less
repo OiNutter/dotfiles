@@ -29,10 +29,6 @@
     border-color: transparent;
     border-top-width: 0;
 
-    &.violation-info {
-      border-bottom-color: @text-color-info;
-    }
-
     &.violation-warning {
       border-bottom-color: @text-color-warning;
     }
@@ -41,6 +37,26 @@
     // and it adds unexpected CSS animation.
     &.violation-error {
       border-bottom-color: @text-color-error;
+    }
+  }
+
+  .violation-area {
+    position: absolute;
+    top: 0;
+  }
+
+  .violation-border {
+    border-bottom-style: dotted;
+    border-bottom-width: 1px;
+
+    @fadeOutRatio: 20%;
+
+    &.violation-warning {
+      border-bottom-color: fadeout(@text-color-warning, @fadeOutRatio);
+    }
+
+    &.violation-error {
+      border-bottom-color: fadeout(@text-color-error, @fadeOutRatio);
     }
   }
 
@@ -124,6 +140,14 @@
 
       .code-label {
         margin: 0;
+      }
+
+      code, pre {
+        border: 1px solid transparent;
+      }
+
+      code {
+        text-shadow: none;
       }
 
       pre {

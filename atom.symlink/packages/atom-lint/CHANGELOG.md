@@ -2,6 +2,36 @@
 
 ## Development
 
+* [#58](https://github.com/yujinakayama/atom-lint/pull/58): Address deprecation warning “parameter --checkstyle is deprecated. Use --reporter checkstyle instead” in CoffeeLint. ([@skevy])
+
+## v0.11.3
+
+* Fix a bug where singlequotes used as apostrophe in violation messages were marked up as code snippets. ([@yujinakayama])
+
+## v0.11.2
+
+* [#45](https://github.com/yujinakayama/atom-lint/issues/45): Fix a bug where the tooltip was cut off by the top of the editor when the file has only a few lines. ([@yujinakayama])
+
+## v0.11.1
+
+* Fix a bug where violation highlights weren't placed properly when the editor (tab) is not active and the file is reloaded by a modification by another process. ([@yujinakayama])
+
+## v0.11.0
+
+* [#44](https://github.com/yujinakayama/atom-lint/pull/44): Add Rust support via rustc. ([@shtirlic])
+* Beautify and mark up violation messages. ([@yujinakayama])
+
+## v0.10.1
+
+* [#42](https://github.com/yujinakayama/atom-lint/issues/42): Fix error `Uncaught ReferenceError: _ is not defined` when some violations that are currently out of sight in the editor scroll view are moved by a modification (e.g. insertion of a line at beginning of the file). ([@yujinakayama])
+
+## v0.10.0
+
+* [#34](https://github.com/yujinakayama/atom-lint/issues/34): Support column range highlight for RuboCop offenses. ([@yujinakayama])
+* [#40](https://github.com/yujinakayama/atom-lint/pull/40): Add C/C++/Objective-C support via Clang. ([@wesbland])
+* Violation highlight now follows source modification. ([@yujinakayama])
+* Fix strange appearance of non-related tooltips on modification. ([@yujinakayama])
+
 ## v0.9.0
 
 * Add shell script support via ShellCheck. ([@yujinakayama])
@@ -88,3 +118,6 @@
 [@benjohnson]: https://github.com/benjohnson
 [@moshee]: https://github.com/moshee
 [@jonrohan]: https://github.com/jonrohan
+[@wesbland]: https://github.com/wesbland
+[@shtirlic]: https://github.com/shtirlic
+[@skevy]: https://github.com/skevy

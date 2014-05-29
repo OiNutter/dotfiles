@@ -4,7 +4,7 @@
 
 Generic code linting support for [Atom](https://atom.io).
 
-![Screenshot](https://f.cloud.github.com/assets/83656/2501468/8a57096a-b36c-11e3-9242-7ba4becc2870.png)
+![Screenshot](https://cloud.githubusercontent.com/assets/83656/2719884/196c7e02-c568-11e3-8455-4ee4ba095752.png)
 
 Atom-Lint is currently in beta development.
 
@@ -24,6 +24,9 @@ More linters will be supported in the future.
 * [puppet-lint](http://puppet-lint.com) for Puppet
   (Installation of [language-puppet](https://atom.io/packages/language-puppet) package is required)
 * [ShellCheck](https://github.com/koalaman/shellcheck) for shell script
+* [Clang](http://clang.llvm.org) for C/C++/Objective-C
+* [rustc](http://www.rust-lang.org/) for Rust
+  (Installation of [language-rust](https://atom.io/packages/language-rust) package is required)
 
 ## Features
 
@@ -51,7 +54,7 @@ You can see the detail of the violation by moving the cursor to it.
 
 Also you can customize keymaps by editing `~/.atom/keymap.cson` (choose **Open Your Keymap** in **Atom** menu):
 
-```cson
+```coffeescript
 '.workspace':
   'ctrl-alt-l': 'lint:toggle'
 '.editor':
@@ -59,22 +62,25 @@ Also you can customize keymaps by editing `~/.atom/keymap.cson` (choose **Open Y
   'ctrl-alt-]': 'lint:move-to-next-violation'
 ```
 
-See **Customizing Key Bindings** in [Customizing Atom](https://atom.io/docs/latest/customizing-atom) for more details.
+See [Customizing Atom](https://atom.io/docs/latest/customizing-atom#customizing-key-bindings) for more details.
 
 ## Configuration
 
 You can configure Atom-Lint by editing `~/.atom/config.cson` (choose **Open Your Config** in **Atom** menu):
 
-```cson
+```coffeescript
 # Some other settings...
 'atom-lint':
   'ignoredNames': [
     'tmp/**'
   ]
+  'clang':
+    'path': '/path/to/bin/clang'
+    'headerSearchPaths': ['/path/to/include','/path2/to/include']
   'coffeelint':
     'path': '/path/to/bin/coffeelint'
     'ignoredNames': [
-      'coffeelint/specific/file/exclusion.coffeee'
+      'coffeelint/specific/excluded/file.coffee'
     ]
   'csslint':
     'path': '/path/to/bin/csslint'
@@ -90,6 +96,8 @@ You can configure Atom-Lint by editing `~/.atom/config.cson` (choose **Open Your
     'path': '/path/to/bin/puppet-lint'
   'rubocop':
     'path': '/path/to/bin/rubocop'
+  'rustc':
+    'path': '/path/to/bin/rustc'
   'scss-lint':
     'path': '/path/to/bin/scss-lint'
   'shellcheck':
@@ -116,7 +124,7 @@ You can specify lists of file patterns to disable linting.
 The global patterns and the per linter patterns will be merged on evaluation
 so that you can make these lists DRY.
 
-```cson
+```coffeescript
 'atom-lint':
   'ignoredNames': [
     'tmp/**'

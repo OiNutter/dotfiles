@@ -1,3 +1,5 @@
+require "thread"
+
 require "heroku/client/heroku_postgresql"
 require "heroku/command/base"
 require "heroku/helpers/heroku_postgresql"
@@ -11,7 +13,7 @@ class Heroku::Command::Pg < Heroku::Command::Base
 
   # pg
   #
-  # List databases for an app
+  # list databases for an app
   #
   def index
     validate_arguments!
@@ -29,7 +31,7 @@ class Heroku::Command::Pg < Heroku::Command::Base
   #
   #   -x, --extended  # Show extended information
   #
-  # Display database information
+  # display database information
   #
   # If DATABASE is not specified, displays all databases
   #
@@ -48,7 +50,7 @@ class Heroku::Command::Pg < Heroku::Command::Base
 
   # pg:promote DATABASE
   #
-  # Sets DATABASE as your DATABASE_URL
+  # sets DATABASE as your DATABASE_URL
   #
   def promote
     unless db = shift_argument
@@ -67,7 +69,7 @@ class Heroku::Command::Pg < Heroku::Command::Base
   #
   #  -c, --command COMMAND      # optional SQL command to run
   #
-  # Open a psql shell to the database
+  # open a psql shell to the database
   #
   # defaults to DATABASE_URL databases if no DATABASE is specified
   #
@@ -82,8 +84,12 @@ class Heroku::Command::Pg < Heroku::Command::Base
       if command = options[:command]
         command = "-c '#{command}'"
       end
+
+      shorthand = "#{attachment.app}::#{attachment.name.sub(/^HEROKU_POSTGRESQL_/,'').gsub(/\W+/, '-')}"
+      prompt_expr = "#{shorthand}%R%# "
+      prompt_flags = %Q(--set "PROMPT1=#{prompt_expr}" --set "PROMPT2=#{prompt_expr}")
       puts "---> Connecting to #{attachment.display_name}"
-      exec "psql -U #{uri.user} -h #{uri.host} -p #{uri.port || 5432} #{command} #{uri.path[1..-1]}"
+      exec "psql -U #{uri.user} -h #{uri.host} -p #{uri.port || 5432} #{prompt_flags} #{command} #{uri.path[1..-1]}"
     rescue Errno::ENOENT
       output_with_bang "The local psql command could not be located"
       output_with_bang "For help installing psql, see http://devcenter.heroku.com/articles/local-postgresql"
@@ -93,7 +99,7 @@ class Heroku::Command::Pg < Heroku::Command::Base
 
   # pg:reset DATABASE
   #
-  # Delete all data in DATABASE
+  # delete all data in DATABASE
   #
   def reset
     unless db = shift_argument
@@ -164,7 +170,7 @@ class Heroku::Command::Pg < Heroku::Command::Base
 
   # pg:credentials DATABASE
   #
-  # Display the DATABASE credentials.
+  # display the DATABASE credentials.
   #
   #   --reset  # Reset credentials on the specified database.
   #
@@ -261,7 +267,7 @@ class Heroku::Command::Pg < Heroku::Command::Base
 
   # pg:push <LOCAL_SOURCE_DATABASE> <REMOTE_TARGET_DATABASE>
   #
-  # Push from LOCAL_SOURCE_DATABASE to REMOTE_TARGET_DATABASE
+  # push from LOCAL_SOURCE_DATABASE to REMOTE_TARGET_DATABASE
   # REMOTE_TARGET_DATABASE must be empty.
   def push
     local, remote = shift_argument, shift_argument
@@ -286,7 +292,7 @@ class Heroku::Command::Pg < Heroku::Command::Base
 
   # pg:pull <REMOTE_SOURCE_DATABASE> <LOCAL_TARGET_DATABASE>
   #
-  # Pull from REMOTE_SOURCE_DATABASE to LOCAL_TARGET_DATABASE
+  # pull from REMOTE_SOURCE_DATABASE to LOCAL_TARGET_DATABASE
   # LOCAL_TARGET_DATABASE must not already exist.
   def pull
     remote, local = shift_argument, shift_argument
@@ -318,9 +324,17 @@ private
 
   def display_db(name, db)
     styled_header(name)
-    styled_hash(db[:info].inject({}) do |hash, item|
-      hash.update(item["name"] => hpg_info_display(item))
-    end, db[:info].map {|item| item['name']})
+
+    if db
+      dsphash = db[:info].inject({}) do |hash, item|
+        hash.update(item["name"] => hpg_info_display(item))
+      end
+      dspkeys = db[:info].map {|item| item['name']}
+
+      styled_hash(dsphash, dspkeys)
+    else
+      styled_hash("Error" => "Not Found")
+    end
 
     display
   end
@@ -335,13 +349,26 @@ private
     @resolver = generate_resolver
     dbs = @resolver.all_databases
 
-    @hpg_databases_with_info = Hash[
-      dbs.map do |config, att|
-        next if 'DATABASE_URL' == config
-        [att.display_name, hpg_info(att, options[:extended])]
-      end.compact
-    ]
+    unique_dbs = dbs.reject { |config, att| 'DATABASE_URL' == config }.map{|config, att| att}.compact
 
+    db_infos = {}
+    mutex = Mutex.new
+    threads = (0..unique_dbs.size-1).map do |i|
+      Thread.new do
+        att = unique_dbs[i]
+        begin
+          info = hpg_info(att, options[:extended])
+        rescue
+          info = nil
+        end
+        mutex.synchronize do
+          db_infos[att.display_name] = info
+        end
+      end
+    end
+    threads.map(&:join)
+
+    @hpg_databases_with_info = db_infos
     return @hpg_databases_with_info
   end
 

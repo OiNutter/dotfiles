@@ -20,6 +20,9 @@ module Heroku::Command
 
       from = app
       to = shift_argument || "#{from}-#{(rand*1000).to_i}"
+      if from == to
+        raise Heroku::Command::CommandFailed.new("Cannot fork to the same app.")
+      end
 
       from_info = api.get_app(from).body
 
@@ -68,7 +71,7 @@ module Heroku::Command
           from_config.delete(from_var_name)
 
           plan = addon["name"].split(":").last
-          unless %w(dev basic).include? plan
+          unless %w(dev basic hobby-dev hobby-basic).include? plan
             wait_for_db to, to_addon
           end
 
@@ -89,6 +92,22 @@ module Heroku::Command
       end
 
       puts "Fork complete, view it at #{to_info['web_url']}"
+    rescue Exception => e
+      raise if e.is_a?(Heroku::Command::CommandFailed)
+
+      puts "Failed to fork app #{from} to #{to}."
+      message = "WARNING: Potentially Destructive Action\nThis command will destroy #{to} (including all add-ons)."
+
+      if confirm_command(to, message)
+        action("Deleting #{to}") do
+          begin
+            api.delete_app(to)
+          rescue Heroku::API::Errors::NotFound
+          end
+        end
+      end
+      puts "Original exception below:"
+      raise e
     end
 
   private
@@ -109,26 +128,20 @@ module Heroku::Command
     def migrate_db(from_addon, from, to_addon, to)
       transfer = nil
 
-      action("Creating database backup from #{from} (this can take some time)") do
+      action("Transferring database (this can take some time)") do
         from_config = api.get_config_vars(from).body
         from_attachment = from_addon["attachment_name"]
-        pgb = Heroku::Client::Pgbackups.new(from_config["PGBACKUPS_URL"])
-        transfer = pgb.create_transfer(from_config["#{from_attachment}_URL"], from_attachment, nil, "BACKUP", :expire => "true")
-        error transfer["errors"].values.flatten.join("\n") if transfer["errors"]
-        loop do
-          transfer = pgb.get_transfer(transfer["id"])
-          error transfer["errors"].values.flatten.join("\n") if transfer["errors"]
-          break if transfer["finished_at"]
-          sleep 1
-        end
-        print " "
-      end
-
-      action("Restoring database backup to #{to} (this can take some time)") do
         to_config = api.get_config_vars(to).body
         to_attachment = to_addon["message"].match(/Attached as (\w+)_URL\n/)[1]
-        pgb = Heroku::Client::Pgbackups.new(to_config["PGBACKUPS_URL"])
-        transfer = pgb.create_transfer(transfer["public_url"], "EXTERNAL_BACKUP", to_config["#{to_attachment}_URL"], to_attachment)
+
+        pgb = Heroku::Client::Pgbackups.new(from_config["PGBACKUPS_URL"])
+        transfer = pgb.create_transfer(
+          from_config["#{from_attachment}_URL"],
+          from_attachment,
+          to_config["#{to_attachment}_URL"],
+          to_attachment,
+          :expire => "true")
+
         error transfer["errors"].values.flatten.join("\n") if transfer["errors"]
         loop do
           transfer = pgb.get_transfer(transfer["id"])
@@ -140,8 +153,8 @@ module Heroku::Command
       end
     end
 
-    def pg_api(starter=false)
-      host = starter ? "postgres-starter-api.heroku.com" : "postgres-api.heroku.com"
+    def pg_api
+      host = "postgres-api.heroku.com"
       RestClient::Resource.new "https://#{host}/client/v11/databases", Heroku::Auth.user, Heroku::Auth.password
     end
 

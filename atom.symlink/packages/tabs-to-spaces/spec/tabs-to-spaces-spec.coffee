@@ -1,128 +1,106 @@
-#
-# Copyright (c) 2014 by Lifted Studios. All Rights Reserved.
-#
+path = require 'path'
+fs = require 'fs-plus'
+{WorkspaceView} = require 'atom'
+temp = require 'temp'
 
-TextBuffer = require 'text-buffer'
+describe 'Tabs to Spaces', ->
+  [editor, buffer] = []
 
-TabsToSpaces = require '../lib/tabs-to-spaces'
+  beforeEach ->
+    directory = temp.mkdirSync()
+    atom.project.setPath(directory)
+    atom.workspaceView = new WorkspaceView()
+    atom.workspace = atom.workspaceView.model
+    filePath = path.join(directory, 'tabs-to-spaces.txt')
+    fs.writeFileSync(filePath, '')
+    fs.writeFileSync(path.join(directory, 'sample.txt'), 'Some text.\n')
+    editor = atom.workspace.openSync(filePath)
+    buffer = editor.getBuffer()
 
-describe 'TabsToSpaces', ->
-  describe 'replaceSpacesWithTabs', ->
-    it 'throws on null', ->
-      expect( ->
-        TabsToSpaces.replaceSpacesWithTabs(null)
-      ).toThrow()
+    waitsForPromise ->
+      atom.packages.activatePackage('tabs-to-spaces')
 
-    it 'throws on undefined', ->
-      expect( ->
-        TabsToSpaces.replaceSpacesWithTabs(undefined)
-      ).toThrow()
+  describe 'tabify', ->
+    it 'does not change an empty file', ->
+      atom.workspaceView.trigger 'tabs-to-spaces:tabify'
+      expect(editor.getText()).toBe ''
 
-    it 'does not change the empty string', ->
-      buffer = new TextBuffer('')
+    it 'does not change spaces at the end of a line', ->
+      editor.insertText('foobarbaz     ')
+      atom.workspaceView.trigger 'tabs-to-spaces:tabify'
+      expect(editor.getText()).toBe 'foobarbaz     '
 
-      TabsToSpaces.replaceSpacesWithTabs(buffer)
+    it 'does not change spaces in the middle of a line', ->
+      editor.insertText('foo  bar  baz')
+      atom.workspaceView.trigger 'tabs-to-spaces:tabify'
+      expect(editor.getText()).toBe 'foo  bar  baz'
 
-      expect(buffer.getText()).toEqual('')
+    it 'converts one tab worth of spaces to a tab', ->
+      atom.config.set('editor.tabLength', 2)
+      editor.insertText('  foo')
+      atom.workspaceView.trigger 'tabs-to-spaces:tabify'
+      expect(editor.getText()).toBe '\tfoo'
 
-    it 'does not change spaces at the end of a string', ->
-      buffer = new TextBuffer('foobarbaz    ')
-
-      TabsToSpaces.replaceSpacesWithTabs(buffer)
-
-      expect(buffer.getText()).toEqual('foobarbaz    ')
-
-    it 'does not change spaces in the middle of the string', ->
-      buffer = new TextBuffer('foo  bar  baz')
-
-      TabsToSpaces.replaceSpacesWithTabs(buffer)
-
-      expect(buffer.getText()).toEqual('foo  bar  baz')
-
-    it 'changes one tab worth of spaces to a tab', ->
-      TabsToSpaces.setSpaces('  ')
-      buffer = new TextBuffer('  foo')
-
-      TabsToSpaces.replaceSpacesWithTabs(buffer)
-
-      expect(buffer.getText()).toEqual("\tfoo")
-
-    it 'changes almost two tabs worth of spaces to one tab and some spaces', ->
-      TabsToSpaces.setSpaces('    ')
-      buffer = new TextBuffer('       foo')
-
-      TabsToSpaces.replaceSpacesWithTabs(buffer)
-
-      expect(buffer.getText()).toEqual("\t   foo")
+    it 'converts almost two tabs worth of spaces to one tab and some spaces', ->
+      atom.config.set('editor.tabLength', 4)
+      editor.insertText('       foo')
+      atom.workspaceView.trigger 'tabs-to-spaces:tabify'
+      expect(editor.getText()).toBe '\t   foo'
 
     it 'changes multiple lines of leading spaces to tabs', ->
-      TabsToSpaces.setSpaces('    ')
-      buffer = new TextBuffer('    foo\n       baz')
-
-      TabsToSpaces.replaceSpacesWithTabs(buffer)
-
-      expect(buffer.getText()).toEqual("\tfoo\n\t   baz")
+      atom.config.set('editor.tabLength', 4)
+      editor.insertText('    foo\n       bar')
+      atom.workspaceView.trigger 'tabs-to-spaces:tabify'
+      expect(editor.getText()).toBe '\tfoo\n\t   bar'
 
     it 'leaves successive newlines alone', ->
-      TabsToSpaces.setSpaces('  ')
-      buffer = new TextBuffer('  foo\n\n  bar\n\n  baz\n\n')
+      atom.config.set('editor.tabLength', 2)
+      editor.insertText('  foo\n\n  bar\n\n  baz\n\n')
+      atom.workspaceView.trigger 'tabs-to-spaces:tabify'
+      expect(editor.getText()).toBe '\tfoo\n\n\tbar\n\n\tbaz\n\n'
 
-      TabsToSpaces.replaceSpacesWithTabs(buffer)
-
-      expect(buffer.getText()).toEqual("\tfoo\n\n\tbar\n\n\tbaz\n\n")
-
-  describe 'replaceTabsWithSpaces', ->
-    it 'throws on null', ->
-      expect( ->
-        TabsToSpaces.replaceTabsWithSpaces(null)
-      ).toThrow()
-
-    it 'throws on undefined', ->
-      expect( ->
-        TabsToSpaces.replaceTabsWithSpaces(undefined)
-      ).toThrow()
-
-    it 'does not change the empty string', ->
-      buffer = new TextBuffer('')
-
-      TabsToSpaces.replaceTabsWithSpaces(buffer)
-
-      expect(buffer.getText()).toEqual('')
+  describe 'untabify', ->
+    it 'does not change an empty file', ->
+      atom.workspaceView.trigger 'tabs-to-spaces:untabify'
+      expect(editor.getText()).toBe ''
 
     it 'does not change tabs at the end of a string', ->
-      buffer = new TextBuffer("foobarbaz\t")
-
-      TabsToSpaces.replaceTabsWithSpaces(buffer)
-
-      expect(buffer.getText()).toEqual("foobarbaz\t")
+      editor.insertText('foobarbaz\t')
+      atom.workspaceView.trigger 'tabs-to-spaces:untabify'
+      expect(editor.getText()).toBe 'foobarbaz\t'
 
     it 'does not change tabs in the middle of a string', ->
-      buffer = new TextBuffer("foo\tbar\tbaz")
-
-      TabsToSpaces.replaceTabsWithSpaces(buffer)
-
-      expect(buffer.getText()).toEqual("foo\tbar\tbaz")
+      editor.insertText('foo\tbar\tbaz')
+      atom.workspaceView.trigger 'tabs-to-spaces:untabify'
+      expect(editor.getText()).toBe 'foo\tbar\tbaz'
 
     it 'changes one tab to the correct number of spaces', ->
-      TabsToSpaces.setSpaces('  ')
-      buffer = new TextBuffer("\tfoo")
-
-      TabsToSpaces.replaceTabsWithSpaces(buffer)
-
-      expect(buffer.getText()).toEqual('  foo')
+      atom.config.set('editor.tabLength', 2)
+      editor.insertText('\tfoo')
+      atom.workspaceView.trigger 'tabs-to-spaces:untabify'
+      expect(editor.getText()).toBe '  foo'
 
     it 'changes two tabs to the correct number of spaces', ->
-      TabsToSpaces.setSpaces('  ')
-      buffer = new TextBuffer("\t\tfoo")
-
-      TabsToSpaces.replaceTabsWithSpaces(buffer)
-
-      expect(buffer.getText()).toEqual('    foo')
+      atom.config.set('editor.tabLength', 2)
+      editor.insertText('\t\tfoo')
+      atom.workspaceView.trigger 'tabs-to-spaces:untabify'
+      expect(editor.getText()).toBe '    foo'
 
     it 'changes multiple lines of leading tabs to spaces', ->
-      TabsToSpaces.setSpaces('  ')
-      buffer = new TextBuffer("\t\tfoo\n\t\tfoo")
+      atom.config.set('editor.tabLength', 2)
+      editor.insertText('\t\tfoo\n\t\tbar\n\n')
+      atom.workspaceView.trigger 'tabs-to-spaces:untabify'
+      expect(editor.getText()).toBe '    foo\n    bar\n\n'
 
-      TabsToSpaces.replaceTabsWithSpaces(buffer)
+  describe 'on save', ->
+    it 'will untabify before an editor saves a buffer', ->
+      atom.config.set('tabs-to-spaces.onSave', 'untabify')
+      editor.insertText('\t\tfoo\n\t\tbar\n\n')
+      editor.save()
+      expect(editor.getText()).toBe '    foo\n    bar\n\n'
 
-      expect(buffer.getText()).toEqual('    foo\n    foo')
+    it 'will tabify before an editor saves a buffer', ->
+      atom.config.set('tabs-to-spaces.onSave', 'tabify')
+      editor.insertText('    foo\n    bar\n\n')
+      editor.save()
+      expect(editor.getText()).toBe '\t\tfoo\n\t\tbar\n\n'

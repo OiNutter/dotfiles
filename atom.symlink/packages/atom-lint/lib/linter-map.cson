@@ -10,3 +10,8 @@
 'source.css.scss': 'scss-lint'
 'source.puppet': 'puppet-lint'
 'source.shell': 'shellcheck'
+'source.c': 'clang'
+'source.c++': 'clang'
+'source.objc': 'clang'
+'source.objc++': 'clang'
+'source.rust': 'rustc'
