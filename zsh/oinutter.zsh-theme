@@ -1,3 +1,6 @@
+if [ "x$OH_MY_ZSH_HG" = "x" ]; then
+    OH_MY_ZSH_HG="hg"
+fi
 
 function virtualenv_info {
     [ $VIRTUAL_ENV ] && echo '('`basename $VIRTUAL_ENV`') '
@@ -14,7 +17,7 @@ function prompt_char {
 }
 
 PROMPT='
-%{$fg[magenta]%}%n%{$reset_color%} at %{$fg[yellow]%}$(box_name)%{$reset_color%} in %{$fg_bold[green]%}${PWD/#$HOME/~}%{$reset_color%}$(git_prompt_info)
+%{$fg[magenta]%}%n%{$reset_color%} at %{$fg[yellow]%}$(box_name)%{$reset_color%} in %{$fg_bold[green]%}${PWD/#$HOME/~}%{$reset_color%}$(hg_prompt_info)$(git_prompt_info)
 $(virtualenv_info)%{$fg[red]%}$(prompt_char)%{$reset_color%} '
 
 ZSH_THEME_GIT_PROMPT_PREFIX=" on %{$fg[magenta]%}"
@@ -22,3 +25,8 @@ ZSH_THEME_GIT_PROMPT_SUFFIX="%{$reset_color%}"
 ZSH_THEME_GIT_PROMPT_DIRTY="%{$fg[green]%}!"
 ZSH_THEME_GIT_PROMPT_UNTRACKED="%{$fg[green]%}?"
 ZSH_THEME_GIT_PROMPT_CLEAN=""
+ZSH_THEME_HG_PROMPT_PREFIX=" on %{$fg[magenta]%}"
+ZSH_THEME_HG_PROMPT_SUFFIX="%{$reset_color%}"
+ZSH_THEME_HG_PROMPT_DIRTY="%{$fg[green]%}!"
+ZSH_THEME_HG_PROMPT_UNTRACKED="%{$fg[green]%}?"
+ZSH_THEME_HG_PROMPT_CLEAN=""
