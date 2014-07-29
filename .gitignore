@@ -6,3 +6,4 @@ environment-*
 atom.symlink/compile-cache/*
 atom.symlink/storage/editor-*
 atom.symlink/.node-gyp/*
+atom.symlink/projects.cson
