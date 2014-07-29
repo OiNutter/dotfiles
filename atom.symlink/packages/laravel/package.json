@@ -1,0 +1,27 @@
+{
+  "name": "laravel",
+  "version": "0.4.0",
+  "private": false,
+  "description": "Add Laravel snippets",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Cronos87/atom-laravel"
+  },
+  "license": "MIT",
+  "engines": {
+    "atom": ">0.50.0"
+  },
+  "dependencies": {},
+  "readme": "# Laravel 4 package\n\nAdd Laravel snippets\n\n* Laravel 4 snippets\n* Helpers snippets\n\n## Credits\n\nFork of [loranger original textmate bundle](https://github.com/loranger/Laravel.tmbundle) works\n",
+  "readmeFilename": "README.md",
+  "bugs": {
+    "url": "https://github.com/Cronos87/atom-laravel/issues"
+  },
+  "homepage": "https://github.com/Cronos87/atom-laravel",
+  "_id": "laravel@0.4.0",
+  "dist": {
+    "shasum": "883fc5d8182fba908c216ec328e59a752fafe675"
+  },
+  "_resolved": "/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-114429-50687-pro9jv/package.tgz",
+  "_from": "/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-114429-50687-pro9jv/package.tgz"
+}

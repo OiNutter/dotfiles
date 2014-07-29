@@ -1,0 +1,88 @@
+'.source.smarty':
+  'Assign':
+    'prefix': '{assign'
+    'body': '{assign var=$1 value=$2'
+  'Capitalize':
+    'prefix': '|cap'
+    'body': '|capitalize'
+  'Capture':
+    'prefix': '{capture'
+    'body': '{capture${1: name=$2}${3: assign=$4}}$0{/capture'
+  'Cat':
+    'prefix': '|cat'
+    'body': '|cat:"${1:lorem ipsum}"'
+  'Config Load':
+    'prefix': '{config_load'
+    'body': '{config_load file="$1"${2: section="$3"}${4: scope="${5:local|parent|global}"}'
+  'Count Characters':
+    'prefix': '|count'
+    'body': '|count_characters'
+  'Count Paragraphs':
+    'prefix': '|count'
+    'body': '|count_paragraphs'
+  'Count Sentences':
+    'prefix': '|count'
+    'body': '|count_sentences'
+  'Count Words':
+    'prefix': '|count'
+    'body': '|count_words'
+  'Counter':
+    'prefix': '{counter'
+    'body': '{counter name="$1" start=${2:1}${3: skip=${4:2}}${5: assign="${6}"}'
+  'Cycle':
+    'prefix': '{cycle'
+    'body': '{cycle values="${1:on},${2:off}"${3: name="${4:name}"}'
+  'Date Format':
+    'prefix': '|format'
+    'body': '|date_format:"${1:%b %e, %Y}"'
+  'Default':
+    'prefix': '|def'
+    'body': '|default:"$1" '
+  'Escape':
+    'prefix': '|esc'
+    'body': '|escape:"${1:html|htmlall|url|quotes|hex|hexentity|javascript}" '
+  'Fetch':
+    'prefix': '{fetch'
+    'body': '{fetch file="${1:filename}"${2: assign=${3:var}}'
+  'Foreach':
+    'prefix': '{foreach'
+    'body': '{foreach from=\\$${1:varname} item=${2:item}${3: key=${4:key}}${5: name=${6:loop1}}}\n\t$0\n{/foreach'
+  'If':
+    'prefix': '{if'
+    'body': '{if $1}\n\t$0\n{/if'
+  'Include':
+    'prefix': '{inc'
+    'body': '{include file="$1"${2: assign=${3:var}}'
+  'Ldelim':
+    'prefix': '{ld'
+    'body': '{ldelim'
+  'Literal':
+    'prefix': '{lit'
+    'body': '{literal}$1{/literal'
+  'Math':
+    'prefix': '{math'
+    'body': '{math equation="${1:1+x}" assign=$2 ${3:x=8}'
+  'Rdelim':
+    'prefix': '{rd'
+    'body': '{rdelim}'
+  'Regex Replace':
+    'prefix': '|regex'
+    'body': '|regex_replace:"/${1:.*}/":"$2"'
+  'Replace':
+    'prefix': '|replace'
+    'body': '|replace:"${1:needle}":"$2" '
+  'String Format':
+    'prefix': '|format'
+    'body': '|string_format:"${1:%.2f}"'
+  'Strip':
+    'prefix': '{strip'
+    'body': '{strip}\n\t$1\n{/strip'
+  'Strip Tags':
+    'prefix': '|strip'
+    'body': '|strip_tags'
+  'Truncate':
+    'prefix': '|trunc'
+    'body': '|truncate:${1:80}:${2:"&hellip;"}:${3:false}'
+  'Word Wrap':
+    'prefix': '|wrap'
+    'body': '|wordwrap:${1:80}${2::"${3:\\n}"}'

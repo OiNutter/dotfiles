@@ -1,0 +1,27 @@
+{
+  "name": "php-twig",
+  "version": "0.2.1",
+  "private": true,
+  "description": "Twig syntax highlighting for atom",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/reesef/php-twig"
+  },
+  "license": "MIT",
+  "engines": {
+    "atom": ">0.50.0"
+  },
+  "dependencies": {},
+  "readme": "# PHP-twig for atom\n\nTwig syntax highlighting for atom.\n\nConverted from [PHP-twig for textmate](https://github.com/Anomareh/PHP-Twig.tmbundle).\n",
+  "readmeFilename": "README.md",
+  "bugs": {
+    "url": "https://github.com/reesef/php-twig/issues"
+  },
+  "homepage": "https://github.com/reesef/php-twig",
+  "_id": "php-twig@0.2.1",
+  "dist": {
+    "shasum": "3862c13b7be2790e8f8173a582a99023530b0857"
+  },
+  "_resolved": "/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-11454-1736-wzgt26/package.tgz",
+  "_from": "/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-11454-1736-wzgt26/package.tgz"
+}

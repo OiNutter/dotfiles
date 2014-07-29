@@ -28,3 +28,53 @@
   'paths': [
     '/Users/willmckenzie/Documents/workspace/komodo/kettle/webservice'
   ]
+'StreetStream - Website':
+  'title': 'StreetStream - Website'
+  'paths': [
+    '/Users/willmckenzie/Documents/workspace/StreetStream/website'
+  ]
+'Komodo - Puppet - Upstart':
+  'title': 'Komodo - Puppet - Upstart'
+  'paths': [
+    '/Users/willmckenzie/Documents/workspace/komodo/puppet-modules/upstart'
+  ]
+'Komodo - Siesta':
+  'title': 'Komodo - Siesta'
+  'paths': [
+    '/Users/willmckenzie/Documents/workspace/komodo/siesta'
+  ]
+'Wemo Experiments':
+  'title': 'Wemo Experiments'
+  'paths': [
+    '/Users/willmckenzie/Documents/workspace/wemo'
+  ]
+'Wemojo':
+  'title': 'Wemojo'
+  'paths': [
+    '/Users/willmckenzie/Documents/workspace/komodo/wemojo'
+  ]
+'Play':
+  'title': 'Play'
+  'paths': [
+    '/Users/willmckenzie/Documents/workspace/play'
+  ]
+'Slack+Katie Talk':
+  'title': 'Slack+Katie Talk'
+  'paths': [
+    '/Users/willmckenzie/Documents/workspace/talks/slack+katie'
+  ]
+'Automation Talk - Part 1':
+  'title': 'Automation Talk - Part 1'
+  'paths': [
+    '/Users/willmckenzie/Documents/workspace/talks/automation-part1'
+  ]
+'Ethical Website':
+  'title': 'Ethical Website'
+  'paths': [
+    '/Users/willmckenzie/Documents/workspace/Spark Etail/Ethical/website'
+  ]
+'Vagrant 101':
+  'title': 'Vagrant 101'
+  'paths': [
+    '/Users/willmckenzie/Documents/workspace/talks/Vagrant101'
+  ]

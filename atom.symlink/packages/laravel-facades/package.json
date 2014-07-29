@@ -1,0 +1,27 @@
+{
+  "name": "laravel-facades",
+  "main": "./lib/laravel-facades",
+  "version": "1.0.0",
+  "description": "An atom.io package to view the source of built-in Laravel 4 facades",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/RyanNielson/laravel-facades"
+  },
+  "license": "MIT",
+  "engines": {
+    "atom": ">0.50.0"
+  },
+  "dependencies": {},
+  "readme": "# Laravel Facades\n\nAn atom.io package to view the source of built-in Laravel 4 facades.\n\n## Installation\n\nUse the atom package manager, which can be found in the Preferences view, or run `apm install laravel-facades` from the command line.\n\nThis package assumes your composer vendor/ directory is at the root of the project you have open as that it what it uses to retrieve the source files to open.\n\n## Usage\n\nThis package can be accessed view the `Packages/Laravel Facades` menu in the top menu bar, or it can be accessed by opening the command panel using `cmd + shift + p` and typing the Facade class name and hitting enter when the correct item is selected. If there are other items in the command panel, just prefix what you're searching with `Laravel Facades` or `Facade` to narrow the results.\n\nWhen a Facade is selected using either of these methods, its source file will open in a new tab.\n",
+  "readmeFilename": "README.md",
+  "bugs": {
+    "url": "https://github.com/RyanNielson/laravel-facades/issues"
+  },
+  "homepage": "https://github.com/RyanNielson/laravel-facades",
+  "_id": "laravel-facades@1.0.0",
+  "dist": {
+    "shasum": "234bc25c0918b07e89402da776d87c493b192148"
+  },
+  "_resolved": "/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-114429-50652-13q9mwp/package.tgz",
+  "_from": "/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-114429-50652-13q9mwp/package.tgz"
+}

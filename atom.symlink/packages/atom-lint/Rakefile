@@ -2,23 +2,33 @@
 desc 'Compile all CoffeeScript files'
 task :compile do
   puts 'Compiling all CoffeeScript files...'
-  system('coffee -o tmp -c lib spec') || fail
+  sh 'coffee -o tmp -c lib spec'
   puts 'Done.'
 end
 
 desc 'Run package specs'
 task :spec do
   puts 'Running package specs...'
-  system('apm test') || fail
+  sh 'apm test'
 end
 
 desc 'Run CoffeeLint'
 task :lint do
   puts 'Running CoffeeLint...'
-  system('coffeelint lib spec') || fail
+  sh 'coffeelint lib spec'
+end
+
+namespace :travis do
+  task :prepare do
+    sh 'npm install --global coffee-script coffeelint'
+    sh 'gem install --no-document rubocop'
+    sh 'sudo pip install flake8'
+  end
+
+  task :spec do
+    sh 'curl -s https://raw.githubusercontent.com/atom/ci/master/build-package.sh | sh'
+  end
 end
 
 task default: [:compile, :spec, :lint]
-
-# Cannot run `apm test` on CI since Atom is still closed beta.
-task ci: [:compile, :lint]
+task travis: ['travis:prepare', :compile, 'travis:spec', :lint]

@@ -1,0 +1,35 @@
+{
+  "name": "jsonlint",
+  "main": "./lib/init",
+  "version": "0.4.0",
+  "private": true,
+  "description": "JSON Lint reports for your Atom editor",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tcarlsen/atom-jsonlint"
+  },
+  "author": {
+    "name": "tcarlsen"
+  },
+  "license": "MIT",
+  "engines": {
+    "atom": ">0.50.0"
+  },
+  "dependencies": {
+    "jsonlint": "^1.6.0",
+    "atom-message-panel": "^0.3.0",
+    "atom-keymap-plus": "^0.1.0"
+  },
+  "readme": "# JSON Lint\n\n> [JSON Lint](https://github.com/zaach/jsonlint) error reports for your [Atom](http://atom.io) editor.\n\n![preview](https://raw.github.com/tcarlsen/atom-jsonlint/master/preview.jpg)\n\n## Installation\n\nYou can install this plugin via the Packages manager in Atom itself or manually through the terminal\n\n```bash\n$ apm install jsonlint\n```\n\n## Usage\n\nJSON Lint is by default validating on save (this can be changed in the package settings), you can also execute it by hitting `cmd+alt+l` on OS X or `ctrl-alt-l` on Windows and Linux.\n\nIf you like you can even set it to validate while typing in the package settings.\n\n## Features\n\n * Validate on keymap\n * Validate on command\n * Validate on save *(toggle in settings)*\n * Validate on change *(toggle in settings)*\n * Option to hide the error panel if no errors were found *(toggle in settings)*\n\n## License\n\n[MIT](http://opensource.org/licenses/MIT) © tcarlsen\n",
+  "readmeFilename": "readme.md",
+  "bugs": {
+    "url": "https://github.com/tcarlsen/atom-jsonlint/issues"
+  },
+  "homepage": "https://github.com/tcarlsen/atom-jsonlint",
+  "_id": "jsonlint@0.4.0",
+  "dist": {
+    "shasum": "bae5f13f2d54b979fb76b8679a04f329fa335e1a"
+  },
+  "_resolved": "/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-11467-11181-10a46ug/package.tgz",
+  "_from": "/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-11467-11181-10a46ug/package.tgz"
+}

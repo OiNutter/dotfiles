@@ -1,0 +1,26 @@
+{
+  "name": "ScssBundle",
+  "version": "0.4.0",
+  "description": "SCSS syntax package for Atom",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/EnriqueCanals/SCSSBundle"
+  },
+  "license": "MIT",
+  "engines": {
+    "atom": ">0.50.0"
+  },
+  "dependencies": {},
+  "readme": "#### Temporary location of the Atom SCSS bundle for retrieval on the Atom Package Manager\n\n![](http://i.imgur.com/mFFD1.png)\n### For:\n![](https://atom.io/assets/logo-579cbedf99b80be71b85354646fe9b78.png)\n\nA *[SCSS](http://sass-lang.com/) syntax bundle* for [Atom](https://github.com/atom/atom)\n\n## Also Available\n\n[![SCSS Sublime Text Package](http://i.imgur.com/0VQjy.png)](https://github.com/kuroir/SCSS.tmbundle/tree/SublimeText2) [![SCSS Chocolat Truffle](http://i.imgur.com/NlYle.png)](https://github.com/kuroir/SCSS.tmbundle/tree/Chocolat)\n\n## How to Install\n\n### Atom Package Manager *(Recommended)*\n\n## Credits\n\n**[Enrique Canals](http://github.com/enriquecanals) ([Site](http://enriquecanals.com))** **Current Maintainer**\n\nAdded support for Atom.\n\n**[Mario Ricalde](http://github.com/marioricalde) ([Site](http://mario.ricalde.mx))** **Creator & Advisor**\n\nAdded support for Sublime Text 2, and TextMate 2.\n\n**[Chris Eppstein](http://github.com/chriseppstein)**\n\nCreator of the original TextMate Bundle.\n\n**[Stephen Way](http://github.com/stephenway)**\n\nAdded support for Chocolat.\n\n**[…and many more.](https://github.com/kuroir/SCSS.tmbundle/graphs/contributors)**\n\n\n## License\n\n##### SCSS.tmbundle Copyright (c) 2012 Mario Ricalde\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. No attribution is required by products that make use of this software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.\n\nExcept as contained in this notice, the name(s) of the above copyright holders shall not be used in advertising or otherwise to promote the sale, use or other dealings in this Software without prior written authorization.\n\nContributors to this project agree to grant all rights to the copyright holder of the primary product. Attribution is maintained in the source control history of the product.\n\n\n[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/MarioRicalde/scss.tmbundle/trend.png)](https://bitdeli.com/free \"Bitdeli Badge\")\n",
+  "readmeFilename": "README.md",
+  "bugs": {
+    "url": "https://github.com/EnriqueCanals/SCSSBundle/issues"
+  },
+  "homepage": "https://github.com/EnriqueCanals/SCSSBundle",
+  "_id": "ScssBundle@0.4.0",
+  "dist": {
+    "shasum": "a2c90ca3ec9792cd0844e6e521210d4b6fa38a82"
+  },
+  "_resolved": "/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-114516-4069-1hj549n/package.tgz",
+  "_from": "/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-114516-4069-1hj549n/package.tgz"
+}

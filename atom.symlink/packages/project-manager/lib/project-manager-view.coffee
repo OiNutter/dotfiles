@@ -19,6 +19,12 @@ class ProjectManagerView extends SelectListView
   destroy: ->
     @detach()
 
+  getEmptyMessage: (itemCount, filteredItemCount) =>
+    if not itemCount
+      'No projects saved yet'
+    else
+      super
+
   toggle: (projectManager) ->
     @projectManager = projectManager
     if @hasParent()
@@ -28,9 +34,12 @@ class ProjectManagerView extends SelectListView
 
   attach: ->
     projects = []
-    currentProjects = CSON.readFileSync(@projectManager.file)
+    currentProjects = CSON.readFileSync(@projectManager.file())
     for title, project of currentProjects
       projects.push(project)
+
+    if atom.config.get('project-manager.sortByTitle')
+      projects = @sortBy(projects, 'title')
     @setItems(projects)
 
     atom.workspaceView.append(@)
@@ -47,3 +56,8 @@ class ProjectManagerView extends SelectListView
   confirmed: ({title, paths}) ->
     @cancel()
     @projectManager.openProject({title, paths})
+
+  sortBy: (arr, key) =>
+    arr.sort (a, b) ->
+      a[key].toUpperCase() > b[key].toUpperCase()
+

@@ -1,12 +1,28 @@
+os = require 'os'
+path = require 'path'
+fs = require 'fs'
+rimraf = require 'rimraf'
 CommandRunner = require '../lib/command-runner'
 
 describe 'CommandRunner', ->
-  originalPath = process.env.PATH
-  originalShell = process.env.SHELL
+  workingDir = path.join(os.tmpdir(), 'atom-lint-spec')
+  originalWorkingDirectory = process.cwd()
+  originalHOME = process.env.HOME
+  originalPATH = process.env.PATH
+  originalSHELL = process.env.SHELL
+
+  beforeEach ->
+    rimraf.sync(workingDir) if fs.existsSync(workingDir)
+    fs.mkdirSync(workingDir)
+    process.env.HOME = workingDir
+    process.chdir(workingDir)
 
   afterEach ->
-    process.env.PATH = originalPath
-    process.env.SHELL = originalShell
+    process.chdir(originalWorkingDirectory)
+    process.env.HOME = originalHOME
+    process.env.PATH = originalPATH
+    process.env.SHELL = originalSHELL
+    rimraf.sync(workingDir)
 
   describe '.fetchEnvOfLoginShell', ->
     itPassesAnObjectContainingAllEnvironementVariables = ->
@@ -34,6 +50,12 @@ describe 'CommandRunner', ->
         process.env.SHELL = '/bin/zsh'
 
       itPassesAnObjectContainingAllEnvironementVariables()
+
+      describe 'and CLOBBER option is unset', ->
+        beforeEach ->
+          fs.writeFileSync('.zshrc', 'unsetopt CLOBBER')
+
+        itPassesAnObjectContainingAllEnvironementVariables()
 
     describe 'when the login shell is tcsh', ->
       beforeEach ->
@@ -161,6 +183,14 @@ describe 'CommandRunner', ->
     it 'handles arguments include whitespaces', ->
       run ['echo', '-n', 'foo   bar'], (error, result) ->
         expect(result.stdout).toBe('foo   bar')
+
+    it 'passes the executed command', ->
+      run ['echo', '-n', 'foo'], (error, result) ->
+        expect(result.command).toEqual(['echo', '-n', 'foo'])
+
+    it 'passes the environment variables', ->
+      run ['echo', '-n', 'foo'], (error, result) ->
+        expect(result.env.PATH).toContain('/bin')
 
     describe 'when the command run successfully', ->
       it 'passes stdout', ->

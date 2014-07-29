@@ -1,0 +1,31 @@
+{
+  "name": "linter-pep8",
+  "linter-package": true,
+  "main": "./lib/init",
+  "version": "0.0.2",
+  "description": "Linter plugin for pep8",
+  "activationEvents": [
+    "linter-pep8:toggle"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jemerick/linter-pep8"
+  },
+  "license": "MIT",
+  "engines": {
+    "atom": ">0.50.0"
+  },
+  "dependencies": {},
+  "readme": "linter-pep8\n=========================\n\nThis linter plugin for [Linter](https://github.com/AtomLinter/Linter) provides an interface to [pep8](https://pypi.python.org/pypi/pep8). It will be used with python files.\n\n## Installation\nLinter package must be installed in order to use this plugin. If Linter is not installed, please follow the instructions [here](https://github.com/AtomLinter/Linter).\n\n### pep8 installation\nBefore using this plugin, you must ensure that `pep8` is installed on your system. To install `pep8`, do the following:\n\n1. Install [pep8](https://pypi.python.org/pypi/pep8) by typing the following in a terminal:\n   ```\n   pip install pep8\n   ```\n\nNow you can proceed to install the linter-pep8 plugin.\n\n### Plugin installation\n```\n$ apm install linter-pep8\n```\n\n## Settings\nYou can configure linter-pep8 by editing ~/.atom/config.cson (choose Open Your Config in Atom menu):\n```\n'linter-pep8':\n  'pep8ExecutablePath': null #pep8 path. run 'which pep8' to find the path to folder, no trailing slash\n  'maxLineLength': 79 # the max line length for your python code, defaults to 79\n  'ignoreErrorCodes': [] # a list of pep8 error codes to ignore. http://pep8.readthedocs.org/en/latest/intro.html#error-codes\n```\n\n## Contributing\nIf you would like to contribute enhancements or fixes, please do the following:\n\n1. Fork the plugin repository.\n1. Hack on a separate topic branch created from the latest `master`.\n1. Commit and push the topic branch.\n1. Make a pull request.\n1. welcome to the club\n\nPlease note that modications should follow these coding guidelines:\n\n- Indent is 2 spaces.\n- Code should pass coffeelint linter.\n- Vertical whitespace helps readability, don’t be afraid to use it.\n\nThank you for helping out!\n",
+  "readmeFilename": "README.md",
+  "bugs": {
+    "url": "https://github.com/jemerick/linter-pep8/issues"
+  },
+  "homepage": "https://github.com/jemerick/linter-pep8",
+  "_id": "linter-pep8@0.0.2",
+  "dist": {
+    "shasum": "3a1f09ecb22ac57352f28fe47143ebc6f413486b"
+  },
+  "_resolved": "/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-114611-68688-1teg6u1/package.tgz",
+  "_from": "/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-114611-68688-1teg6u1/package.tgz"
+}

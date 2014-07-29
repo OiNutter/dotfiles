@@ -21,6 +21,8 @@
   'projectHome': '/Users/will/Documents/workspace'
   'disabledPackages': [
     'atom-lint'
+    'linter-scss-lint'
+    'ScssBundle'
   ]
 'tree-view': {}
 'markdown-preview': {}
@@ -30,3 +32,5 @@
   'personalAccessToken': 'BgNxxWjJPSUR2eqW5L5s'
 'atom-jshint':
   'hintOnModify': false
+'jsonlint':
+  'hideOnNoErrors': true
