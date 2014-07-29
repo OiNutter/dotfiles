@@ -1,4 +1,6 @@
 *_rsa*
+ssh-symlink/config
+ssh-symlink/known_hosts
 environment-*
 .project
 atom.symlink/compile-cache/*
