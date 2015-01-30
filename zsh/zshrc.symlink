@@ -59,5 +59,12 @@ export PATH="/Applications/Postgres.app/Contents/MacOS/bin:$PATH"
 export PATH=$HOME/pebble-dev/PebbleSDK-2.0.1/bin:$PATH
 
 ### Add Android SDK
-export PATH=$PATH:$HOME/.android/tools
-export PATH=$PATH:$HOME/.android/platform-tools
+export PATH="$PATH:/Applications/Android Studio.app/sdk/tools"
+export PATH="$PATH:/Applications/Android Studio.app/sdk/platform-tools"
+
+### Add sbin (for varnish)
+export PATH=$PATH:/usr/local/sbin
+
+### Add ec2 command line tools
+export EC2_HOME=$HOME/.ec2
+export PATH="$PATH:$HOME/.ec2/bin"
