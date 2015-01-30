@@ -4,3 +4,6 @@
 [submodule "grunt-init.symlink/node"]
 	path = grunt-init.symlink/node
 	url = git://github.com/gruntjs/grunt-init-node
+[submodule "ssh.symlink"]
+	path = ssh.symlink
+	url = git@github.com:OiNutter/dotssh
