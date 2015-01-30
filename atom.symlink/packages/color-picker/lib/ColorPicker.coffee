@@ -3,7 +3,6 @@
 # ----------------------------------------------------------------------------
 
         Convert = require './ColorPicker-convert'
-        ConditionalContextMenu = require './conditional-contextmenu'
         VariableInspector = require './variable-inspector'
 
         _regexes = require './ColorPicker-regexes'
@@ -18,10 +17,12 @@
             activate: ->
                 atom.workspaceView.command "color-picker:open", => @open true
 
-                ConditionalContextMenu.item {
+                atom.contextMenu.add '.editor': [{
                     label: 'Color picker'
-                    command: 'color-picker:open',
-                }, => return true if @match = @getMatchAtCursor()
+                    command: 'color-picker:open'
+
+                    shouldDisplay: => return true if @match = @getMatchAtCursor()
+                }]
 
                 ColorPickerView = require './ColorPicker-view'
                 @view = new ColorPickerView
@@ -80,13 +81,14 @@
                 return _match
 
             open: (getMatch = false) ->
-                if getMatch then @match = @getMatchAtCursor()
+                return unless _editor = atom.workspace.getActiveEditor()
+                @match = @getMatchAtCursor() if getMatch
 
                 if not @match
                     randomRGBFragment = -> (Math.random() * 255) << 0
 
                     _line = '#' + Convert.rgbToHex [randomRGBFragment(), randomRGBFragment(), randomRGBFragment()]
-                    _cursorBuffer = atom.workspace.getActiveEditor().getCursorBufferPosition()
+                    _cursorBuffer = _editor.getCursorBufferPosition()
                     _cursorRow = _cursorBuffer.row
                     _cursorColumn = _cursorBuffer.column
 

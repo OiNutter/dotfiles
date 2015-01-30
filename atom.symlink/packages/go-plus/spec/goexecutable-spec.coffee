@@ -2,18 +2,22 @@ path = require 'path'
 fs = require 'fs-plus'
 os = require 'os'
 temp = require('temp').track()
-{WorkspaceView} = require 'atom'
 _ = require 'underscore-plus'
 GoExecutable = require './../lib/goexecutable'
+Environment = require './../lib/environment'
+AtomConfig = require './util/atomconfig'
 
 describe "go executable", ->
-  [goexecutable, directory, env, go] = []
+  [environment, goexecutable, directory, env, go] = []
 
   beforeEach ->
     done = false
     runs ->
+      atomconfig = new AtomConfig()
+      atomconfig.defaults()
+      environment = new Environment(process.env)
       directory = temp.mkdirSync()
-      env = _.clone(process.env)
+      env = environment.Clone()
       env['GOPATH'] = directory
       goexecutable = new GoExecutable(env)
       goexecutable.once 'detect-complete', (thego) ->
@@ -30,9 +34,9 @@ describe "go executable", ->
         expect(goexecutable).toBeDefined
         expect(go).toBeDefined
         expect(go).toBeTruthy
-        expect(go.name.substring(0,2)).toBe 'go'
-        expect(go.version.substring(0,2)).toBe 'go'
-        expect(go.arch).toBe 'amd64'
+        expect(go.name.substring(0,2)).toBe 'go' unless go.version is 'devel'
+        expect(go.version.substring(0,2)).toBe 'go' unless go.version is 'devel'
+        expect(go.arch).toBe 'amd64' unless go.version is 'devel'
         if os.platform() is 'win32'
           expect(go.executable.substring(go.executable.length - 6, go.executable.length)).toBe 'go.exe'
         else
@@ -47,6 +51,7 @@ describe "go executable", ->
         expect(go).toBeTruthy
         expect(go.gopath).toBe directory
         expect(go.goimports()).toBe false
+        expect(go.goreturns()).toBe false
         expect(go.golint()).toBe false
         expect(go.oracle()).toBe false
         goexecutable.once 'gettools-complete', =>
@@ -54,8 +59,35 @@ describe "go executable", ->
           expect(go).toBeDefined
           expect(go).toBeTruthy
           expect(go.gopath).toBe directory
-          expect(go.goimports()).toBe path.join(directory, 'bin', 'goimports' + suffix)
-          expect(go.golint()).toBe path.join(directory, 'bin', 'golint' + suffix)
+          expect(go.goimports()).toBe fs.realpathSync(path.join(directory, 'bin', 'goimports' + suffix))
+          expect(go.goreturns()).toBe false
+          expect(go.golint()).toBe fs.realpathSync(path.join(directory, 'bin', 'golint' + suffix))
+          expect(go.oracle()).toBe path.join(directory, 'bin', 'oracle' + suffix)
+          done = true
+        goexecutable.gettools(go, true)
+
+      waitsFor =>
+        done is true
+      , 60000 # Go getting takes a while (this will fail without internet)
+
+      runs =>
+        suffix = if os.platform() is 'win32' then '.exe' else ''
+        expect(goexecutable).toBeDefined
+        expect(go).toBeDefined
+        expect(go).toBeTruthy
+        expect(go.gopath).toBe directory
+        expect(go.goimports()).not.toBe false
+        expect(go.goreturns()).toBe false
+        expect(go.golint()).not.toBe false
+        expect(go.oracle()).toBe false
+        goexecutable.once 'gettools-complete', =>
+          go = goexecutable.current()
+          expect(go).toBeDefined
+          expect(go).toBeTruthy
+          expect(go.gopath).toBe directory
+          expect(go.goimports()).toBe fs.realpathSync(path.join(directory, 'bin', 'goimports' + suffix))
+          expect(go.goreturns()).toBe fs.realpathSync(path.join(directory, 'bin', 'goreturns' + suffix))
+          expect(go.golint()).toBe fs.realpathSync(path.join(directory, 'bin', 'golint' + suffix))
           expect(go.oracle()).toBe path.join(directory, 'bin', 'oracle' + suffix)
           done = true
         goexecutable.gettools(go, true)
@@ -67,7 +99,7 @@ describe "go executable", ->
     it "finds tools if they are on the PATH but not in the GOPATH", ->
       done = false
       runs ->
-        env = _.clone(process.env)
+        env = environment.Clone()
         env['GOPATH'] = ''
         atom.config.set('go-plus.goPath', '')
         goexecutable = new GoExecutable(env)
@@ -91,7 +123,7 @@ describe "go executable", ->
     it "skips fetching tools if GOPATH is empty", ->
       done = false
       runs ->
-        env = _.clone(process.env)
+        env = environment.Clone()
         env['GOPATH'] = ''
         if os.platform() is 'win32'
           env['Path'] = ''

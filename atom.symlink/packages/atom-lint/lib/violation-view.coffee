@@ -18,7 +18,6 @@ class ViolationView extends View
     @initializeSubviews()
     @initializeStates()
 
-    @prepareTooltip()
     @trackEdit()
     @trackCursor()
     @showHighlight()
@@ -38,14 +37,6 @@ class ViolationView extends View
 
     @isValid = true
 
-  prepareTooltip: ->
-    HTML = @violation.getHTML()
-    @tooltip
-      title: HTML || @violation.message
-      html: HTML?
-      container: @lintView
-      selector: @find('.violation-area')
-
   trackEdit: ->
     # :persistent -
     # Whether to include this marker when serializing the buffer. Defaults to true.
@@ -64,8 +55,11 @@ class ViolationView extends View
     # * 'inside':
     #     The marker is invalidated by a change that touches the marked
     #     region in any way. This is the most fragile strategy.
-    options = { invalidation: 'inside', persistent: false }
+    options = { invalidate: 'inside', persistent: false }
     @marker = @editor.markScreenRange(@getCurrentScreenRange(), options)
+
+    @editor.decorateMarker(@marker, { type: 'gutter', class: "lint-#{@violation.severity}" })
+
     @marker.on 'changed', (event) =>
       # Head and Tail: Markers always have a head and sometimes have a tail.
       # If you think of a marker as an editor selection, the tail is the part that's stationary
@@ -99,7 +93,7 @@ class ViolationView extends View
           @scheduleDeferredShowHighlight()
       else
         @hideHighlight()
-        @tooltip('hide')
+        @violationTooltip?.hide()
 
   isVisibleMarkerChange: (event) ->
     editorFirstVisibleRow = @editorView.getFirstVisibleScreenRow()
@@ -112,7 +106,7 @@ class ViolationView extends View
       if @isValid
         @toggleTooltipWithCursorPosition()
       else
-        @tooltip('hide')
+        @violationTooltip?.hide()
 
   showHighlight: ->
     @updateHighlight()
@@ -154,9 +148,11 @@ class ViolationView extends View
 
     if cursorPosition.row is @screenStartPosition.row &&
        cursorPosition.column is @screenStartPosition.column
-      @tooltip('show')
+      # @tooltip conflicts with View's @tooltip function.
+      @violationTooltip ?= @createViolationTooltip()
+      @violationTooltip.show()
     else
-      @tooltip('hide')
+      @violationTooltip?.hide()
 
   getCurrentBufferStartPosition: ->
     @editor.bufferPositionForScreenPosition(@screenStartPosition)
@@ -164,19 +160,15 @@ class ViolationView extends View
   getCurrentScreenRange: ->
     new Range(@screenStartPosition, @screenEndPosition)
 
-  tooltip: (option) ->
-    violationView = this
-    @each ->
-      $this = $(this)
-      data = $this.data('bs.tooltip')
-      options = typeof option == 'object' && option
-      options.violationView = violationView
-
-      if !data
-        $this.data('bs.tooltip', (data = new ViolationTooltip(this, options)))
-      if typeof option == 'string'
-        data[option]()
-
   beforeRemove: ->
     @marker?.destroy()
-    @tooltip('destroy')
+    @violationTooltip?.destroy()
+
+  createViolationTooltip: ->
+    options =
+      violation: @violation
+      container: @lintView
+      selector: @find('.violation-area')
+      editorView: @editorView
+
+    new ViolationTooltip(this, options)

@@ -1,4 +1,5 @@
 {View, EditorView} = require 'atom'
+path = require 'path'
 
 module.exports =
 class ProjectManagerAddView extends View
@@ -7,10 +8,17 @@ class ProjectManagerAddView extends View
   @content: ->
     @div class: 'project-manager overlay from-top', =>
       @div class: 'editor-container', outlet: 'editorContainer', =>
-        @span class: 'project-manager-editor-title', 'Project title:'
-        @subview 'editor', new EditorView(mini: true)
+        @subview 'editor',
+          new EditorView(mini: true, placeholderText: 'Project title')
+        @div =>
+          @span 'Path: '
+          @span class: 'text-highlight', atom.project?.getPath()
 
   initialize: ->
+    basename = path.basename(atom.project.getPath())
+    @editor.setText(basename)
+    range = [[0], [basename.length]]
+    @editor.getEditor().setSelectedBufferRange(range)
 
   handleEvents: ->
     @editor.on 'core:confirm', @confirm
@@ -30,7 +38,6 @@ class ProjectManagerAddView extends View
     @remove() if project.title
 
   remove: =>
-    @editor.setText('')
     atom.workspaceView.focus() if atom.workspaceView?
     @addClass('hidden')
 

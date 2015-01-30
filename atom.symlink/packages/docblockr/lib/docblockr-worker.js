@@ -85,7 +85,7 @@ module.exports =
           self.write(editor, '\n$0\n */');
         }
         // extend line comments (// and #)
-        else if(self.validate_request({preceding:true, preceding_regex:regex.extend_line, scope:'comment.line'})) {
+        else if((self.editor_settings.extend_double_slash == true) && (self.validate_request({preceding:true, preceding_regex:regex.extend_line, scope:'comment.line'}))) {
           // console.log('Snippet Extend line command');
           var _regex = /^(\s*(?:#|\/\/[\/!]?)\s*).*$/;
           var editor = atom.workspace.getActiveEditor();
@@ -135,7 +135,8 @@ module.exports =
 
       atom.workspaceView.command('docblockr:wrap-lines', function(event) {
         // console.log('Wraplines command');
-        self.wrap_lines_command();
+        if(self.validate_request({scope:'comment.block'}))
+          self.wrap_lines_command();
       });
 
       atom.workspaceView.command('docblockr:decorate', function(event) {
@@ -786,13 +787,15 @@ module.exports =
       var scope = editor.getGrammar().scopeName;
       var regex = /\bsource\.([a-z+\-]+)/;
       var matches = regex.exec(scope);
-      var source_lang = (matches === null)? 'js': matches[1];
+      var source_lang = (matches === null)? null: matches[1];
 
       var settings = atom.config.getSettings().docblockr;
 
-      if(source_lang === "php")
-          return new DocsParser.PhpParser(settings);
-      else if(source_lang === "coffee")
+      if((source_lang === null) && (scope == "text.html.php")) {
+        return new DocsParser.PhpParser(settings);
+      }
+
+      if(source_lang === "coffee")
           return new DocsParser.CoffeeParser(settings);
       else if((source_lang === "actionscript") || (source_lang == 'haxe'))
           return new DocsParser.ActionscriptParser(settings);

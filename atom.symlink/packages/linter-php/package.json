@@ -3,7 +3,7 @@
   "linter-package": true,
   "activationEvents": [],
   "main": "./lib/init",
-  "version": "0.0.9",
+  "version": "0.0.11",
   "description": "Lint PHP on the fly, using php -l",
   "repository": {
     "type": "git",
@@ -14,16 +14,16 @@
     "atom": ">0.50.0"
   },
   "dependencies": {},
-  "readme": "# linter-php\n=========================\n\nThis package will lint your `.php` opened filed in Atom through [php -l](http://www.php.net/manual/en/features.commandline.options.php).\n\n## Installation\n\n* Install [php](http://php.net).\n* `$ apm install linter` (if you don't have [AtomLinter/Linter](https://github.com/AtomLinter/Linter) installed).\n* `$ apm install linter-php`\n\n## Settings\nYou can configure linter-phpcs by editing ~/.atom/config.cson (choose Open Your Config in Atom menu):\n```\n'linter-phpcs':\n  'phpExecutablePath': null # php path. run 'which php' to find the path\n```\n## Other available linters\n- [linter-phpcs](https://atom.io/packages/linter-phpcs) - Linter plugin for PHP, using phpcs.\n- [linter-phpmd](https://atom.io/packages/linter-phpmd) - Linter plugin for PHP, using phpmd.\n- [linter-jshint](https://atom.io/packages/linter-jshint) - Linter plugin for JavaScript, using jshint.\n- [linter-scss-lint](https://atom.io/packages/linter-scss-lint) - Sass Linter plugin for SCSS, using scss-lint.\n- [linter-coffeelint](https://atom.io/packages/linter-coffeelint) Linter plugin for CoffeeScript, using coffeelint.\n- [linter-csslint](https://atom.io/packages/linter-csslint) Linter plugin for CSS, using csslint.\n- [linter-rubocop](https://atom.io/packages/linter-rubocop) - Linter plugin for Ruby, using rubocop.\n- [linter-tslint](https://atom.io/packages/linter-tslint) Linter plugin for TypeScript, using tslint.\n",
+  "readme": "# linter-php\n=========================\n\nThis package will lint your `.php` opened filed in Atom through [php -l](http://www.php.net/manual/en/features.commandline.options.php).\n\n## Installation\n\n* Install [php](http://php.net).\n* `$ apm install linter` (if you don't have [AtomLinter/Linter](https://github.com/AtomLinter/Linter) installed).\n* `$ apm install linter-php`\n\n## Settings\nYou can configure linter-phpcs by editing ~/.atom/config.cson (choose Open Your Config in Atom menu):\n```\n'linter-phpcs':\n  'phpExecutablePath': null # php path. run 'which php' to find the path\n```\n## Other available linters\n- [linter-phpcs](https://atom.io/packages/linter-phpcs) - Linter plugin for PHP, using phpcs.\n- [linter-phpmd](https://atom.io/packages/linter-phpmd) - Linter plugin for PHP, using phpmd.\n- [linter-jshint](https://atom.io/packages/linter-jshint) - Linter plugin for JavaScript, using jshint.\n- [linter-scss-lint](https://atom.io/packages/linter-scss-lint) - Sass Linter plugin for SCSS, using scss-lint.\n- [linter-coffeelint](https://atom.io/packages/linter-coffeelint) Linter plugin for CoffeeScript, using coffeelint.\n- [linter-csslint](https://atom.io/packages/linter-csslint) Linter plugin for CSS, using csslint.\n- [linter-rubocop](https://atom.io/packages/linter-rubocop) - Linter plugin for Ruby, using rubocop.\n- [linter-tslint](https://atom.io/packages/linter-tslint) Linter plugin for TypeScript, using tslint.\n\n## Donation\n[![Share the love!](https://chewbacco-stuff.s3.amazonaws.com/donate.png)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=KXUYS4ARNHCN8)\n",
   "readmeFilename": "README.md",
   "bugs": {
     "url": "https://github.com/AtomLinter/linter-php/issues"
   },
   "homepage": "https://github.com/AtomLinter/linter-php",
-  "_id": "linter-php@0.0.9",
+  "_id": "linter-php@0.0.11",
   "dist": {
-    "shasum": "67bbea065024ca3d0de976ac1c8e6a31158c614b"
+    "shasum": "8351b1602a041774c24eb39b958ed5e16f6d425a"
   },
-  "_resolved": "/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-114629-1509-job92a/package.tgz",
-  "_from": "/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-114629-1509-job92a/package.tgz"
+  "_resolved": "/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-114714-6552-q08r32/package.tgz",
+  "_from": "/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-114714-6552-q08r32/package.tgz"
 }

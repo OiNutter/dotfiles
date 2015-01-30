@@ -4,18 +4,20 @@ os = require 'os'
 Go = require './../lib/go'
 PathExpander = require './../lib/util/pathexpander'
 PathHelper = require './util/pathhelper'
+Environment = require './../lib/environment'
 
 describe "go", ->
-  [go, pathexpander, pathhelper, env] = []
+  [go, environment, pathexpander, pathhelper, env] = []
 
   beforeEach ->
-    pathexpander = new PathExpander(process.env)
+    environment = new Environment(process.env)
+    pathexpander = new PathExpander(environment.Clone())
     pathhelper = new PathHelper()
     go = new Go('/usr/local/bin/go', pathexpander)
 
   describe "when working with a single-item gopath", ->
     beforeEach ->
-      go.gopath = '~/go'
+      go.gopath = pathhelper.home() + path.sep + 'go'
 
     it "expands the path", ->
       runs =>
@@ -35,7 +37,7 @@ describe "go", ->
 
   describe "when working with a multi-item gopath", ->
     beforeEach ->
-      go.gopath = '~' + path.sep + 'go' + path.delimiter + '~' + path.sep + 'go2' + path.delimiter + path.sep + 'usr' + path.sep + 'local' + path.sep + 'go'
+      go.gopath = pathhelper.home() + path.sep + 'go' + path.delimiter + pathhelper.home() + path.sep + 'go2' + path.delimiter + path.sep + 'usr' + path.sep + 'local' + path.sep + 'go'
 
     it "expands the path", ->
       runs =>

@@ -49,7 +49,7 @@ DocsParser.prototype.parse = function(line) {
     }
     out = this.parse_var(line);
     if (out) {
-        return this.format_var(out.name, out.val);
+        return this.format_var.apply(this, out);
     }
     return null;
 };
@@ -120,12 +120,12 @@ DocsParser.prototype.format_function = function(name, args, retval, options) {
     var description = this.get_name_override() || ('['+ escape(name) + (name ? ' ': '') + 'description]');
     out.push('${1:' + description + '}');
 
-    if (this.editor_settings.autoadd_method_tag) {
+    if (this.editor_settings.auto_add_method_tag) {
         out.push('@method '+ escape(name));
     }
 
     if(!extra_tag_after)
-        this.add_extra_tags(out);
+        out = this.add_extra_tags(out);
 
     // if there are arguments, add a @param for each
     if(args) {
@@ -194,7 +194,7 @@ DocsParser.prototype.format_function = function(name, args, retval, options) {
     }
 
     if(extra_tag_after)
-        this.add_extra_tags(out);
+        out = this.add_extra_tags(out);
 
     return out;
 };
@@ -283,6 +283,7 @@ DocsParser.prototype.add_extra_tags = function(out) {
     var extra_tags = this.editor_settings.extra_tags || [];
     if (extra_tags.length > 0)
         out = out.concat(extra_tags);
+    return out;
 };
 
 DocsParser.prototype.guess_type_from_name = function(name) {
@@ -439,10 +440,7 @@ JsParser.prototype.parse_var = function(line) {
         return null;
     }
     // variable name, variable value
-    return {
-        name: matches.name,
-        val: matches.val.trim()
-    };
+    return [matches.name, matches.val.trim()];
 };
 
 JsParser.prototype.guess_type_from_value = function(val) {
@@ -614,7 +612,7 @@ PhpParser.prototype.parse_function = function(line) {
         '(?P<name>' + this.settings.fnIdentifier + ')' +
         // function fnName
         // (arg1, arg2)
-        '\\s*\\(\\s*(?P<args>.*)\)'
+        '\\s*\\(\\s*(?P<args>.*)\\)'
         );
 
     var matches = xregexp.exec(line, regex);
@@ -818,8 +816,8 @@ ActionscriptParser.prototype = Object.create(DocsParser.prototype);
 ActionscriptParser.prototype.setup_settings = function() {
     var nameToken = '[a-zA-Z_][a-zA-Z0-9_]*';
     this.settings = {
-        'typeInfo': False,
-        'curlyTypes': False,
+        'typeInfo': false,
+        'curlyTypes': false,
         'typeTag': '',
         'commentCloser': ' */',
         'fnIdentifier': nameToken,
@@ -993,8 +991,8 @@ JavaParser.prototype = Object.create(DocsParser.prototype);
 JavaParser.prototype.setup_settings = function() {
     var identifier = '[a-zA-Z_$][a-zA-Z_$0-9]*';
     this.settings = {
-        'curlyTypes': False,
-        'typeInfo': False,
+        'curlyTypes': false,
+        'typeInfo': false,
         'typeTag': 'type',
         'varIdentifier': identifier,
         'fnIdentifier':  identifier,

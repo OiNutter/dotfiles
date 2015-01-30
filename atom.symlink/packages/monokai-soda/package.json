@@ -1,7 +1,7 @@
 {
   "name": "monokai-soda",
   "theme": "syntax",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "description": "A modified version of monokai theme for Atom",
   "repository": {
@@ -18,10 +18,20 @@
     "url": "https://github.com/AbeEstrada/monokai-soda/issues"
   },
   "homepage": "https://github.com/AbeEstrada/monokai-soda",
-  "_id": "monokai-soda@0.3.0",
+  "_id": "monokai-soda@0.4.0",
   "dist": {
-    "shasum": "7b1e1f30d750d27454f4dc0e9a99949f55d965ba"
+    "shasum": "3592d383d379996268856276233379321ee7ecd4"
   },
-  "_resolved": "/var/folders/m7/z8yrf0_1493blj1bl9nb2fc40000gn/T/d-114228-30593-hz2une/package.tgz",
-  "_from": "/var/folders/m7/z8yrf0_1493blj1bl9nb2fc40000gn/T/d-114228-30593-hz2une/package.tgz"
+  "_resolved": "/private/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-1141021-29227-r5lk4z/package.tgz",
+  "_from": "/private/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-1141021-29227-r5lk4z/package.tgz",
+  "_atomModuleCache": {
+    "version": 1,
+    "dependencies": [],
+    "extensions": {
+      ".json": [
+        "package.json"
+      ]
+    },
+    "folders": []
+  }
 }

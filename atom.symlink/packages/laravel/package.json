@@ -1,6 +1,6 @@
 {
   "name": "laravel",
-  "version": "0.4.0",
+  "version": "0.4.2",
   "private": false,
   "description": "Add Laravel snippets",
   "repository": {
@@ -18,10 +18,10 @@
     "url": "https://github.com/Cronos87/atom-laravel/issues"
   },
   "homepage": "https://github.com/Cronos87/atom-laravel",
-  "_id": "laravel@0.4.0",
+  "_id": "laravel@0.4.2",
   "dist": {
-    "shasum": "883fc5d8182fba908c216ec328e59a752fafe675"
+    "shasum": "5dec8a7fdae968211a089ebbaa93d4c4161d4566"
   },
-  "_resolved": "/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-114429-50687-pro9jv/package.tgz",
-  "_from": "/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-114429-50687-pro9jv/package.tgz"
+  "_resolved": "/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-11484-82437-ua8a88/package.tgz",
+  "_from": "/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-11484-82437-ua8a88/package.tgz"
 }

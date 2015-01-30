@@ -1,8 +1,11 @@
-'fileTypes': ['tpl']
+'fileTypes': ['tpl', 'smarty']
 'foldingStartMarker': '(<(?i:(head|table|tr|div|style|script|ul|ol|form|dl))\\b.*?>|\\{\\{?(if|foreach|capture|literal|foreach|php|section|strip)|\\{\\s*$)'
 'foldingStopMarker': '(</(?i:(head|table|tr|div|style|script|ul|ol|form|dl))>|\\{\\{?/(if|foreach|capture|literal|foreach|php|section|strip)|(^|\\s)\\})'
 'name': 'Smarty'
 'patterns': [
+  {
+    "include": "text.html.basic"
+  },
   {
     'begin': '(?<=\\{)\\*'
     'captures':

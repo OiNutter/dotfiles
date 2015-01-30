@@ -34,7 +34,9 @@ class Rubocop
       else
         'warning'
 
-    new Violation(severity, bufferRange, offense.message)
+    metadata = [offense.cop_name]
+
+    new Violation(severity, bufferRange, offense.message, metadata)
 
   runRubocop: (callback) ->
     runner = new CommandRunner(@buildCommand())
@@ -44,10 +46,12 @@ class Rubocop
 
       if result.exitCode == 0 || result.exitCode == 1
         try
-          callback(null, JSON.parse(result.stdout))
+          rubocopResult = JSON.parse(result.stdout)
         catch error
           escapedStdout = JSON.stringify(result.stdout)
-          callback(new LinterError("Failed parsing RuboCop's JSON output #{escapedStdout}", result))
+          error = new LinterError("Failed parsing RuboCop's JSON output #{escapedStdout}", result)
+
+        callback(error, rubocopResult)
       else
         callback(new LinterError("rubocop exited with code #{result.exitCode}", result))
 

@@ -2,7 +2,7 @@
 
 # Tabs to Spaces
 
-An Atom package for converting between leading tabs and leading spaces.
+An Atom package for converting leading whitespace to either all spaces or all tabs.
 
 ## Installation
 
@@ -16,39 +16,36 @@ apm install tabs-to-spaces
 
 ## Use
 
-It can convert between leading tabs and spaces in the current editor window. It can be executed from:
+It can convert any form of leading whitespace to either all spaces (Untabify) or the maximum number of tabs and minimum number of spaces with tabs up front (Tabify) to fill the same space. It will also, with configuration, convert to your preferred method on save.
 
-* Command Palette
-    * `Tabs To Spaces: Tabify`
-    * `Tabs To Spaces: Untabify`
-* Packages Menu
-    * `Packages > Tabs to Spaces > Tabify`
-    * `Packages > Tabs to Spaces > Untabify`
-* Context Menu
-    * `Tabify`
-    * `Untabify`
+### Commands
 
-## Configuration
+* `tabs-to-spaces:tabify` &mdash; Converts leading whitespace to tabs
+* `tabs-to-spaces:untabify` &mdash; Converts leading whitespace to spaces
+
+### Configuration
 
 Tabs to Spaces uses the following configuration values:
 
-* `editor.getTabLength()` &mdash; sets the number of space characters a tab character is equivalent to
-* `tabs-to-spaces.onSave` &mdash; if set to either "tabify" or "untabify" it performs that operation on save
-    * Previously this was named `on-save`, but this conflicts with the humanizing algorithm used for configuration options, so it was changed to follow the standard.
+* `editor.tabLength` &mdash; sets the number of space characters a tab character is equivalent to
+* `tabs-to-spaces.onSave` &mdash; if set to either `tabify` or `untabify` it performs that operation on save
 
-### Keybinding
+The package also supports language-specific configuration for the `onSave` setting. For example, the following configuration will tabify all file types on save except for JavaScript files:
 
-I have not set keybindings for this package. They can easily be added by referencing the following commands:
-
-* `tabs-to-spaces:tabify`
-* `tabs-to-spaces:untabify`
-
-For example, to map the Untabify command to <kbd>Cmd+Alt+T</kbd>:
-
-```cson
-'.editor:not(.mini)':
-  'alt-cmd-t': 'tabs-to-spaces:untabify'
+```coffee
+'global':
+  'tabs-to-spaces':
+    'onSave': 'tabify'
+'.source.js':
+  'tabs-to-spaces':
+    'onSave': 'none'
 ```
+
+No matter what `tabs-to-spaces.onSave` settings you configure, your `config.cson` will not be automatically tabified or untabified.
+
+### Keybindings
+
+Keybindings have not been set for this package. They can easily be added by referencing the commands listed above.
 
 ## Copyright
 

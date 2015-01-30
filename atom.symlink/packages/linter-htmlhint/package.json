@@ -1,0 +1,429 @@
+{
+  "name": "linter-htmlhint",
+  "linter-package": true,
+  "activationEvents": [],
+  "main": "./lib/init",
+  "version": "0.0.8",
+  "description": "Linter plugin for HTML, using htmlhint",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AtomLinter/linter-htmlhint.git"
+  },
+  "license": "MIT",
+  "engines": {
+    "atom": ">0.50.0"
+  },
+  "dependencies": {
+    "htmlhint": "^0.9.6"
+  },
+  "readme": "linter-htmlhint\n=========================\n\nThis linter plugin for [Linter](https://github.com/AtomLinter/Linter) provides an interface to [htmlhint](https://github.com/yaniswang/HTMLHint). It will be used with files that have the syntax.\n\n## Installation\nLinter package must be installed in order to use this plugin. If Linter is not installed, please follow the instructions [here](https://github.com/AtomLinter/Linter).\n\n### Plugin installation\n```\n$ apm install linter-htmlhint\n```\n\n## Settings\nYou can configure linter-htmlhint by editing ~/.atom/config.cson (choose Open Your Config in Atom menu):\n```\n'linter-htmlhint':\n  'htmlhintExecutablePath': null #htmlhint path. run 'which htmlhint' to find the path\n```\n\n## Contributing\nIf you would like to contribute enhancements or fixes, please do the following:\n\n1. Fork the plugin repository.\n1. Hack on a separate topic branch created from the latest `master`.\n1. Commit and push the topic branch.\n1. Make a pull request.\n1. welcome to the club\n\nPlease note that modifications should follow these coding guidelines:\n\n- Indent is 2 spaces.\n- Code should pass coffeelint linter.\n- Vertical whitespace helps readability, don’t be afraid to use it.\n\nThank you for helping out!\n\n## Donation\n[![Share the love!](https://chewbacco-stuff.s3.amazonaws.com/donate.png)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=KXUYS4ARNHCN8)\n",
+  "readmeFilename": "README.md",
+  "bugs": {
+    "url": "https://github.com/AtomLinter/linter-htmlhint/issues"
+  },
+  "homepage": "https://github.com/AtomLinter/linter-htmlhint",
+  "_id": "linter-htmlhint@0.0.8",
+  "dist": {
+    "shasum": "45baef5170ecfe53ae2458a83e8984e4ae6ce837"
+  },
+  "_resolved": "/private/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-1141021-29256-15581cg/package.tgz",
+  "_from": "/private/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-1141021-29256-15581cg/package.tgz",
+  "_atomModuleCache": {
+    "version": 1,
+    "dependencies": [
+      {
+        "name": "htmlhint",
+        "version": "0.9.6",
+        "path": "node_modules/htmlhint/index.js"
+      },
+      {
+        "name": "colors",
+        "version": "0.6.0-1",
+        "path": "node_modules/htmlhint/node_modules/colors/colors.js"
+      },
+      {
+        "name": "commander",
+        "version": "1.1.1",
+        "path": "node_modules/htmlhint/node_modules/commander/index.js"
+      },
+      {
+        "name": "keypress",
+        "version": "0.1.0",
+        "path": "node_modules/htmlhint/node_modules/commander/node_modules/keypress/index.js"
+      },
+      {
+        "name": "csslint",
+        "version": "0.10.0",
+        "path": "node_modules/htmlhint/node_modules/csslint/lib/csslint-node.js"
+      },
+      {
+        "name": "parserlib",
+        "version": "0.2.5",
+        "path": "node_modules/htmlhint/node_modules/csslint/node_modules/parserlib/lib/node-parserlib.js"
+      },
+      {
+        "name": "jshint",
+        "version": "1.1.0",
+        "path": "node_modules/htmlhint/node_modules/jshint/src/stable/jshint.js"
+      },
+      {
+        "name": "cli",
+        "version": "0.4.5",
+        "path": "node_modules/htmlhint/node_modules/jshint/node_modules/cli/cli.js"
+      },
+      {
+        "name": "glob",
+        "version": "4.2.1",
+        "path": "node_modules/htmlhint/node_modules/jshint/node_modules/cli/node_modules/glob/glob.js"
+      },
+      {
+        "name": "inflight",
+        "version": "1.0.4",
+        "path": "node_modules/htmlhint/node_modules/jshint/node_modules/cli/node_modules/glob/node_modules/inflight/inflight.js"
+      },
+      {
+        "name": "wrappy",
+        "version": "1.0.1",
+        "path": "node_modules/htmlhint/node_modules/jshint/node_modules/cli/node_modules/glob/node_modules/inflight/node_modules/wrappy/wrappy.js"
+      },
+      {
+        "name": "inherits",
+        "version": "2.0.1",
+        "path": "node_modules/htmlhint/node_modules/jshint/node_modules/cli/node_modules/glob/node_modules/inherits/inherits.js"
+      },
+      {
+        "name": "minimatch",
+        "version": "1.0.0",
+        "path": "node_modules/htmlhint/node_modules/jshint/node_modules/cli/node_modules/glob/node_modules/minimatch/minimatch.js"
+      },
+      {
+        "name": "lru-cache",
+        "version": "2.5.0",
+        "path": "node_modules/htmlhint/node_modules/jshint/node_modules/cli/node_modules/glob/node_modules/minimatch/node_modules/lru-cache/lib/lru-cache.js"
+      },
+      {
+        "name": "sigmund",
+        "version": "1.0.0",
+        "path": "node_modules/htmlhint/node_modules/jshint/node_modules/cli/node_modules/glob/node_modules/minimatch/node_modules/sigmund/sigmund.js"
+      },
+      {
+        "name": "once",
+        "version": "1.3.1",
+        "path": "node_modules/htmlhint/node_modules/jshint/node_modules/cli/node_modules/glob/node_modules/once/once.js"
+      },
+      {
+        "name": "wrappy",
+        "version": "1.0.1",
+        "path": "node_modules/htmlhint/node_modules/jshint/node_modules/cli/node_modules/glob/node_modules/once/node_modules/wrappy/wrappy.js"
+      },
+      {
+        "name": "esprima",
+        "version": "2.0.0-dev",
+        "path": "node_modules/htmlhint/node_modules/jshint/node_modules/esprima/esprima.js"
+      },
+      {
+        "name": "minimatch",
+        "version": "0.4.0",
+        "path": "node_modules/htmlhint/node_modules/jshint/node_modules/minimatch/minimatch.js"
+      },
+      {
+        "name": "lru-cache",
+        "version": "2.5.0",
+        "path": "node_modules/htmlhint/node_modules/jshint/node_modules/minimatch/node_modules/lru-cache/lib/lru-cache.js"
+      },
+      {
+        "name": "sigmund",
+        "version": "1.0.0",
+        "path": "node_modules/htmlhint/node_modules/jshint/node_modules/minimatch/node_modules/sigmund/sigmund.js"
+      },
+      {
+        "name": "peakle",
+        "version": "0.0.1",
+        "path": "node_modules/htmlhint/node_modules/jshint/node_modules/peakle/peakle.js"
+      },
+      {
+        "name": "shelljs",
+        "version": "0.1.4",
+        "path": "node_modules/htmlhint/node_modules/jshint/node_modules/shelljs/shell.js"
+      },
+      {
+        "name": "underscore",
+        "version": "1.4.4",
+        "path": "node_modules/htmlhint/node_modules/jshint/node_modules/underscore/underscore.js"
+      }
+    ],
+    "extensions": {
+      ".coffee": [
+        "lib/init.coffee",
+        "lib/linter-htmlhint.coffee",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/cli/examples/static.coffee"
+      ],
+      ".js": [
+        "node_modules/htmlhint/Gruntfile.js",
+        "node_modules/htmlhint/index.js",
+        "node_modules/htmlhint/lib/htmlhint.js",
+        "node_modules/htmlhint/node_modules/colors/colors.js",
+        "node_modules/htmlhint/node_modules/colors/example.js",
+        "node_modules/htmlhint/node_modules/colors/test.js",
+        "node_modules/htmlhint/node_modules/commander/index.js",
+        "node_modules/htmlhint/node_modules/commander/node_modules/keypress/index.js",
+        "node_modules/htmlhint/node_modules/commander/node_modules/keypress/test.js",
+        "node_modules/htmlhint/node_modules/csslint/cli.js",
+        "node_modules/htmlhint/node_modules/csslint/lib/csslint-node.js",
+        "node_modules/htmlhint/node_modules/csslint/node_modules/parserlib/lib/node-parserlib.js",
+        "node_modules/htmlhint/node_modules/jshint/examples/reporter.js",
+        "node_modules/htmlhint/node_modules/jshint/make.js",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/cli/cli.js",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/cli/examples/cat.js",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/cli/examples/command.js",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/cli/examples/echo.js",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/cli/examples/glob.js",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/cli/examples/long_desc.js",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/cli/examples/progress.js",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/cli/examples/sort.js",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/cli/examples/spinner.js",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/cli/examples/static.js",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/cli/index.js",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/cli/node_modules/glob/common.js",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/cli/node_modules/glob/glob.js",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/cli/node_modules/glob/node_modules/inflight/inflight.js",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/cli/node_modules/glob/node_modules/inflight/node_modules/wrappy/wrappy.js",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/cli/node_modules/glob/node_modules/inflight/test.js",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/cli/node_modules/glob/node_modules/inherits/inherits.js",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/cli/node_modules/glob/node_modules/inherits/inherits_browser.js",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/cli/node_modules/glob/node_modules/inherits/test.js",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/cli/node_modules/glob/node_modules/minimatch/minimatch.js",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/cli/node_modules/glob/node_modules/minimatch/node_modules/lru-cache/lib/lru-cache.js",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/cli/node_modules/glob/node_modules/minimatch/node_modules/sigmund/bench.js",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/cli/node_modules/glob/node_modules/minimatch/node_modules/sigmund/sigmund.js",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/cli/node_modules/glob/node_modules/once/node_modules/wrappy/wrappy.js",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/cli/node_modules/glob/node_modules/once/once.js",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/cli/node_modules/glob/sync.js",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/esprima/bin/esparse.js",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/esprima/bin/esvalidate.js",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/esprima/esprima.js",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/minimatch/minimatch.js",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/minimatch/node_modules/lru-cache/lib/lru-cache.js",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/minimatch/node_modules/sigmund/bench.js",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/minimatch/node_modules/sigmund/sigmund.js",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/peakle/grunt.js",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/peakle/peakle.js",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/peakle/test.js",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/shelljs/global.js",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/shelljs/make.js",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/shelljs/scripts/docs.js",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/shelljs/scripts/run-tests.js",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/shelljs/shell.js",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/underscore/index.js",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/underscore/underscore-min.js",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/underscore/underscore.js",
+        "node_modules/htmlhint/node_modules/jshint/src/cli/cli.js",
+        "node_modules/htmlhint/node_modules/jshint/src/next/constants.js",
+        "node_modules/htmlhint/node_modules/jshint/src/next/jshint.js",
+        "node_modules/htmlhint/node_modules/jshint/src/next/reason.js",
+        "node_modules/htmlhint/node_modules/jshint/src/next/regexp.js",
+        "node_modules/htmlhint/node_modules/jshint/src/next/utils.js",
+        "node_modules/htmlhint/node_modules/jshint/src/platforms/rhino.js",
+        "node_modules/htmlhint/node_modules/jshint/src/reporters/checkstyle.js",
+        "node_modules/htmlhint/node_modules/jshint/src/reporters/default.js",
+        "node_modules/htmlhint/node_modules/jshint/src/reporters/jslint_xml.js",
+        "node_modules/htmlhint/node_modules/jshint/src/reporters/non_error.js",
+        "node_modules/htmlhint/node_modules/jshint/src/shared/messages.js",
+        "node_modules/htmlhint/node_modules/jshint/src/shared/vars.js",
+        "node_modules/htmlhint/node_modules/jshint/src/stable/jshint.js",
+        "node_modules/htmlhint/node_modules/jshint/src/stable/lex.js",
+        "node_modules/htmlhint/node_modules/jshint/src/stable/reg.js",
+        "node_modules/htmlhint/node_modules/jshint/src/stable/state.js",
+        "node_modules/htmlhint/node_modules/jshint/src/stable/style.js",
+        "node_modules/htmlhint/src/core.js",
+        "node_modules/htmlhint/src/htmlparser.js",
+        "node_modules/htmlhint/src/reporter.js",
+        "node_modules/htmlhint/src/rules/attr-lowercase.js",
+        "node_modules/htmlhint/src/rules/attr-no-duplication.js",
+        "node_modules/htmlhint/src/rules/attr-unsafe-chars.js",
+        "node_modules/htmlhint/src/rules/attr-value-double-quotes.js",
+        "node_modules/htmlhint/src/rules/attr-value-not-empty.js",
+        "node_modules/htmlhint/src/rules/csslint.js",
+        "node_modules/htmlhint/src/rules/doctype-first.js",
+        "node_modules/htmlhint/src/rules/doctype-html5.js",
+        "node_modules/htmlhint/src/rules/head-script-disabled.js",
+        "node_modules/htmlhint/src/rules/href-abs-or-rel.js",
+        "node_modules/htmlhint/src/rules/id-class-ad-disabled.js",
+        "node_modules/htmlhint/src/rules/id-class-value.js",
+        "node_modules/htmlhint/src/rules/id-unique.js",
+        "node_modules/htmlhint/src/rules/img-alt-require.js",
+        "node_modules/htmlhint/src/rules/jshint.js",
+        "node_modules/htmlhint/src/rules/space-tab-mixed-disabled.js",
+        "node_modules/htmlhint/src/rules/spec-char-escape.js",
+        "node_modules/htmlhint/src/rules/src-not-empty.js",
+        "node_modules/htmlhint/src/rules/style-disabled.js",
+        "node_modules/htmlhint/src/rules/tag-pair.js",
+        "node_modules/htmlhint/src/rules/tag-self-close.js",
+        "node_modules/htmlhint/src/rules/tagname-lowercase.js"
+      ],
+      ".json": [
+        "node_modules/htmlhint/node_modules/colors/package.json",
+        "node_modules/htmlhint/node_modules/commander/node_modules/keypress/package.json",
+        "node_modules/htmlhint/node_modules/commander/package.json",
+        "node_modules/htmlhint/node_modules/csslint/node_modules/parserlib/package.json",
+        "node_modules/htmlhint/node_modules/csslint/package.json",
+        "node_modules/htmlhint/node_modules/jshint/jshint.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/cli/node_modules/glob/node_modules/inflight/node_modules/wrappy/package.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/cli/node_modules/glob/node_modules/inflight/package.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/cli/node_modules/glob/node_modules/inherits/package.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/cli/node_modules/glob/node_modules/minimatch/node_modules/lru-cache/package.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/cli/node_modules/glob/node_modules/minimatch/node_modules/sigmund/package.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/cli/node_modules/glob/node_modules/minimatch/package.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/cli/node_modules/glob/node_modules/once/node_modules/wrappy/package.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/cli/node_modules/glob/node_modules/once/package.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/cli/node_modules/glob/package.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/cli/package.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/esprima/package.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/minimatch/node_modules/lru-cache/package.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/minimatch/node_modules/sigmund/package.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/minimatch/package.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/peakle/package.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/shelljs/.documentup.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/shelljs/jshint.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/shelljs/package.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/underscore/package.json",
+        "node_modules/htmlhint/node_modules/jshint/package.json",
+        "node_modules/htmlhint/package.json",
+        "package.json"
+      ]
+    },
+    "folders": [
+      {
+        "paths": [
+          "lib",
+          ""
+        ],
+        "dependencies": {
+          "htmlhint": "^0.9.6"
+        }
+      },
+      {
+        "paths": [
+          "node_modules/htmlhint",
+          "node_modules/htmlhint/lib",
+          "node_modules/htmlhint/src",
+          "node_modules/htmlhint/src/rules",
+          "node_modules/htmlhint/test",
+          "node_modules/htmlhint/test/rules"
+        ],
+        "dependencies": {
+          "commander": "1.1.1",
+          "colors": "0.6.0-1",
+          "jshint": "1.1.0",
+          "csslint": "0.10.0"
+        }
+      },
+      {
+        "paths": [
+          "node_modules/htmlhint/node_modules/commander"
+        ],
+        "dependencies": {
+          "keypress": "0.1.x"
+        }
+      },
+      {
+        "paths": [
+          "node_modules/htmlhint/node_modules/csslint",
+          "node_modules/htmlhint/node_modules/csslint/lib"
+        ],
+        "dependencies": {
+          "parserlib": "~0.2.2"
+        }
+      },
+      {
+        "paths": [
+          "node_modules/htmlhint/node_modules/jshint/examples",
+          "node_modules/htmlhint/node_modules/jshint",
+          "node_modules/htmlhint/node_modules/jshint/src/cli",
+          "node_modules/htmlhint/node_modules/jshint/src/next",
+          "node_modules/htmlhint/node_modules/jshint/src/platforms",
+          "node_modules/htmlhint/node_modules/jshint/src/reporters",
+          "node_modules/htmlhint/node_modules/jshint/src/shared",
+          "node_modules/htmlhint/node_modules/jshint/src/stable",
+          "node_modules/htmlhint/node_modules/jshint/tests",
+          "node_modules/htmlhint/node_modules/jshint/tests/next/fixtures/parser",
+          "node_modules/htmlhint/node_modules/jshint/tests/next/fixtures/reason",
+          "node_modules/htmlhint/node_modules/jshint/tests/next/fixtures/regexp",
+          "node_modules/htmlhint/node_modules/jshint/tests/next/fixtures/utils",
+          "node_modules/htmlhint/node_modules/jshint/tests/next/lib",
+          "node_modules/htmlhint/node_modules/jshint/tests/next/unit",
+          "node_modules/htmlhint/node_modules/jshint/tests/stable/helpers",
+          "node_modules/htmlhint/node_modules/jshint/tests/stable/regression/libs",
+          "node_modules/htmlhint/node_modules/jshint/tests/stable/regression",
+          "node_modules/htmlhint/node_modules/jshint/tests/stable/unit",
+          "node_modules/htmlhint/node_modules/jshint/tests/stable/unit/fixtures"
+        ],
+        "dependencies": {
+          "shelljs": "0.1.x",
+          "underscore": "1.4.x",
+          "peakle": "0.0.x",
+          "cli": "0.4.x",
+          "minimatch": "0.x.x"
+        }
+      },
+      {
+        "paths": [
+          "node_modules/htmlhint/node_modules/jshint/node_modules/cli",
+          "node_modules/htmlhint/node_modules/jshint/node_modules/cli/examples"
+        ],
+        "dependencies": {
+          "glob": ">= 3.1.4"
+        }
+      },
+      {
+        "paths": [
+          "node_modules/htmlhint/node_modules/jshint/node_modules/cli/node_modules/glob"
+        ],
+        "dependencies": {
+          "inflight": "^1.0.4",
+          "inherits": "2",
+          "minimatch": "^1.0.0",
+          "once": "^1.3.0"
+        }
+      },
+      {
+        "paths": [
+          "node_modules/htmlhint/node_modules/jshint/node_modules/cli/node_modules/glob/node_modules/inflight"
+        ],
+        "dependencies": {
+          "once": "^1.3.0",
+          "wrappy": "1"
+        }
+      },
+      {
+        "paths": [
+          "node_modules/htmlhint/node_modules/jshint/node_modules/cli/node_modules/glob/node_modules/minimatch",
+          "node_modules/htmlhint/node_modules/jshint/node_modules/cli/node_modules/glob/node_modules/minimatch/test"
+        ],
+        "dependencies": {
+          "lru-cache": "2",
+          "sigmund": "~1.0.0"
+        }
+      },
+      {
+        "paths": [
+          "node_modules/htmlhint/node_modules/jshint/node_modules/cli/node_modules/glob/node_modules/once",
+          "node_modules/htmlhint/node_modules/jshint/node_modules/cli/node_modules/glob/node_modules/once/test"
+        ],
+        "dependencies": {
+          "wrappy": "1"
+        }
+      },
+      {
+        "paths": [
+          "node_modules/htmlhint/node_modules/jshint/node_modules/minimatch",
+          "node_modules/htmlhint/node_modules/jshint/node_modules/minimatch/test"
+        ],
+        "dependencies": {
+          "lru-cache": "2",
+          "sigmund": "~1.0.0"
+        }
+      }
+    ]
+  }
+}

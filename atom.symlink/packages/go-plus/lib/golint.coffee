@@ -9,7 +9,8 @@ class Golint
   Emitter.includeInto(this)
 
   constructor: (dispatch) ->
-    atom.workspaceView.command 'golang:golint', => @checkCurrentBuffer()
+    atom.commands.add 'atom-workspace',
+      'golang:golint': => @checkCurrentBuffer()
     @dispatch = dispatch
     @name = 'lint'
 
@@ -17,31 +18,39 @@ class Golint
     @unsubscribe()
     @dispatch = null
 
-  reset: (editorView) ->
-    @emit 'reset', editorView
+  reset: (editor) ->
+    @emit 'reset', editor
 
   checkCurrentBuffer: ->
-    editorView = atom?.workspaceView?.getActiveView()
-    return unless @dispatch.isValidEditorView(editorView)
-    @reset editorView
+    editor = atom?.workspace?.getActiveTextEditor()
+    return unless @dispatch.isValidEditor(editor)
+    @reset editor
     done = (err, messages) =>
-      @dispatch.resetAndDisplayMessages(editorView, messages)
-    @checkBuffer(editorView, false, done)
+      @dispatch.resetAndDisplayMessages(editor, messages)
+    @checkBuffer(editor, false, done)
 
-  checkBuffer: (editorView, saving, callback = ->) ->
-    unless @dispatch.isValidEditorView(editorView)
-      @emit @name + '-complete', editorView, saving
+  checkBuffer: (editor, saving, callback = ->) ->
+    unless @dispatch.isValidEditor(editor)
+      @emit @name + '-complete', editor, saving
       callback(null)
       return
     if saving and not atom.config.get('go-plus.lintOnSave')
-      @emit @name + '-complete', editorView, saving
+      @emit @name + '-complete', editor, saving
       callback(null)
       return
-    buffer = editorView?.getEditor()?.getBuffer()
+    buffer = editor?.getBuffer()
     unless buffer?
-      @emit @name + '-complete', editorView, saving
+      @emit @name + '-complete', editor, saving
       callback(null)
       return
+    go = @dispatch.goexecutable.current()
+    gopath = go.buildgopath()
+    if not gopath? or gopath is ''
+      @emit @name + '-complete', editor, saving
+      callback(null)
+      return
+    env = @dispatch.env()
+    env['GOPATH'] = gopath
     cwd = path.dirname(buffer.getPath())
     args = [buffer.getPath()]
     configArgs = @dispatch.splicersplitter.splitAndSquashToArray(' ', atom.config.get('go-plus.golintArgs'))
@@ -58,12 +67,12 @@ class Golint
       return
     done = (exitcode, stdout, stderr, messages) =>
       console.log @name + ' - stderr: ' + stderr if stderr? and stderr.trim() isnt ''
-      messages = @mapMessages(editorView, stdout, cwd) if stdout? and stdout.trim() isnt ''
-      @emit @name + '-complete', editorView, saving
+      messages = @mapMessages(stdout, cwd) if stdout? and stdout.trim() isnt ''
+      @emit @name + '-complete', editor, saving
       callback(null, messages)
-    @dispatch.executor.exec(cmd, cwd, null, done, args)
+    @dispatch.executor.exec(cmd, cwd, env, done, args)
 
-  mapMessages: (editorView, data, cwd) ->
+  mapMessages: (data, cwd) ->
     pattern = /^(.*?):(\d*?):((\d*?):)?\s(.*)$/img
     messages = []
     extract = (matchLine) ->
@@ -89,5 +98,4 @@ class Golint
       match = pattern.exec(data)
       extract(match)
       break unless match?
-    @emit @name + '-messages', editorView, messages
     return messages

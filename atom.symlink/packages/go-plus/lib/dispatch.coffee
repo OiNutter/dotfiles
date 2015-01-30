@@ -5,13 +5,15 @@ Golint = require './golint'
 Gopath = require './gopath'
 Gobuild = require './gobuild'
 Gocover = require './gocover'
+Gocode = require './gocode'
 Executor = require './executor'
+Environment = require './environment'
 GoExecutable = require './goexecutable'
 SplicerSplitter = require './util/splicersplitter'
 _ = require 'underscore-plus'
 {MessagePanelView, LineMessageView, PlainMessageView} = require 'atom-message-panel'
-{$, SettingsView} = require 'atom'
 path = require 'path'
+os = require 'os'
 async = require 'async'
 
 module.exports =
@@ -25,9 +27,10 @@ class Dispatch
     @dispatching = false
     @ready = false
     @messages = []
+    @items = []
 
-    @processEnv = process.env
-    @executor = new Executor()
+    @environment = new Environment(process.env)
+    @executor = new Executor(@environment.Clone())
     @splicersplitter = new SplicerSplitter()
     @goexecutable = new GoExecutable(@env())
 
@@ -37,18 +40,20 @@ class Dispatch
     @gopath = new Gopath(this)
     @gobuild = new Gobuild(this)
     @gocover = new Gocover(this)
+    @gocode = new Gocode(this)
 
     @messagepanel = new MessagePanelView title: '<span class="icon-diff-added"></span> go-plus', rawTitle: true unless @messagepanel?
 
     @on 'run-detect', => @detect()
 
     # Reset State If Requested
-    gofmtsubscription = @gofmt.on 'reset', (editorView) => @resetState(editorView)
-    golintsubscription = @golint.on 'reset', (editorView) => @resetState(editorView)
-    govetsubscription = @govet.on 'reset', (editorView) => @resetState(editorView)
-    gopathsubscription = @gopath.on 'reset', (editorView) => @resetState(editorView)
-    gobuildsubscription = @gobuild.on 'reset', (editorView) => @resetState(editorView)
-    gocoversubscription = @gocover.on 'reset', (editorView) => @resetState(editorView)
+    gofmtsubscription = @gofmt.on 'reset', (editor) => @resetState(editor)
+    golintsubscription = @golint.on 'reset', (editor) => @resetState(editor)
+    govetsubscription = @govet.on 'reset', (editor) => @resetState(editor)
+    gopathsubscription = @gopath.on 'reset', (editor) => @resetState(editor)
+    gobuildsubscription = @gobuild.on 'reset', (editor) => @resetState(editor)
+    gocoversubscription = @gocover.on 'reset', (editor) => @resetState(editor)
+    gocodesubscription = @gocode.on 'reset', (editor) => @resetState(editor)
 
     @subscribe(gofmtsubscription)
     @subscribe(golintsubscription)
@@ -56,13 +61,14 @@ class Dispatch
     @subscribe(gopathsubscription)
     @subscribe(gobuildsubscription)
     @subscribe(gocoversubscription)
+    @subscribe(gocodesubscription)
 
-    @on 'dispatch-complete', (editorView) => @displayMessages(editorView)
+    @on 'dispatch-complete', (editor) => @displayMessages(editor)
     @subscribeToAtomEvents()
     @emit 'run-detect'
 
   destroy: =>
-    @unsubscribeFromAtomEvents()
+    @destroyItems()
     @unsubscribe()
     @resetPanel()
     @messagepanel?.remove()
@@ -73,59 +79,82 @@ class Dispatch
     @govet.destroy()
     @gopath.destroy()
     @gofmt.destroy()
+    @gocode.destroy()
     @gocover = null
     @gobuild = null
     @golint = null
     @govet = null
     @gopath = null
     @gofmt = null
+    @gocode = null
     @ready = false
     @activated = false
     @emit 'destroyed'
 
-  subscribeToAtomEvents: =>
-    @editorViewSubscription = atom.workspaceView.eachEditorView (editorView) => @handleEvents(editorView)
-    @workspaceViewSubscription = atom.workspaceView.on 'pane-container:active-pane-item-changed', => @resetPanel()
-    @getMissingToolsSubscription = atom.config.observe 'go-plus.getMissingTools', => @gettools(false) if atom.config.get('go-plus.getMissingTools')? and atom.config.get('go-plus.getMissingTools') and @ready
-    @formatWithGoImportsSubscription = atom.config.observe 'go-plus.formatWithGoImports', => @displayGoInfo(true) if @ready
-    @gopathSubscription = atom.config.observe 'go-plus.goPath', => @displayGoInfo(true) if @ready
-    @environmentOverridesConfigurationSubscription = atom.config.observe 'go-plus.environmentOverridesConfiguration', => @displayGoInfo(true) if @ready
-    @goInstallationSubscription = atom.config.observe 'go-plus.goInstallation', => @detect() if @ready
-    @goinfoCommandSubscription = atom.workspaceView.command 'golang:goinfo', => @displayGoInfo(true) if @ready and @activated
-    @getmissingtoolsCommandSubscription = atom.workspaceView.command 'golang:getmissingtools', => @gettools(false) if @activated
-    @updatetoolsCommandSubscription = atom.workspaceView.command 'golang:updatetools', => @gettools(true) if @activated
+  addItem: (item) ->
+    return if item in @items
 
-    @subscribe(@getMissingToolsSubscription)
-    @subscribe(@formatWithGoImportsSubscription)
-    @subscribe(@gopathSubscription)
-    @subscribe(@environmentOverridesConfigurationSubscription)
-    @subscribe(@goInstallationSubscription)
+    if typeof item.on is 'function'
+      @subscribe item, 'destroyed', => @removeItem(item)
+
+    @items.splice(0, 0, item)
+
+  removeItem: (item) ->
+    index = @items.indexOf(item)
+    return if index is -1
+
+    if typeof item.on is 'function'
+      @unsubscribe item
+
+    @items.splice(index, 1)
+
+  destroyItems: ->
+    return unless @items and _.size(@items) > 0
+    for item in @items
+      item.dispose()
+
+  subscribeToAtomEvents: =>
+    @addItem(atom.workspace.observeTextEditors((editor) => @handleEvents(editor)))
+    @addItem(atom.workspace.onDidChangeActivePaneItem((event) => @resetPanel()))
+    @addItem(atom.config.observe('go-plus.getMissingTools', => @gettools(false) if atom.config.get('go-plus.getMissingTools')? and atom.config.get('go-plus.getMissingTools') and @ready))
+    @addItem(atom.config.observe('go-plus.formatTool', => @displayGoInfo(true) if @ready))
+    @addItem(atom.config.observe('go-plus.goPath', => @displayGoInfo(true) if @ready))
+    @addItem(atom.config.observe('go-plus.environmentOverridesConfiguration', => @displayGoInfo(true) if @ready))
+    @addItem(atom.config.observe('go-plus.goInstallation', => @detect() if @ready))
+
+    atom.commands.add 'atom-workspace',
+      'golang:goinfo': => @displayGoInfo(true) if @ready and @activated
+
+    atom.commands.add 'atom-workspace',
+      'golang:getmissingtools': => @gettools(false) if @activated
+
+    atom.commands.add 'atom-workspace',
+      'golang:updatetools': => @gettools(true) if @activated
+
     @activated = true
 
-  handleEvents: (editorView) =>
-    buffer = editorView?.getEditor()?.getBuffer()
+  handleEvents: (editor) =>
+    buffer = editor?.getBuffer()
     return unless buffer?
-    @updateGutter(editorView, @messages)
-    modifiedsubscription = buffer.on 'contents-modified', =>
+    @updateGutter(editor, @messages)
+    modifiedsubscription = buffer.onDidStopChanging =>
       return unless @activated
-      @handleBufferChanged(editorView)
+      @handleBufferChanged(editor)
 
-    savedsubscription = buffer.on 'saved', =>
+    savedsubscription = buffer.onDidSave =>
       return unless @activated
       return unless not @dispatching
-      @dispatching = true
-      @handleBufferSave(editorView, true)
+      @handleBufferSave(editor, true)
 
-    destroyedsubscription = buffer.once 'destroyed', =>
-      savedsubscription?.off()
-      modifiedsubscription?.off()
+    destroyedsubscription = buffer.onDidDestroy =>
+      savedsubscription?.dispose()
+      @removeItem(savedsubscription) if savedsubscription?
+      modifiedsubscription?.dispose()
+      @removeItem(modifiedsubscription) if modifiedsubscription?
 
-    @subscribe(modifiedsubscription)
-    @subscribe(savedsubscription)
-    @subscribe(destroyedsubscription)
-
-  unsubscribeFromAtomEvents: =>
-    @editorViewSubscription?.off()
+    @addItem(modifiedsubscription)
+    @addItem(savedsubscription)
+    @addItem(destroyedsubscription)
 
   detect: =>
     @ready = false
@@ -135,15 +164,15 @@ class Dispatch
       @emitReady()
     @goexecutable.detect()
 
-  resetAndDisplayMessages: (editorView, msgs) =>
-    return unless @isValidEditorView(editorView)
-    @resetState(editorView)
+  resetAndDisplayMessages: (editor, msgs) =>
+    return unless @isValidEditor(editor)
+    @resetState(editor)
     @collectMessages(msgs)
-    @displayMessages(editorView)
+    @displayMessages(editor)
 
-  displayMessages: (editorView) =>
-    @updatePane(editorView, @messages)
-    @updateGutter(editorView, @messages)
+  displayMessages: (editor) =>
+    @updatePane(editor, @messages)
+    @updateGutter(editor, @messages)
     @dispatching = false
     @emit 'display-complete'
 
@@ -152,55 +181,87 @@ class Dispatch
     @emit 'ready'
 
   displayGoInfo: (force) =>
-    editorView = atom.workspaceView.getActiveView()
+    editor = atom.workspace?.getActiveTextEditor()
     unless force
-      return unless editorView?.constructor?
-      return unless editorView.constructor?.name is 'SettingsView' or @isValidEditorView(editorView)
+      return unless @isValidEditor(editor)
 
     @resetPanel()
     go = @goexecutable.current()
     if go? and go.executable? and go.executable.trim() isnt ''
-      @messagepanel.add new PlainMessageView message: 'Using Go: ' + go.name + ' (@' + go.executable + ')', className: 'text-success'
+      @messagepanel.add new PlainMessageView raw: true, message: '<b>Go:</b> ' + go.name + ' (@' + go.executable + ')', className: 'text-info'
 
       # gopath
       gopath = go.buildgopath()
       if gopath? and gopath.trim() isnt ''
-        @messagepanel.add new PlainMessageView message: 'GOPATH: ' + gopath, className: 'text-success'
+        @messagepanel.add new PlainMessageView raw: true, message: '<b>GOPATH:</b> ' + gopath, className: 'text-highlight'
       else
-        @messagepanel.add new PlainMessageView message: 'GOPATH: Not Set', className: 'text-error'
+        @messagepanel.add new PlainMessageView raw: true, message: '<b>GOPATH:</b> Not Set (You Should Try Launching Atom Using The Shell Commands...)', className: 'text-error'
 
       # cover
       if go.cover()? and go.cover() isnt false
-        @messagepanel.add new PlainMessageView message: 'Cover Tool: ' + go.cover(), className: 'text-success'
+        @messagepanel.add new PlainMessageView raw: true, message: '<b>Cover Tool:</b> ' + go.cover(), className: 'text-subtle'
       else
-        @messagepanel.add new PlainMessageView message: 'Cover Tool: Not Found', className: 'text-error'
+        @messagepanel.add new PlainMessageView raw: true, message: '<b>Cover Tool:</b> Not Found (Is Mercurial Installed?)', className: 'text-error'
 
       # vet
       if go.vet()? and go.vet() isnt false
-        @messagepanel.add new PlainMessageView message: 'Vet Tool: ' + go.vet(), className: 'text-success'
+        @messagepanel.add new PlainMessageView raw: true, message: '<b>Vet Tool:</b> ' + go.vet(), className: 'text-subtle'
       else
-        @messagepanel.add new PlainMessageView message: 'Vet Tool: Not Found', className: 'text-error'
+        @messagepanel.add new PlainMessageView raw: true, message: '<b>Vet Tool:</b> Not Found (Is Mercurial Installed?)', className: 'text-error'
 
       # gofmt / goimports
       if go.format()? and go.format() isnt false
-        @messagepanel.add new PlainMessageView message: 'Format Tool: ' + go.format(), className: 'text-success'
+        @messagepanel.add new PlainMessageView raw: true, message: '<b>Format Tool:</b> ' + go.format(), className: 'text-subtle'
       else
-        @messagepanel.add new PlainMessageView message: 'Format Tool (goimports): Not Found', className: 'text-error' if atom.config.get('go-plus.formatWithGoImports')
-        @messagepanel.add new PlainMessageView message: 'Format Tool (gofmt): Not Found', className: 'text-error' unless atom.config.get('go-plus.formatWithGoImports')
+        @messagepanel.add new PlainMessageView raw: true, message: '<b>Format Tool (' + atom.config.get('go-plus.formatTool') + '):</b> Not Found', className: 'text-error'
 
       # golint
       if go.golint()? and go.golint() isnt false
-        @messagepanel.add new PlainMessageView message: 'Lint Tool: ' + go.golint(), className: 'text-success'
+        @messagepanel.add new PlainMessageView raw: true, message: '<b>Lint Tool:</b> ' + go.golint(), className: 'text-subtle'
       else
-        @messagepanel.add new PlainMessageView message: 'Lint Tool: Not Found', className: 'text-error'
+        @messagepanel.add new PlainMessageView raw: true, message: '<b>Lint Tool:</b> Not Found', className: 'text-error'
+
+      # gocode
+      if go.gocode()? and go.gocode() isnt false
+        @messagepanel.add new PlainMessageView raw: true, message: '<b>Gocode Tool:</b> ' + go.gocode(), className: 'text-subtle'
+      else
+        @messagepanel.add new PlainMessageView raw: true, message: '<b>Gocode Tool:</b> Not Found', className: 'text-error'
+
+      # gocode active
+      if _.contains(atom.packages.getAvailablePackageNames(), 'autocomplete-plus')
+        @messagepanel.add new PlainMessageView raw: true, message: '<b>Gocode Status:</b> Enabled', className: 'text-subtle'
+      else
+        @messagepanel.add new PlainMessageView raw: true, message: '<b>Gocode Status:</b> Not Enabled (autocomplete-plus needs to be installed and active; install it and restart)', className: 'text-warning'
 
       # oracle
       if go.oracle()? and go.oracle() isnt false
-        @messagepanel.add new PlainMessageView message: 'Oracle Tool: ' + go.oracle(), className: 'text-success'
+        @messagepanel.add new PlainMessageView raw: true, message: '<b>Oracle Tool: ' + go.oracle(), className: 'text-subtle'
       else
-        @messagepanel.add new PlainMessageView message: 'Oracle Tool: Not Found', className: 'text-error'
+        @messagepanel.add new PlainMessageView raw: true, message: '<b>Oracle Tool: Not Found', className: 'text-error'
+
+      # git
+      if go.git()? and go.git() isnt false
+        @messagepanel.add new PlainMessageView raw: true, message: '<b>Git:</b> ' + go.git(), className: 'text-subtle'
+      else
+        @messagepanel.add new PlainMessageView raw: true, message: '<b>Git:</b> Not Found', className: 'text-warning'
+
+      # hg
+      if go.hg()? and go.hg() isnt false
+        @messagepanel.add new PlainMessageView raw: true, message: '<b>Mercurial:</b> ' + go.hg(), className: 'text-subtle'
+      else
+        @messagepanel.add new PlainMessageView raw: true, message: '<b>Mercurial:</b> Not Found', className: 'text-warning'
+
+      # PATH
+      thepath = if os.platform() is 'win32' then @env()?.Path else @env()?.PATH
+      if thepath? and thepath.trim() isnt ''
+        @messagepanel.add new PlainMessageView raw: true, message: '<b>PATH:</b> ' + thepath, className: 'text-subtle'
+      else
+        @messagepanel.add new PlainMessageView raw: true, message: '<b>PATH:</b> Not Set', className: 'text-error'
     else
-      @messagepanel.add new PlainMessageView message: 'No Go Installations Were Found', className: 'text-error'
+      @messagepanel.add new PlainMessageView raw: true, message: 'No Go Installations Were Found', className: 'text-error'
+
+    @messagepanel.add new PlainMessageView raw: true, message: '<b>Atom:</b> ' + atom.appVersion + ' (' + os.platform() + ' ' + os.arch() + ' ' + os.release() + ')', className: 'text-info'
+
     @messagepanel.attach()
 
   collectMessages: (messages) ->
@@ -214,7 +275,7 @@ class Dispatch
       return element?.line + ':' + element?.column + ':' + element?.msg
     @emit 'messages-collected', _.size(@messages)
 
-  triggerPipeline: (editorView, saving) ->
+  triggerPipeline: (editor, saving) ->
     @dispatching = true
     go = @goexecutable.current()
     unless go? and go.executable? and go.executable.trim() isnt ''
@@ -224,78 +285,79 @@ class Dispatch
 
     async.series([
       (callback) =>
-        @gofmt.formatBuffer(editorView, saving, callback)
+        @gofmt.formatBuffer(editor, saving, callback)
     ], (err, modifymessages) =>
       @collectMessages(modifymessages)
       async.parallel([
         (callback) =>
-          @govet.checkBuffer(editorView, saving, callback)
+          @govet.checkBuffer(editor, saving, callback)
         (callback) =>
-          @golint.checkBuffer(editorView, saving, callback)
+          @golint.checkBuffer(editor, saving, callback)
         (callback) =>
-          @gopath.check(editorView, saving, callback)
+          @gopath.check(editor, saving, callback)
         (callback) =>
-          @gobuild.checkBuffer(editorView, saving, callback)
+          @gobuild.checkBuffer(editor, saving, callback)
       ], (err, checkmessages) =>
         @collectMessages(checkmessages)
-        @emit 'dispatch-complete', editorView
+        @emit 'dispatch-complete', editor
       )
     )
 
     async.series([
       (callback) =>
-        @gocover.runCoverage(editorView, saving, callback)
+        @gocover.runCoverage(editor, saving, callback)
     ], (err, modifymessages) =>
       @emit 'coverage-complete'
     )
 
-  handleBufferSave: (editorView, saving) ->
+  handleBufferSave: (editor, saving) ->
     return unless @ready and @activated
-    return unless @isValidEditorView(editorView)
-    @resetState(editorView)
-    @triggerPipeline(editorView, saving)
+    return unless @isValidEditor(editor)
+    @resetState(editor)
+    @triggerPipeline(editor, saving)
 
-  handleBufferChanged: (editorView) ->
+  handleBufferChanged: (editor) ->
     return unless @ready and @activated
-    return unless @isValidEditorView(editorView)
+    return unless @isValidEditor(editor)
     @gocover.resetCoverage()
 
-  resetState: (editorView) ->
+  resetState: (editor) ->
     @messages = []
-    @resetGutter(editorView)
+    @resetGutter(editor)
     @resetPanel()
 
-  resetGutter: (editorView) ->
-    return unless @isValidEditorView(editorView)
-    if atom.config.get('core.useReactEditor')
-      return unless editorView.getEditor()?
-      # Find current markers
-      markers = editorView.getEditor().getBuffer()?.findMarkers(class: 'go-plus')
-      return unless markers? and _.size(markers) > 0
-      # Remove markers
-      marker.destroy() for marker in markers
+  resetGutter: (editor) ->
+    return unless @isValidEditor(editor)
+    # Find current markers
+    markers = editor?.getBuffer()?.findMarkers(class: 'go-plus')
+    return unless markers? and _.size(markers) > 0
+    # Remove markers
+    marker.destroy() for marker in markers
 
-  updateGutter: (editorView, messages) ->
-    @resetGutter(editorView)
+  updateGutter: (editor, messages) ->
+    @resetGutter(editor)
+    return unless @isValidEditor(editor)
     return unless messages? and messages.length > 0
-    if atom.config.get('core.useReactEditor')
-      buffer = editorView?.getEditor()?.getBuffer()
-      return unless buffer?
-      for message in messages
-        skip = false
-        if message?.file? and message.file isnt ''
-          skip = message.file isnt buffer.getPath()
+    buffer = editor?.getBuffer()
+    return unless buffer?
+    for message in messages
+      skip = false
+      if message?.file? and message.file isnt ''
+        skip = message.file isnt buffer?.getPath()
 
-        unless skip
-          if message?.line? and message.line isnt false and message.line >= 0
-            marker = buffer.markPosition([message.line - 1, 0], class: 'go-plus', invalidate: 'touch')
-            editorView.getEditor().decorateMarker(marker, type: 'gutter', class: 'goplus-' + message.type)
+      unless skip
+        if message?.line? and message.line isnt false and message.line >= 0
+          try
+            marker = buffer?.markPosition([message.line - 1, 0], class: 'go-plus', invalidate: 'touch')
+            editor?.decorateMarker(marker, type: 'gutter', class: 'goplus-' + message.type)
+          catch error
+            console.log error
 
   resetPanel: ->
     @messagepanel?.close()
     @messagepanel?.clear()
 
-  updatePane: (editorView, messages) ->
+  updatePane: (editor, messages) ->
     @resetPanel
     return unless messages?
     if messages.length <= 0 and atom.config.get('go-plus.showPanelWhenNoIssuesExist')
@@ -323,13 +385,13 @@ class Dispatch
       else
         # LineMessageView
         @messagepanel.add new LineMessageView file: file, line: line, character: column, message: message.msg, className: className
-    @messagepanel.attach() if atom?.workspaceView?
+    @messagepanel.attach() if atom?.workspace?
 
-  isValidEditorView: (editorView) ->
-    editorView?.getEditor()?.getGrammar()?.scopeName is 'source.go'
+  isValidEditor: (editor) ->
+    editor?.getGrammar()?.scopeName is 'source.go'
 
   env: ->
-    _.clone(@processEnv)
+    @environment.Clone()
 
   gettools: (updateExistingTools) =>
     updateExistingTools = updateExistingTools? and updateExistingTools

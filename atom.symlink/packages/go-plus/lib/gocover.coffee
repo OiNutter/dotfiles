@@ -21,11 +21,14 @@ class Gocover
     @coverageFile = false
     @ranges = false
 
-    atom.workspaceView.command 'golang:gocover', => @runCoverageForCurrentEditorView()
-    atom.workspaceView.command 'golang:cleargocover', => @clearMarkersFromEditors()
-    atom.workspace.eachEditor (editor) =>
-      if atom.config.get('core.useReactEditor')? and atom.config.get('core.useReactEditor')
-        @addMarkersToEditor(editor)
+    atom.commands.add 'atom-workspace',
+      'golang:gocover': => @runCoverageForCurrentEditor()
+
+    atom.commands.add 'atom-workspace',
+      'golang:cleargocover': => @clearMarkersFromEditors()
+      
+    atom.workspace.observeTextEditors (editor) =>
+      @addMarkersToEditor(editor)
 
   destroy: ->
     @unsubscribe()
@@ -34,20 +37,20 @@ class Gocover
     @removeCoverageFile()
 
   addMarkersToEditors: =>
-    editors = atom.workspace.getEditors()
+    editors = atom.workspace.getTextEditors()
     for editor in editors
       @addMarkersToEditor(editor)
 
   clearMarkersFromEditors: =>
     @removeCoverageFile()
-    editors = atom.workspace.getEditors()
+    editors = atom.workspace.getTextEditors()
     for editor in editors
       @clearMarkers(editor)
 
   addMarkersToEditor: (editor) =>
     return unless editor?.getGrammar()?.scopeName is 'source.go'
-    file = editor.getPath()
-    buffer = editor.getBuffer()
+    file = editor?.getPath()
+    buffer = editor?.getBuffer()
     return unless file? and buffer?
 
     # Clear current markers
@@ -56,21 +59,27 @@ class Gocover
     # Add new markers
     return unless @ranges? and @ranges and _.size(@ranges) > 0
     editorRanges = _.filter @ranges, (r) -> _.endsWith(file, r.file)
-    for range in editorRanges
-      marker = buffer.markRange(range.range, class: 'gocover', gocovercount: range.count, invalidate: 'touch')
-      clazz = if range.count > 0 then 'covered' else 'uncovered'
-      editor.decorateMarker(marker, type: 'highlight', class: clazz, onlyNonEmpty: true)
+    try
+      for range in editorRanges
+        marker = buffer.markRange(range.range, class: 'gocover', gocovercount: range.count, invalidate: 'touch')
+        clazz = if range.count > 0 then 'covered' else 'uncovered'
+        editor.decorateMarker(marker, type: 'highlight', class: clazz, onlyNonEmpty: true)
+    catch error
+      console.log error
 
   clearMarkers: (editor) =>
     return unless editor?.getGrammar()?.scopeName is 'source.go'
     # Find current markers
-    markers = editor.getBuffer()?.findMarkers(class: 'gocover')
-    return unless markers? and _.size(markers) > 0
-    # Remove markers
-    marker.destroy() for marker in markers
+    try
+      markers = editor?.getBuffer()?.findMarkers(class: 'gocover')
+      return unless markers? and _.size(markers) > 0
+      # Remove markers
+      marker.destroy() for marker in markers
+    catch error
+      console.log error
 
-  reset: (editorView) ->
-    @emit 'reset', editorView
+  reset: (editor) ->
+    @emit 'reset', editor
 
   removeCoverageFile: =>
     @ranges = []
@@ -85,29 +94,29 @@ class Gocover
     tempDir = temp.mkdirSync()
     @coverageFile = path.join(tempDir, 'coverage.out')
 
-  runCoverageForCurrentEditorView: =>
-    editorView = atom?.workspaceView?.getActiveView()
-    return unless editorView?
-    @reset editorView
-    @runCoverage(editorView, false)
+  runCoverageForCurrentEditor: =>
+    editor = atom?.workspace?.getActiveTextEditor()
+    return unless editor?
+    @reset editor
+    @runCoverage(editor, false)
 
-  runCoverage: (editorView, saving, callback = ->) =>
-    unless @dispatch.isValidEditorView(editorView)
-      @emit @name + '-complete', editorView, saving
+  runCoverage: (editor, saving, callback = ->) =>
+    unless @dispatch.isValidEditor(editor)
+      @emit @name + '-complete', editor, saving
       callback(null)
       return
     if saving and not atom.config.get('go-plus.runCoverageOnSave')
-      @emit @name + '-complete', editorView, saving
+      @emit @name + '-complete', editor, saving
       callback(null)
       return
-    buffer = editorView?.getEditor()?.getBuffer()
+    buffer = editor?.getBuffer()
     unless buffer?
-      @emit @name + '-complete', editorView, saving
+      @emit @name + '-complete', editor, saving
       callback(null)
       return
 
     if @covering
-      @emit @name + '-complete', editorView, saving
+      @emit @name + '-complete', editor, saving
       callback(null)
       return
 
@@ -117,7 +126,7 @@ class Gocover
     go = @dispatch.goexecutable.current()
     gopath = go.buildgopath()
     if not gopath? or gopath is ''
-      @emit @name + '-complete', editorView, saving
+      @emit @name + '-complete', editor, saving
       callback(null)
       return
     env = @dispatch.env()
@@ -141,14 +150,10 @@ class Gocover
     done = (exitcode, stdout, stderr, messages) =>
       if exitcode is 0
         @ranges = @parser.ranges(tempFile)
-        if atom.config.get('core.useReactEditor')? and atom.config.get('core.useReactEditor')
-          @addMarkersToEditors()
+        @addMarkersToEditors()
       @covering = false
-      @emit @name + '-complete', editorView, saving
+      @emit @name + '-complete', editor, saving
       callback(null, messages)
     @dispatch.executor.exec(cmd, cwd, env, done, args)
 
   resetCoverage: =>
-    unless atom.config.get('core.useReactEditor')? and atom.config.get('core.useReactEditor')
-      for area in areas
-        area.removeMarkers()

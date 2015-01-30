@@ -1,10 +1,9 @@
 # ----------------------------------------------------------------------------
 #  ColorPicker: View
 # ----------------------------------------------------------------------------
-    { View } = require 'atom'
+    {View} = require 'atom'
     Convert = require './ColorPicker-convert'
 
-    ColorPicker = null
     SaturationSelector = null
     HueSelector = null
     AlphaSelector = null
@@ -39,7 +38,6 @@
         initialize: ->
             (atom.workspaceView.find '.vertical').append this
 
-            ColorPicker = require './ColorPicker'
             SaturationSelector = require './ColorPicker-saturationSelector'
             AlphaSelector = require './ColorPicker-alphaSelector'
             HueSelector = require './ColorPicker-hueSelector'
@@ -51,7 +49,7 @@
         # Tear down any state and detach
         destroy: ->
             @close()
-            this.remove()
+            @remove()
             @detach()
 
     # -------------------------------------
@@ -73,13 +71,13 @@
         isOpen: false
 
         reset: ->
-            this.addClass 'is--visible is--initial'
-            this.removeClass 'no--arrow is--pointer is--searching'
+            @addClass 'is--visible is--initial'
+            @removeClass 'no--arrow is--pointer is--searching'
 
-            (this.find '#ColorPicker-color')
+            (@find '#ColorPicker-color')
                 .css 'background-color', ''
                 .css 'border-bottom-color', ''
-            (this.find '#ColorPicker-value')
+            (@find '#ColorPicker-value')
                 .attr 'data-variable', ''
                 .html ''
 
@@ -88,15 +86,16 @@
             _selectedColor = @storage.selectedColor
 
             if not _selectedColor or _selectedColor.hasOwnProperty 'pointer'
-                this.addClass 'is--pointer'
-            if not _selectedColor then this.addClass 'is--searching'
+                @addClass 'is--pointer'
+            if not _selectedColor then @addClass 'is--searching'
 
-            _colorPickerWidth = this.width()
-            _colorPickerHeight = this.height()
+            _colorPickerWidth = @width()
+            _colorPickerHeight = @height()
             _halfColorPickerWidth = _colorPickerWidth / 2
 
             _pane = atom.workspaceView.getActivePaneView()
-            _paneOffset = top: _pane[0].offsetTop, left: _pane[0].offsetLeft
+            _paneZero = (_pane and _pane[0]) or {offsetTop:0, offsetLeft:0}
+            _paneOffset = top: _paneZero.offsetTop, left: _paneZero.offsetLeft
             _tabBarHeight = (_pane.find '.tab-bar').height()
 
             @storage.activeView = _view = _pane.activeView
@@ -104,7 +103,7 @@
             _gutterWidth = (_view.find '.gutter').width()
 
             _scroll = top: _view.scrollTop(), left: _view.scrollLeft()
-            _scrollbar = _view.verticalScrollbar
+            _scrollbar = _view.find '.vertical-scrollbar'
             if _scrollbar then _scrollbar.on 'scroll.color-picker', => @scroll()
 
             # Add 15 to account for the arrow on top of the color picker
@@ -119,12 +118,12 @@
             # Remove 15 to ignore the arrow on top of the color picker
             if _top + _colorPickerHeight - 15 > _viewHeight
                 _top = _viewHeight + _tabBarHeight - _colorPickerHeight - 20
-                this.addClass 'no--arrow'
+                @addClass 'no--arrow'
             _top += _paneOffset.top
 
             if _left + _halfColorPickerWidth > _viewWidth
                 _left = _viewWidth - _halfColorPickerWidth - 20
-                this.addClass 'no--arrow'
+                @addClass 'no--arrow'
             _left += _paneOffset.left - _halfColorPickerWidth
 
             this # Place the color picker
@@ -133,7 +132,7 @@
 
         close: ->
             @isOpen = false
-            this.removeClass 'is--visible is--initial is--searching is--error'
+            @removeClass 'is--visible is--initial is--searching is--error'
 
             return unless @storage.activeView and @storage.activeView.verticalScrollbar
             @storage.activeView.verticalScrollbar.off 'scroll.color-picker'
@@ -154,7 +153,7 @@
             window.onresize = => if @isOpen then @close()
             atom.workspaceView.on 'pane:active-item-changed', => @close()
 
-            $body = this.parents 'body'
+            $body = @parents 'body'
 
             do => # Bind the color output control
                 $body.on 'mousedown', (e) =>
@@ -179,7 +178,7 @@
                             @close()
                         when 'ColorPicker-initialWrapper'
                             @inputColor _color
-                            this.addClass 'is--initial'
+                            @addClass 'is--initial'
                 .on 'keydown', (e) =>
                     return unless @isOpen
                     return @close() unless e.which is 13
@@ -302,7 +301,7 @@
 
         # Set the current color after control interaction
         setColor: (color, preferredColorType) ->
-            unless color then this.removeClass 'is--initial'
+            unless color then @removeClass 'is--initial'
             else _setInitialColor = true
 
             _saturation = @storage.saturation
@@ -341,20 +340,20 @@
             @storage.pickedColor = _displayColor
 
             # Set the color
-            (this.find '#ColorPicker-color')
+            (@find '#ColorPicker-color')
                 .css 'background-color', _color
                 .css 'border-bottom-color', _color
-            (this.find '#ColorPicker-value').html _displayColor
+            (@find '#ColorPicker-value').html _displayColor
 
             # Save the initial color this function is given it
             if _setInitialColor
-                (this.find '#ColorPicker-initial')
+                (@find '#ColorPicker-initial')
                     .css 'background-color', _color
                     .html _displayColor
 
             # The color is a variable
             if color.hasOwnProperty 'pointer'
-                this.removeClass 'is--searching'
+                @removeClass 'is--searching'
                     .find '#ColorPicker-value'
                     .attr 'data-variable', color.match
 
@@ -367,10 +366,11 @@
 
         # User selects a new color, reflect the change
         inputColor: (color) ->
+            return unless this
             _hasClass = this[0].className.match /(is\-\-color\_(\w+))\s/
 
-            this.removeClass _hasClass[1] if _hasClass
-            this.addClass "is--color_#{ color.type }"
+            @removeClass _hasClass[1] if _hasClass
+            @addClass "is--color_#{ color.type }"
 
             _color = color.color
 

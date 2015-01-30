@@ -39,10 +39,15 @@ More linters will be supported in the future.
 $ apm install atom-lint
 ```
 
+If the current Atom has been launched via GUI (e.g. Dock/Finder on OS X),
+once quit and re-launch it from your shell with the `atom` command.
+This is required only once and important to handle `PATH` environment variable properly.
+See [Linter Executable Paths](#linter-executable-paths) for more details.
+
 ## Usage
 
-Your source will be linted on open and on save automatically,
-and the detected violations will be displayed as arrows in the editor.
+Your source will be linted on open and on save automatically.
+The detected violations will be displayed as arrows in the editor.
 You can see the detail of the violation by moving the cursor to it.
 
 ## Keymaps
@@ -50,12 +55,14 @@ You can see the detail of the violation by moving the cursor to it.
 * `Ctrl-Alt-L`: Global toggle
 * `Ctrl-Alt-[`: Move to Previous Violation
 * `Ctrl-Alt-]`: Move to Next Violation
+* `Ctrl-Alt-M`: Toggle Violation Metadata (toggle configuration `atom-lint.showViolationMetadata`)
 
 Also you can customize keymaps by editing `~/.atom/keymap.cson` (choose **Open Your Keymap** in **Atom** menu):
 
 ```coffeescript
 '.workspace':
   'ctrl-alt-l': 'lint:toggle'
+  'ctrl-alt-m': 'lint:toggle-violation-metadata'
 '.editor':
   'ctrl-alt-[': 'lint:move-to-previous-violation'
   'ctrl-alt-]': 'lint:move-to-next-violation'
@@ -73,6 +80,7 @@ You can configure Atom-Lint by editing `~/.atom/config.cson` (choose **Open Your
   'ignoredNames': [
     'tmp/**'
   ]
+  'showViolationMetadata': true
   'clang':
     'path': '/path/to/bin/clang'
     'headerSearchPaths': ['/path/to/include','/path2/to/include']
@@ -91,6 +99,7 @@ You can configure Atom-Lint by editing `~/.atom/config.cson` (choose **Open Your
     'path': '/path/to/bin/erlc'
   'flake8':
     'path': '/path/to/bin/flake8'
+    'configPath': '/path/to/your/config' # Passed to flake 8 via --config option
   'gc':
     'path': '/path/to/bin/go'
   'hlint':
@@ -114,9 +123,15 @@ You can configure Atom-Lint by editing `~/.atom/config.cson` (choose **Open Your
 * `atom-lint.LINTER.path`
 
 Normally you can omit this setting.
-By default Atom-Lint automatically refers the environment variable `PATH` of your login shell
-if it's `bash` or `zsh`, and then invokes the command.
-Thus, if you're using a language version manager such as [rbenv](https://github.com/sstephenson/rbenv),
+
+There's an issue that
+environment variables in Atom varies depending on whether it's launched via shell or GUI.
+If it's launched via GUI, it cannot get the environment variables set in your shell rc files like `PATH`.
+To handle this issue,
+when Atom is launched via shell, Atom-Lint automatically saves the environment variables,
+and from then on it will use the saved variables on linter invocation even if Atom is launched via GUI.
+
+If you're using a language version manager such as [rbenv](https://github.com/sstephenson/rbenv),
 linters need be installed in the default/global environment of the version manager
 (i.e. the environment where you opened a new terminal).
 If you need to use a non-default executable, use this setting.
@@ -157,6 +172,8 @@ See [`minimatch`](https://github.com/isaacs/minimatch) for more details.
 Specify additional header search paths. These paths are passed to `clang` with `-I` option.
 
 #### Project-Specific Flags and Atom-Lint's configuration
+
+**This feature is temporarily disabled now.**
 
 * `atom-lint.clang.mergeAtomLintConfigIntoAutoDiscoveredFlags`
 

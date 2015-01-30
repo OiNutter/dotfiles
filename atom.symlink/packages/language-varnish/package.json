@@ -1,0 +1,26 @@
+{
+  "name": "language-varnish",
+  "version": "0.3.0",
+  "description": "Language support for Varnish configuration files",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jacobbednarz/atom-language-varnish"
+  },
+  "license": "MIT",
+  "engines": {
+    "atom": ">0.50.0"
+  },
+  "dependencies": {},
+  "readme": "# VCL language support in Atom\n\nAdds language support for Varnish configuration files to Atom.\n",
+  "readmeFilename": "README.md",
+  "bugs": {
+    "url": "https://github.com/jacobbednarz/atom-language-varnish/issues"
+  },
+  "homepage": "https://github.com/jacobbednarz/atom-language-varnish",
+  "_id": "language-varnish@0.3.0",
+  "dist": {
+    "shasum": "72444cf6d0e791558e6ec7d54f0504e5035d69db"
+  },
+  "_resolved": "/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-114630-25103-qnd6us/package.tgz",
+  "_from": "/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-114630-25103-qnd6us/package.tgz"
+}

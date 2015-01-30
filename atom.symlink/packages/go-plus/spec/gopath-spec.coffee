@@ -1,7 +1,6 @@
 path = require 'path'
 fs = require 'fs-plus'
 temp = require('temp').track()
-{WorkspaceView} = require 'atom'
 _ = require 'underscore-plus'
 AtomConfig = require './util/atomconfig'
 
@@ -14,9 +13,7 @@ describe "gopath", ->
     directory = temp.mkdirSync()
     oldGoPath = process.env.GOPATH
     process.env['GOPATH']=directory
-    atom.project.setPath(directory)
-    atom.workspaceView = new WorkspaceView()
-    atom.workspace = atom.workspaceView.model
+    atom.project.setPaths(directory)
 
   afterEach ->
     process.env['GOPATH']=oldGoPath

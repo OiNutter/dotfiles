@@ -2,6 +2,70 @@
 
 ## Development
 
+## v0.20.0
+
+* [#96](https://github.com/yujinakayama/atom-lint/pull/96): Allow specifying a config file for `flake8` via config `atom-lint.flake8.configPath`. ([@anaconda])
+
+## v0.19.2
+
+* Fix an issue where no information is displayed on the status bar when a new editor tab is opened on Atom 0.125.0. ([@yujinakayama])
+
+## v0.19.1
+
+* Fix an error when environment variable `PATH` is not set. ([@yujinakayama])
+
+## v0.19.0
+
+* [#52](https://github.com/yujinakayama/atom-lint/issues/52): Redesign handling of environment variables to handle 100% CPU usage issue. ([@yujinakayama])
+
+## v0.18.0
+
+* Add basic support for Windows. ([@guillaume86])
+* Use Decoration API for gutter markers instead of the deprecated `EditorView::removeClassFromAllLines`. This drops the support for non-React editors. ([@yujinakayama])
+* Improve violation message mark-up. ([@yujinakayama])
+
+## v0.17.0
+
+* Always run linters in the current project root directory. ([@richrace])
+* Run RuboCop on RSpec syntax sources. ([@richrace])
+* Fix crash when line numbers and indent guide are hidden. ([@raviraa])
+* Disable automatic `.clang-complete` discovery feature temporarily. ([@yujinakayama])
+
+## v0.16.1
+
+* Fix an inconsistent view layout when `lint:toggle-violation-metadata` is run. ([@yujinakayama])
+
+## v0.16.0
+
+* Add support for displaying violation metadata in the tooltip. ([@yujinakayama])
+* Add new configuration `atom-lint.showViolationMetadata` for switching metadata display in tooltip. ([@yujinakayama])
+* Add new keymap `lint:toggle-violation-metadata` (Ctrl-Alt-M) for toggling configuration `atom-lint.showViolationMetadata`. ([@yujinakayama])
+* [#82](https://github.com/yujinakayama/atom-lint/pull/82): Display RuboCop's cop names as metadata. ([@yujinakayama])
+* Fix a bug where global toggling was executed twice for a `lint:toggle` command invocation after `atom-lint` is deactivated and then re-activated. ([@yujinakayama])
+* Handle deprecation warning “The option `invalidation` is deprecated, use `invalidate` instead”. ([@yujinakayama])
+
+## v0.15.1
+
+* [#83](https://github.com/yujinakayama/atom-lint/issues/83): Specify `pathwatcher` package dependency tentatively to solve incompatibility issue with Atom 0.121.0 on installation of `atom-lint`. ([@yujinakayama])
+
+## v0.15.0
+
+* [#81](https://github.com/yujinakayama/atom-lint/issues/81): Update `clang-flags` npm module dependency to `^0.1.2` and required Atom version to `>=0.121.0` due to an breaking change in Atom 0.121.0. ([@yujinakayama])
+
+## v0.14.5
+
+* Conform to the change of exit code in SCSSLint 0.26. ([@yujinakayama])
+
+## v0.14.4
+
+* [#80](https://github.com/yujinakayama/atom-lint/pull/80): Fix a bug where fetching login shell's environment variables fails when zsh option `CLOBBER` is unset and a linter is run twice at the same time on launch of Atom. ([@yujinakayama])
+* [#80](https://github.com/yujinakayama/atom-lint/pull/80): Fallback to Atom's environment variables rather than empty ones when failed fetching login shell's ones. ([@yujinakayama])
+* [#80](https://github.com/yujinakayama/atom-lint/pull/80): Avoid wasteful double linting on launch. ([@yujinakayama])
+
+## v0.14.3
+
+* [#80](https://github.com/yujinakayama/atom-lint/pull/80): Fix a bug that couldn't find `HOME` environment using RuboCop. ([@rochefort])
+
 ## v0.14.2
 
 * Fix a bug where linters could not be run when the login shell is zsh and zsh option `CLOBBER` is unset. ([@yujinakayama])
@@ -148,3 +212,8 @@
 [@bryanhunter]: https://github.com/bryanhunter
 [@elrolito]: https://github.com/elrolito
 [@Kev]: https://github.com/Kev
+[@rochefort]: https://github.com/rochefort
+[@richrace]: https://github.com/richrace
+[@raviraa]: https://github.com/raviraa
+[@guillaume86]: https://github.com/guillaume86
+[@anaconda]: https://github.com/anaconda

@@ -1,3 +1,91 @@
+## v3.0.9 (December 12, 2014)
+
+* :bug: Fix potential race condition
+
+## v3.0.8 (December 12, 2104)
+
+* :bug: Fix integration with autocomplete-plus (fixes #101)
+
+## v3.0.7 (December 11, 2014)
+
+* :hammer: Migrate go tools repos with the release of 1.4
+* :hammer: Use new autocomplete-plus registration API (you may need to uninstall/reinstall autocomplete-plus, or run `apm install autocomplete-plus` to get gocode integration working again)
+* :bug: Due to the go tools location moving, you will need to: `rm -rf $GOPATH/src/code.google.com/p/go.tools` and `rm -rf $GOPATH/src/golang.org/x` , and then run `Update Tools` to get your tools back to a working state with Go 1.4
+
+## v3.0.6 (November 23, 2014)
+
+* :bug: Add error handling when interacting with TextEditor and Buffer to guard against a destroyed TextEditor (fixes #100)
+
+## v3.0.5 (November 22, 2014)
+
+* :lipstick: Send the current buffer path to gocode to allow autocomplete within the current package (see #98)
+* :hammer: Fix tests
+
+## v3.0.4 (November 17, 2014)
+
+* :lipstick: Avoid potential :racehorse: condition (see #96)
+
+## v3.0.3 (November 17, 2014)
+
+* :bug: Fix error from `glob` (fixes #96)
+
+## v3.0.1 (November 17, 2014)
+
+* :bug: Ensure Autocomplete activation works (fixes #95)
+
+## v3.0.0 (November 16, 2014)
+
+* :gift: Gocode integration - major thanks to @andy-inc for the contribution! (fixes #2, #4, #94)
+
+## v2.1.3 (November 16, 2014)
+
+* :bug: Ensure GOPATH is correctly set when calling Format, Lint, and Vet tools (thanks @azr!) (fixes #89)
+* :lipstick: Fix issue with cover caused by migration of tools import paths to `golang.org/x/...` (related to #92)
+
+## v2.1.2 (November 12, 2014)
+
+* :lipstick: Change import paths for Go tools to new `golang.org/x/...` path (thanks @hansrodtang!)
+* :abc: Documentation updates
+
+## v2.1.1 (November 7, 2014)
+
+* :abc: Tone down the color scheme for `Display Go Information`
+* :abc: Add a hint about Mercurial for missing tools that require `hg` for a successful `go get`
+
+## v2.1.0 (November 7, 2014)
+
+* :new: Add support for [goreturns](https://github.com/sqs/goreturns) (#84)
+* :abc: Warn when `git` and `hg` cannot be found (#55)
+* :abc: Add operating system and Atom information to `Display Go Information` output (#85)
+* :bug: Don't try to use folders named `go` as the go executable
+* :lipstick: Add descriptions to `go-plus` settings
+* :lipstick: Add order to `go-plus` settings
+* :lipstick: Move to new Atom API(s) to fix test deprecation warnings
+
+## v2.0.10 (September 21, 2014)
+
+* :bug: Ensure gutter highlighting occurs and coverage is displayed (fixes #66)
+
+## v2.0.9 (September 12, 2014)
+
+* :lipstick: Remove deprecation warnings
+
+## v2.0.8 (August 17, 2014)
+
+* :bug: Actually parse `/usr/libexec/path_helper` output correctly
+
+## v2.0.7 (August 17, 2014)
+
+* :new: Use `/usr/libexec/path_helper` on OS X to set the PATH when Atom is launched via Dock / Finder / Spotlight (fixes #54, helps with #55)
+
+## v2.0.6 (August 15, 2014)
+
+* :new: Support GAE's `goapp` / `goapp.bat` (fixes #58, #59)
+
+## v2.0.5 (August 5, 2014)
+
+* :bug: Fix issue which prevented the save pipeline from triggering if you opened a file that was not .go
+
 ## v2.0.4 (July 30, 2014)
 
 * :bug: Really nailed the multiple message panels thing now :smile: - Emissary event life cycles are now properly handled

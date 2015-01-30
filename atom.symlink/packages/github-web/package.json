@@ -1,7 +1,7 @@
 {
   "name": "github-web",
   "theme": "syntax",
-  "version": "0.4.0",
+  "version": "0.6.0",
   "private": false,
   "description": "GitHub website style syntax theme.",
   "repository": {
@@ -18,10 +18,20 @@
     "url": "https://github.com/JonMidhir/github-web/issues"
   },
   "homepage": "https://github.com/JonMidhir/github-web",
-  "_id": "github-web@0.4.0",
+  "_id": "github-web@0.6.0",
   "dist": {
-    "shasum": "f27a66024d179267b8952de4fe1196747203f8b1"
+    "shasum": "85f1a9d08bccb044f1047016729c48b7c160a80d"
   },
-  "_resolved": "/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-114629-1493-1x10tr4/package.tgz",
-  "_from": "/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-114629-1493-1x10tr4/package.tgz"
+  "_resolved": "/private/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-1141021-29219-1nkd4eq/package.tgz",
+  "_from": "/private/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-1141021-29219-1nkd4eq/package.tgz",
+  "_atomModuleCache": {
+    "version": 1,
+    "dependencies": [],
+    "extensions": {
+      ".json": [
+        "package.json"
+      ]
+    },
+    "folders": []
+  }
 }

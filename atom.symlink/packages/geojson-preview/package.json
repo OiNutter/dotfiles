@@ -1,7 +1,7 @@
 {
   "name": "geojson-preview",
   "main": "./lib/geojson-preview",
-  "version": "0.3.1",
+  "version": "0.3.3",
   "description": "Preview geojson file in your text editor!",
   "keywords": [
     "geojson",
@@ -21,7 +21,7 @@
     "mapbox.js": "1.6.x",
     "geojsonhint": "0.2.x",
     "fs-plus": "2.x",
-    "pathwatcher": "^1.0",
+    "pathwatcher": "^2.0.10",
     "underscore-plus": "1.x"
   },
   "readme": "# GeoJSON Preview\n\nLets you preview .geojson files in your editor on a leaflet map.\n\nShow the geojson on a map to the right of the current editor using `ctrl-shift-g`\n\n![geojson-preview](https://f.cloud.github.com/assets/26278/2306038/b8feb124-a277-11e3-9635-e882eaf8c5ce.gif)\n",
@@ -30,10 +30,10 @@
     "url": "https://github.com/mick/geojson-preview/issues"
   },
   "homepage": "https://github.com/mick/geojson-preview",
-  "_id": "geojson-preview@0.3.1",
+  "_id": "geojson-preview@0.3.3",
   "dist": {
-    "shasum": "4838717eee78a993cba150238f70feb924825daa"
+    "shasum": "17f1f9b5f32ed5fda36f0096edb4caf5378972ac"
   },
-  "_resolved": "/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-11467-11171-jeduzo/package.tgz",
-  "_from": "/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-11467-11171-jeduzo/package.tgz"
+  "_resolved": "/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-11484-82422-1cs2uqs/package.tgz",
+  "_from": "/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-11484-82422-1cs2uqs/package.tgz"
 }

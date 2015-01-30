@@ -1,7 +1,7 @@
 {
   "name": "tabs-to-spaces",
   "main": "./lib/index",
-  "version": "0.4.1",
+  "version": "0.8.0",
   "description": "Provides the ability to convert between leading tabs and spaces in a document",
   "repository": {
     "type": "git",
@@ -9,31 +9,37 @@
   },
   "license": "MIT",
   "engines": {
-    "atom": ">0.60.0"
+    "atom": ">=0.153.0"
   },
-  "dependencies": {
-    "emissary": "1.x"
-  },
+  "dependencies": {},
   "devDependencies": {
-    "fs-plus": "2.x",
-    "grunt": "~0.4.2",
-    "grunt-contrib-jshint": "~0.6.3",
-    "grunt-contrib-nodeunit": "~0.2.0",
-    "grunt-contrib-uglify": "~0.2.2",
-    "grunt-codo": "~0.1.0",
-    "temp": "~0.6.0",
-    "text-buffer": ">1.4.0"
+    "temp": "~0.6.0"
   },
-  "readme": "[![Build Status](https://travis-ci.org/lee-dohm/tabs-to-spaces.svg?branch=master)](https://travis-ci.org/lee-dohm/tabs-to-spaces)\n\n# Tabs to Spaces\n\nAn Atom package for converting between leading tabs and leading spaces.\n\n## Installation\n\nThe package can be installed by using the Settings screen and searching for `tabs-to-spaces`.\n\nIt can also be installed from the command line with the command:\n\n```bash\napm install tabs-to-spaces\n```\n\n## Use\n\nIt can convert between leading tabs and spaces in the current editor window. It can be executed from:\n\n* Command Palette\n    * `Tabs To Spaces: Tabify`\n    * `Tabs To Spaces: Untabify`\n* Packages Menu\n    * `Packages > Tabs to Spaces > Tabify`\n    * `Packages > Tabs to Spaces > Untabify`\n* Context Menu\n    * `Tabify`\n    * `Untabify`\n\n## Configuration\n\nTabs to Spaces uses the following configuration values:\n\n* `editor.getTabLength()` &mdash; sets the number of space characters a tab character is equivalent to\n* `tabs-to-spaces.onSave` &mdash; if set to either \"tabify\" or \"untabify\" it performs that operation on save\n    * Previously this was named `on-save`, but this conflicts with the humanizing algorithm used for configuration options, so it was changed to follow the standard.\n\n### Keybinding\n\nI have not set keybindings for this package. They can easily be added by referencing the following commands:\n\n* `tabs-to-spaces:tabify`\n* `tabs-to-spaces:untabify`\n\nFor example, to map the Untabify command to <kbd>Cmd+Alt+T</kbd>:\n\n```cson\n'.editor:not(.mini)':\n  'alt-cmd-t': 'tabs-to-spaces:untabify'\n```\n\n## Copyright\n\nCopyright &copy; 2014 by [Lee Dohm](http://www.lee-dohm.com). See [LICENSE](https://github.com/lee-dohm/tabs-to-spaces/blob/master/LICENSE.md) for details.\n",
+  "readme": "[![Build Status](https://travis-ci.org/lee-dohm/tabs-to-spaces.svg?branch=master)](https://travis-ci.org/lee-dohm/tabs-to-spaces)\n\n# Tabs to Spaces\n\nAn Atom package for converting leading whitespace to either all spaces or all tabs.\n\n## Installation\n\nThe package can be installed by using the Settings screen and searching for `tabs-to-spaces`.\n\nIt can also be installed from the command line with the command:\n\n```bash\napm install tabs-to-spaces\n```\n\n## Use\n\nIt can convert any form of leading whitespace to either all spaces (Untabify) or the maximum number of tabs and minimum number of spaces with tabs up front (Tabify) to fill the same space. It will also, with configuration, convert to your preferred method on save.\n\n### Commands\n\n* `tabs-to-spaces:tabify` &mdash; Converts leading whitespace to tabs\n* `tabs-to-spaces:untabify` &mdash; Converts leading whitespace to spaces\n\n### Configuration\n\nTabs to Spaces uses the following configuration values:\n\n* `editor.tabLength` &mdash; sets the number of space characters a tab character is equivalent to\n* `tabs-to-spaces.onSave` &mdash; if set to either `tabify` or `untabify` it performs that operation on save\n\nThe package also supports language-specific configuration for the `onSave` setting. For example, the following configuration will tabify all file types on save except for JavaScript files:\n\n```coffee\n'global':\n  'tabs-to-spaces':\n    'onSave': 'tabify'\n'.source.js':\n  'tabs-to-spaces':\n    'onSave': 'none'\n```\n\nNo matter what `tabs-to-spaces.onSave` settings you configure, your `config.cson` will not be automatically tabified or untabified.\n\n### Keybindings\n\nKeybindings have not been set for this package. They can easily be added by referencing the commands listed above.\n\n## Copyright\n\nCopyright &copy; 2014 by [Lee Dohm](http://www.lee-dohm.com). See [LICENSE](https://github.com/lee-dohm/tabs-to-spaces/blob/master/LICENSE.md) for details.\n",
   "readmeFilename": "README.md",
   "bugs": {
     "url": "https://github.com/lee-dohm/tabs-to-spaces/issues"
   },
   "homepage": "https://github.com/lee-dohm/tabs-to-spaces",
-  "_id": "tabs-to-spaces@0.4.1",
+  "_id": "tabs-to-spaces@0.8.0",
   "dist": {
-    "shasum": "8d54d39ab192181387f76ccaa75927d98671f8fa"
+    "shasum": "ae1bfbd665e69bd506557c924f985e44555601de"
   },
-  "_resolved": "/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-114629-1520-1v0o66m/package.tgz",
-  "_from": "/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-114629-1520-1v0o66m/package.tgz"
+  "_resolved": "/private/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-1141119-94947-4lzw6q/package.tgz",
+  "_from": "/private/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-1141119-94947-4lzw6q/package.tgz",
+  "_atomModuleCache": {
+    "version": 1,
+    "dependencies": [],
+    "extensions": {
+      ".json": [
+        "coffeelint.json",
+        "package.json"
+      ],
+      ".coffee": [
+        "lib/index.coffee",
+        "lib/tabs-to-spaces.coffee"
+      ]
+    },
+    "folders": []
+  }
 }

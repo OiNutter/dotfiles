@@ -2,6 +2,7 @@
 #  Variable inspector
 # ----------------------------------------------------------------------------
 
+        path = require 'path'
         _definitions = {}
 
     # -------------------------------------
@@ -58,15 +59,15 @@
                 .then =>
                     # Figure out what file is holding the definition
                     # Assume it's the one closest to the current path
-                    _targetPath = atom.workspaceView.getActivePaneItem().getPath()
-                    _targetFragments = _targetPath.split '/'
+                    _targetPath = atom.workspace.getActivePaneItem().getPath()
+                    _targetFragments = _targetPath.split path.sep
 
                     _bestMatch = null
                     _bestMatchHits = 0
 
                     for result in _results
                         _thisMatchHits = 0
-                        _pathFragments = result.filePath.split '/'
+                        _pathFragments = result.filePath.split path.sep
                         _thisMatchHits++ for pathFragment, i in _pathFragments when pathFragment is _targetFragments[i]
 
                         if _thisMatchHits > _bestMatchHits
