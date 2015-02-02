@@ -7,7 +7,7 @@ _ = require 'lodash'
 class StatusBarView extends View
 
   @content: ->
-    @div class: 'tool-panel panel-bottom padded text-smaller', =>
+    @div class: 'padded text-smaller', =>
       @dl class: 'linter-statusbar', outlet: 'violations',
 
   initialize: ->
@@ -30,7 +30,7 @@ class StatusBarView extends View
     # If the selected line contains an error message, highlight the error
     $line?.addClass('message-highlighted')
 
-  beforeRemove: ->
+  detached: ->
     @off 'click', '.copy'
     @off 'click', '.goToError'
 
@@ -75,6 +75,11 @@ class StatusBarView extends View
       @show()
       @highlightLines(currentLine)
 
+  filterInfoMessages: (messages, config) ->
+    showInfoMessages = config.get 'linter.showInfoMessages'
+    return messages if showInfoMessages
+    return (msg for msg in messages when msg.level != 'info')
+
   # Render the view
   render: (messages, editor) ->
     statusBarConfig = atom.config.get 'linter.statusBar'
@@ -86,6 +91,8 @@ class StatusBarView extends View
 
     # Hide the last version of this view
     @hide()
+
+    messages = @filterInfoMessages messages, atom.config
 
     # No more errors on the file, return
     return unless messages.length > 0

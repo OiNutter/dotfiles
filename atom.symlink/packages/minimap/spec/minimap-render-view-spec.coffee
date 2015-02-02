@@ -1,7 +1,7 @@
 path = require 'path'
 MinimapRenderView = require '../lib/minimap-render-view'
 MinimapView = require '../lib/minimap-view'
-Minimap = require '../lib/minimap'
+Minimap = require '../lib/main'
 
 describe "MinimapRenderView", ->
   [minimapView, MinimapRenderView, editorView, updateCallback, workspaceElement, editor] = []
@@ -25,7 +25,7 @@ describe "MinimapRenderView", ->
       atom.project.setPaths([path.join(__dirname, 'fixtures')])
 
     waitsFor ->
-      editor = atom.workspace.getActiveEditor()
+      editor = atom.workspace.getActiveTextEditor()
 
     runs ->
       editorView = atom.views.getView(editor)

@@ -1,9 +1,9 @@
 path = require 'path'
 MinimapRenderView = require '../lib/minimap-render-view'
 MinimapView = require '../lib/minimap-view'
-Minimap = require '../lib/minimap'
+Minimap = require '../lib/main'
 
-describe "MinimapRenderView", ->
+xdescribe "MinimapRenderView", ->
   [minimapView, MinimapRenderView, editorView, updateCallback, marker, decoration] = []
 
   afterEach -> minimapView?.detach()
@@ -28,7 +28,7 @@ describe "MinimapRenderView", ->
       promise = atom.packages.activatePackage('minimap')
 
     runs ->
-      editor = atom.workspace.getActiveEditor()
+      editor = atom.workspace.getActiveTextEditor()
       editorView = atom.views.getView(editor)
       minimapView = new MinimapView editorView
       minimapView.attachToPaneView()

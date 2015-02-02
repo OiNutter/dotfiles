@@ -1,7 +1,7 @@
 {
   "name": "marked",
   "main": "./lib/marked",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "private": true,
   "description": "Opens the current file in Marked.app (Mac only!)",
   "activationEvents": [
@@ -22,15 +22,21 @@
     "url": "https://github.com/cliffrowley/atom-marked/issues"
   },
   "homepage": "https://github.com/cliffrowley/atom-marked",
-  "_id": "marked@0.1.6",
-  "dist": {
-    "shasum": "be76e6eeaf8ac64b1701c1306831f2c0ec71bfeb"
-  },
-  "_resolved": "/private/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-114930-40680-licxmn/package.tgz",
-  "_from": "/private/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-114930-40680-licxmn/package.tgz",
+  "_id": "marked@0.1.7",
+  "_shasum": "abff3ec9de95bc56111fdacbb4491ce3e310772d",
+  "_resolved": "file:../d-115031-3419-1ddhlfs/package.tgz",
+  "_from": "../d-115031-3419-1ddhlfs/package.tgz",
   "_atomModuleCache": {
     "version": 1,
     "dependencies": [],
+    "extensions": {
+      ".coffee": [
+        "lib/marked.coffee"
+      ],
+      ".json": [
+        "package.json"
+      ]
+    },
     "folders": []
   }
 }

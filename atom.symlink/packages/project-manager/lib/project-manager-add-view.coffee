@@ -1,4 +1,4 @@
-{View, EditorView} = require 'atom'
+{View} = require 'atom-space-pen-views'
 path = require 'path'
 
 module.exports =
@@ -6,43 +6,48 @@ class ProjectManagerAddView extends View
   projectManager: null
 
   @content: ->
-    @div class: 'project-manager overlay from-top', =>
+    @div class: 'project-manager', =>
       @div class: 'editor-container', outlet: 'editorContainer', =>
-        @subview 'editor',
-          new EditorView(mini: true, placeholderText: 'Project title')
         @div =>
-          @span 'Path: '
-          @span class: 'text-highlight', atom.project?.getPath()
+          @input outlet:'editor', class:'native-key-bindings', placeholderText: 'Project title'
+        @div =>
+          for projectPath in atom.project?.getPaths()
+            @span class: 'text-highlight', projectPath
 
   initialize: ->
-    basename = path.basename(atom.project.getPath())
-    @editor.setText(basename)
-    range = [[0], [basename.length]]
-    @editor.getEditor().setSelectedBufferRange(range)
-
-  handleEvents: ->
     @editor.on 'core:confirm', @confirm
-    @editor.on 'core:cancel', @remove
-    @editor.find('input').on 'blur', @remove
+    @editor.on 'core:cancel', @hide
+    @editor.on 'blur', @hide
 
-  focus: =>
-    @removeClass('hidden')
-    @editorContainer.find('.editor').focus()
+  cancelled: =>
+    @hide()
 
   confirm: =>
     project =
-      title: @editor.getText()
-      paths: [atom.project?.getPath()]
+      title: @editor.val()
+      paths: atom.project.getPaths()
 
     @projectManager.addProject(project) if project.title
-    @remove() if project.title
+    @hide() if project.title
 
-  remove: =>
-    atom.workspaceView.focus() if atom.workspaceView?
-    @addClass('hidden')
+  hide: =>
+    atom.commands.dispatch(atom.views.getView(atom.workspace), 'focus')
+    @panel.hide()
+
+  show: =>
+    @panel ?= atom.workspace.addModalPanel(item: this)
+    @panel.show()
+
+    firstPath = atom.project.getPaths()[0]
+    basename = path.basename(firstPath)
+
+    @editor.val(basename)
+    @editor.focus()
+    @editor.select()
 
   toggle: (projectManager) ->
     @projectManager = projectManager
-    atom.workspaceView.append(@)
-    @focus()
-    @handleEvents()
+    if @panel?.isVisible()
+      @hide()
+    else
+      @show()

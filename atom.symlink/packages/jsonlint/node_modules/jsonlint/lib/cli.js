@@ -90,9 +90,9 @@ function parse (source) {
       }
     }
 
-    return JSON.stringify(parsed,null,options.indent);
+    return JSON.stringify(parsed, null, options.indent);
   } catch (e) {
-    if ( options.forcePrettyPrint ) {
+    if (options.forcePrettyPrint) {
       /* From https://github.com/umbrae/jsonlintdotcom:
        * If we failed to validate, run our manual formatter and then re-validate so that we
        * can get a better line number. On a successful validate, we don't want to run our
@@ -107,16 +107,15 @@ function parse (source) {
         if (! options.compact) {
           console.error(e);
         }
-        return formatted;
-        process.exit(1);
+        // force the pretty print before exiting
+        console.log(formatted);
       }
     } else {
       if (! options.compact) {
         console.error(e);
       }
-
-      process.exit(1);
     }
+    process.exit(1);
   }
 }
 
@@ -154,7 +153,9 @@ function main (args) {
 
 // from http://stackoverflow.com/questions/1359761/sorting-a-json-object-in-javascript
 function sortObject(o) {
-  if (Object.prototype.toString.call(o) !== '[object Object]') {
+  if (Array.isArray(o)) {
+    return o.map(sortObject);
+  } else if (Object.prototype.toString.call(o) !== '[object Object]') {
     return o;
   }
 

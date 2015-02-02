@@ -2,16 +2,20 @@ fs = require 'fs'
 path = require 'path'
 shell = require 'shell'
 
-TravisCi = require 'travis-ci'
+TravisCi = null
 
-BuildMatrixView = require './build-matrix-view'
-BuildStatusView = require './build-status-view'
+BuildMatrixView = null
+BuildStatusView = null
 
 module.exports =
   # Internal: The default configuration properties for the package.
-  configDefaults:
-    useTravisCiPro: false
-    personalAccessToken: '<Your personal GitHub access token>'
+  config:
+    useTravisCiPro:
+        type: 'boolean'
+        default: false
+    personalAccessToken:
+        type: 'string'
+        default: '<Your personal GitHub access token>'
 
   # Internal: The build matrix bottom panel view.
   buildMatrixView: null
@@ -23,6 +27,9 @@ module.exports =
   #
   # Returns nothing.
   activate: ->
+    TravisCi ?= require 'travis-ci'
+    BuildStatusView ?= require './build-status-view'
+    BuildMatrixView ?= require './build-matrix-view'
     @isGitHubRepo() and @isTravisProject((e) => e and @init())
 
   # Internal: Deactive the package and destroys any views.
@@ -75,15 +82,15 @@ module.exports =
       pro: atom.config.get('travis-ci-status.useTravisCiPro')
     })
 
-    atom.workspaceView.command 'travis-ci-status:open-on-travis', =>
-      @openOnTravis()
+    atom.commands.add 'atom-workspace', 'travis-ci-status:open-on-travis', => @openOnTravis()
 
     createStatusEntry = =>
       nwo = @getNameWithOwner()
       @buildMatrixView = new BuildMatrixView(nwo)
       @buildStatusView = new BuildStatusView(nwo, @buildMatrixView)
 
-    if atom.workspaceView.statusBar
+    statusBar = document.querySelector("status-bar")
+    if statusBar?
       createStatusEntry()
     else
       atom.packages.once 'activated', ->

@@ -14,6 +14,7 @@
     showIndentGuide: true
     preferredLineLength: 100
     tabLength: 4
+    invisibles: {}
   core:
     disabledPackages: [
       "atom-lint"

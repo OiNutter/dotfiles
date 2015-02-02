@@ -1,20 +1,20 @@
-.editor, .editor .gutter,
+atom-text-editor, atom-text-editor .gutter,
 :host, :host .gutter {
   background-color: #222222;
   color: #F8F8F2;
 }
 
-.editor.is-focused .cursor,
+atom-text-editor.is-focused .cursor,
 :host(.is-focused) .cursor {
   border-color: #F8F8F0;
 }
 
-.editor.is-focused .selection .region,
+atom-text-editor.is-focused .selection .region,
 :host(.is-focused) .selection .region {
   background-color: #444444;
 }
 
-.editor.is-focused .line-number.cursor-line-no-selection, .editor.is-focused .line.cursor-line,
+atom-text-editor.is-focused .line-number.cursor-line-no-selection, atom-text-editor.is-focused .line.cursor-line,
 :host(.is-focused) .line-number.cursor-line-no-selection, :host(.is-focused) .line.cursor-line {
   background-color: #333333;
 }
@@ -23,9 +23,20 @@
   color: rgba(255, 255, 255, 0.1);
 }
 
-.editor .wrap-guide,
+atom-text-editor .wrap-guide,
 :host .wrap-guide {
   background-color: rgba(197, 200, 198, 0.1);
+}
+
+atom-text-editor .find-result .region,
+atom-text-editor::shadow .find-result .region {
+  border: 1px solid #F8F8F0;
+}
+
+atom-text-editor .current-result .region,
+atom-text-editor::shadow .current-result .region {
+  background-color: #444444;
+  border: 1px solid #F8F8F0;
 }
 
 .comment {

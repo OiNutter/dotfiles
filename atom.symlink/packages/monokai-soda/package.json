@@ -1,9 +1,9 @@
 {
   "name": "monokai-soda",
   "theme": "syntax",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "private": true,
-  "description": "A modified version of monokai theme for Atom",
+  "description": "A modified version of monokai syntax theme for Atom",
   "repository": {
     "type": "git",
     "url": "https://github.com/AbeEstrada/monokai-soda"
@@ -18,12 +18,10 @@
     "url": "https://github.com/AbeEstrada/monokai-soda/issues"
   },
   "homepage": "https://github.com/AbeEstrada/monokai-soda",
-  "_id": "monokai-soda@0.4.0",
-  "dist": {
-    "shasum": "3592d383d379996268856276233379321ee7ecd4"
-  },
-  "_resolved": "/private/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-1141021-29227-r5lk4z/package.tgz",
-  "_from": "/private/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-1141021-29227-r5lk4z/package.tgz",
+  "_id": "monokai-soda@0.5.0",
+  "_shasum": "af50cbc3f3f760093183bfc94e7ab3004ef5e17c",
+  "_resolved": "file:../d-115031-3435-k3wivj/package.tgz",
+  "_from": "../d-115031-3435-k3wivj/package.tgz",
   "_atomModuleCache": {
     "version": 1,
     "dependencies": [],

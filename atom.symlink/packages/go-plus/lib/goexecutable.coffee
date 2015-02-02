@@ -178,7 +178,7 @@ class GoExecutable
         if go.cover() isnt false and not updateExistingTools
           done()
         else
-          @executor.exec(go.executable, false, gogetenv, done, ['get', '-u', 'golang.org/x/tools/cmd/cover']) # TODO: Switch To New Path Once Go 1.4 Is Released
+          @executor.exec(go.executable, false, gogetenv, done, ['get', '-u', 'golang.org/x/tools/cmd/cover'])
       (callback) =>
         done = (exitcode, stdout, stderr) =>
           callback(null)
@@ -220,5 +220,5 @@ class GoExecutable
   current: =>
     return @gos[0] if _.size(@gos) is 1
     for go in @gos
-      return go if go.executable is @currentgo
+      return go if go?.executable is @currentgo
     return @gos[0]

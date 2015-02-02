@@ -2,6 +2,11 @@
 
 ## Development
 
+## v0.20.1
+
+* [#114](https://github.com/yujinakayama/atom-lint/issues/114): Fix error `Uncaught TypeError: Cannot read property 'previous' of undefined` with Atom 0.165.0. ([@yujinakayama])
+* [#113](https://github.com/yujinakayama/atom-lint/issues/113): Fix possible error on parsing Checkstyle format XML. ([@yujinakayama])
+
 ## v0.20.0
 
 * [#96](https://github.com/yujinakayama/atom-lint/pull/96): Allow specifying a config file for `flake8` via config `atom-lint.flake8.configPath`. ([@anaconda])

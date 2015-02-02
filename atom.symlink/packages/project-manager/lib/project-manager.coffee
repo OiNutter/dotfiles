@@ -51,7 +51,7 @@ module.exports =
         @createProjectManagerAddView(state).toggle(@)
 
       'project-manager:edit-projects': =>
-        atom.workspaceView.open @file()
+        atom.workspace.open @file()
 
       'project-manager:reload-project-settings': =>
         @loadCurrentProject()

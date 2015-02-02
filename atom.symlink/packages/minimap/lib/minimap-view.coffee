@@ -79,8 +79,6 @@ class MinimapView extends View
     @emitter = new Emitter
     @setEditorView(editorView)
 
-    @paneView.classList.add('with-minimap')
-
     @subscriptions = new CompositeDisposable
 
     super({minimapView: this, editorView})
@@ -210,6 +208,8 @@ class MinimapView extends View
     @detachFromPaneView()
     @renderView.destroy()
     @remove()
+
+  getTextEditor: -> @editor
 
   setEditorView: (@editorView) ->
     @editor = @editorView.getModel()
@@ -494,13 +494,15 @@ class MinimapView extends View
     e.preventDefault()
     e.stopPropagation()
 
-    y = e.pageY - @offsetTop
-    top = (y + @renderView.scrollTop()) / @scaleY
+    {pageY, target} = e
 
-    position = @editor.displayBuffer.screenPositionForPixelPosition({top, left: 0})
-    @editor.scrollToScreenPosition(position, center: true)
+    y = pageY - target.getBoundingClientRect().top
+    row = Math.floor(y / @getLineHeight()) + @getFirstVisibleScreenRow()
 
-    # Fix trigger `mousewheel` event.
+    scrollTop = row * @getTextEditor().getLineHeightInPixels() - @getTextEditor().getHeight() / 2
+
+    @getTextEditor().setScrollTop(scrollTop)
+
     setTimeout =>
       @isClicked = false
     , 377

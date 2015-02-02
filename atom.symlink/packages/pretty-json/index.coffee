@@ -12,7 +12,7 @@ prettify = (editor, sorted) ->
     )
 
 formatter = (text, sorted) ->
-  editorSettings = atom.config.getSettings().editor
+  editorSettings = atom.config.get('editor')
   if editorSettings.softTabs?
     space = Array(editorSettings.tabLength + 1).join(" ")
   else
@@ -29,9 +29,10 @@ formatter = (text, sorted) ->
 
 module.exports =
   activate: ->
-    atom.workspaceView.command 'pretty-json:prettify', '.editor', ->
-      editor = atom.workspace.getActiveEditor()
-      prettify(editor)
-    atom.workspaceView.command 'pretty-json:sort-and-prettify', '.editor', ->
-      editor = atom.workspace.getActiveEditor()
-      prettify(editor, true)
+    atom.commands.add 'atom-workspace',
+      'pretty-json:prettify': ->
+        editor = atom.workspace.getActiveEditor()
+        prettify(editor)
+      'pretty-json:sort-and-prettify': ->
+        editor = atom.workspace.getActiveEditor()
+        prettify(editor, true)
