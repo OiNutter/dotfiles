@@ -1,0 +1,35 @@
+{
+  "name": "language-aspx",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Language file for ASP.NET Web Forms files (aspx, ascx, ashx)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jbalboni/atom-language-aspx"
+  },
+  "license": "MIT",
+  "engines": {
+    "atom": ">0.50.0"
+  },
+  "dependencies": {},
+  "readme": "# language-aspx package\n\nProvides language support for ASP.NET Web Forms and User Controls.\n\nAssumes the html and csharp language files, so you should install those, too.\n",
+  "readmeFilename": "README.md",
+  "bugs": {
+    "url": "https://github.com/jbalboni/atom-language-aspx/issues"
+  },
+  "homepage": "https://github.com/jbalboni/atom-language-aspx",
+  "_id": "language-aspx@0.2.0",
+  "_shasum": "06264d788b9d192e21e96aec4480531b9e41ff74",
+  "_resolved": "file:../d-11513-98452-hazu5h/package.tgz",
+  "_from": "../d-11513-98452-hazu5h/package.tgz",
+  "_atomModuleCache": {
+    "version": 1,
+    "dependencies": [],
+    "extensions": {
+      ".json": [
+        "package.json"
+      ]
+    },
+    "folders": []
+  }
+}

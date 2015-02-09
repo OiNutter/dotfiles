@@ -1,0 +1,61 @@
+'fileTypes': [
+  'aspx',
+  'ascx',
+  'master'
+]
+'name': 'Web Form/Control (C#)'
+'patterns': [
+  {
+    'begin': '<%[\=\# ]'
+    'beginCaptures':
+      '0':
+        'name': 'punctuation.section.embedded.begin.aspx'
+    'end': '%>'
+    'endCaptures':
+      '0':
+        'name': 'punctuation.section.embedded.end.aspx'
+    'name': 'source.cs.embedded.html'
+    'patterns': [
+      {
+        'include': 'source.cs'
+      }
+    ]
+  }
+  {
+    'begin': '<%\@'
+    'beginCaptures':
+      '0':
+        'name': 'punctuation.section.embedded.begin.aspx'
+    'end': '%>'
+    'endCaptures':
+      '0':
+        'name': 'punctuation.section.embedded.end.aspx'
+    'name': 'source.asp.embedded2.html'
+    'patterns': [
+      {
+        'match': ' [^" =]*? '
+        'name': 'entity.name.tag.html'
+      }
+      {
+        'captures':
+          '1':
+            'name': 'entity.other.attribute-name.html'
+          '2':
+            'name': 'string.quoted.double.html'
+        'match': '(.*?)=([\'"]?.*?["\'])'
+        'name': 'meta.attribute-with-value.html'
+      }
+    ]
+  }
+  {
+    'captures':
+      '0':
+        'name': 'punctuation.definition.comment.aspx'
+    'match': '<%--.*?--%>'
+    'name': 'comment.line.aspx'
+  }
+  {
+    'include': 'text.html.basic'
+  }
+]
+'scopeName': 'text.html.aspx'
