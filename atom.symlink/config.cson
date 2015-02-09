@@ -26,7 +26,7 @@
       "atom-soda-dark-ui"
       "monokai-soda"
     ]
-    projectHome: "/Users/will/Documents/workspace"
+    projectHome: "/Users/will/projects/"
   "git-diff":
     showIconsInEditorGutter: true
   "travis-ci-status":
