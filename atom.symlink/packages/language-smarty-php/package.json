@@ -1,6 +1,6 @@
 {
   "name": "language-smarty-php",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Convertion of the smarty-php bundle for TextMate.",
   "repository": {
     "type": "git",
@@ -11,18 +11,16 @@
     "atom": ">0.50.0"
   },
   "dependencies": {},
-  "readme": "# language-smarty-php package\n\nA convertion of [php-smarty for TextMate](https://github.com/textmate/php-smarty.tmbundle) for [Atom](http://atom.io).\n",
+  "readme": "# language-smarty-php package\n\nA convertion of [php-smarty for TextMate](https://github.com/textmate/php-smarty.tmbundle) for [Atom](http://atom.io).\n\n# Contributors\n\n* [rachel-carvalho](https://github.com/rachel-carvalho)\n* [Kevin39](https://github.com/kevin39)\n* [Imperez](https://github.com/imperez)\n",
   "readmeFilename": "README.md",
   "bugs": {
     "url": "https://github.com/martin-damien/language-smarty-php/issues"
   },
   "homepage": "https://github.com/martin-damien/language-smarty-php",
-  "_id": "language-smarty-php@0.4.0",
-  "dist": {
-    "shasum": "4432977b57f42b6a4edf444e18d87bc5723006f6"
-  },
-  "_resolved": "/private/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-1141018-55919-1szh73j/package.tgz",
-  "_from": "/private/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-1141018-55919-1szh73j/package.tgz",
+  "_id": "language-smarty-php@0.5.0",
+  "_shasum": "a4c1160840c905c34a430684ceb1b6c769461498",
+  "_resolved": "file:../d-115111-88612-6mxw3a/package.tgz",
+  "_from": "../d-115111-88612-6mxw3a/package.tgz",
   "_atomModuleCache": {
     "version": 1,
     "dependencies": [],

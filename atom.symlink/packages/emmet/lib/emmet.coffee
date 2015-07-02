@@ -23,6 +23,19 @@ getUserHome = () ->
 
   process.env.HOME
 
+isValidTabContext = () ->
+  if editorProxy.getGrammar() is 'html'
+    # HTML may contain embedded grammars
+    scopes = editorProxy.getCurrentScope()
+    contains = (regexp) -> scopes.filter((s) -> regexp.test s).length
+
+    if contains /\.js\.embedded\./
+      # in JS, allow Tab expander only inside string
+      return contains /^string\./
+
+  return true
+
+
 # Emmet action decorator: creates a command function
 # for Atom and executes Emmet action as single
 # undo command
@@ -50,11 +63,11 @@ runAction = (action, evt) ->
   syntax = editorProxy.getSyntax()
   if action is 'expand_abbreviation_with_tab'
     # do not handle Tab key if:
-    # -1. syntax is unknown- (defined by keymap selector)
+    # -1. syntax is unknown- (no longer valid, defined by keymap selector)
     # 2. there’s a selection (user wants to indent it)
     # 3. has expanded snippet (e.g. has tabstops)
     activeEditor = editorProxy.editor;
-    if not activeEditor.getSelection().isEmpty()
+    if not isValidTabContext() or not activeEditor.getLastSelection().isEmpty()
       return evt.abortKeyBinding()
     if activeEditor.snippetExpansion
       # in case of snippet expansion: expand abbreviation if we currently on last
@@ -64,8 +77,8 @@ runAction = (action, evt) ->
         se.destroy()
       else
         return evt.abortKeyBinding()
-  
-  if action is 'toggle_comment' and toggleCommentSyntaxes.indexOf(syntax) is -1
+
+  if action is 'toggle_comment' and (toggleCommentSyntaxes.indexOf(syntax) is -1 or not atom.config.get 'emmet.useEmmetComments')
     return evt.abortKeyBinding()
 
   if action is 'insert_formatted_line_break_only'
@@ -109,9 +122,17 @@ loadExtensions = () ->
     console.warn 'Emmet: no such extension folder:', extPath
 
 module.exports =
-  configDefaults:
-    extensionsPath: '~/emmet'
-    formatLineBreaks: true
+  config:
+    extensionsPath:
+      type: 'string'
+      default: '~/emmet'
+    formatLineBreaks:
+      type: 'boolean'
+      default: true
+    useEmmetComments:
+      type: 'boolean'
+      default: true
+      description: 'disable to use atom native commenting system'
 
   activate: (@state) ->
     @subscriptions = new CompositeDisposable

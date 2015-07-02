@@ -2,9 +2,7 @@
 
 PluginManagement = require './mixins/plugin-management'
 
-[Minimap, MinimapElement, MinimapPluginGeneratorView, deprecate, semver] = []
-
-require '../vendor/resizeend'
+[Minimap, MinimapElement, MinimapPluginGeneratorElement, deprecate, semver] = []
 
 # Public: The `Minimap` package provides an eagle-eye view of text buffers.
 #
@@ -60,15 +58,15 @@ class Main
       default: true
       description: 'If this option is enabled and Soft Wrap is checked then the Minimap max width is set to the Preferred Line Length value.'
     charWidth:
-      type: 'integer'
+      type: 'number'
       default: 1
-      minimum: 1
+      minimum: .5
     charHeight:
-      type: 'integer'
+      type: 'number'
       default: 2
-      minimum: 1
+      minimum: .5
     interline:
-      type: 'integer'
+      type: 'number'
       default: 1
       minimum: 0
       description: 'The space between lines in the minimap in pixels.'
@@ -81,7 +79,18 @@ class Main
     scrollAnimation:
       type: 'boolean'
       default: false
-      description: "If this option is enabled then when you click the minimap it will scroll to the destination with animation"
+      description: 'Enables animations when scrolling by clicking on the minimap.'
+    scrollAnimationDuration:
+      type: 'integer'
+      default: 300
+      description: 'The duration of scrolling animations when clicking on the minimap.'
+    createPluginInDevMode:
+      type: 'boolean'
+      default: false
+    absoluteMode:
+      type: 'boolean'
+      default: false
+      description: 'When enabled the text editor content will be able to flow below the minimap.'
 
   # Internal: The activation state of the minimap package.
   active: false
@@ -145,8 +154,9 @@ class Main
 
   # Opens the plugin generation view.
   generatePlugin: ->
-    MinimapPluginGeneratorView ?= require './minimap-plugin-generator-view'
-    view = new MinimapPluginGeneratorView()
+    MinimapPluginGeneratorElement ?= require './minimap-plugin-generator-element'
+    view = new MinimapPluginGeneratorElement()
+    view.attach()
 
   # Calls the `callback` when the minimap package have been activated.
   #
@@ -264,15 +274,11 @@ class Main
   # Returns a `Disposable`.
   observeMinimaps: (iterator) ->
     return unless iterator?
-    @editorsMinimaps.forEach (minimap) -> iterator(minimap)
+    @editorsMinimaps?.forEach (minimap) -> iterator(minimap)
     createdCallback = (minimap) -> iterator(minimap)
-    disposable = @onDidCreateMinimap(createdCallback)
-    disposable.off = ->
-      deprecate('Use Disposable::dispose instead')
-      disposable.dispose()
-    disposable
+    @onDidCreateMinimap(createdCallback)
 
-  # Internal: Registers
+  # Internal: Registers to the `observeTextEditors` method.
   initSubscriptions: ->
     @subscriptions.add atom.workspace.observeTextEditors (textEditor) =>
       minimap = @minimapForEditor(textEditor)

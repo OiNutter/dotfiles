@@ -1,6 +1,6 @@
 {
   "name": "language-varnish",
-  "version": "0.3.0",
+  "version": "0.5.0",
   "description": "Language support for Varnish configuration files",
   "repository": {
     "type": "git",
@@ -11,16 +11,24 @@
     "atom": ">0.50.0"
   },
   "dependencies": {},
-  "readme": "# VCL language support in Atom\n\nAdds language support for Varnish configuration files to Atom.\n",
+  "readme": "# Syntax support for VCL files in Atom\n\nContributions are welcome and bonus are awarded for pull requests. Please fork and send a pull requests for updates to grammars, snippets or documentation.\n",
   "readmeFilename": "README.md",
   "bugs": {
     "url": "https://github.com/jacobbednarz/atom-language-varnish/issues"
   },
   "homepage": "https://github.com/jacobbednarz/atom-language-varnish",
-  "_id": "language-varnish@0.3.0",
-  "dist": {
-    "shasum": "72444cf6d0e791558e6ec7d54f0504e5035d69db"
-  },
-  "_resolved": "/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-114630-25103-qnd6us/package.tgz",
-  "_from": "/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-114630-25103-qnd6us/package.tgz"
+  "_id": "language-varnish@0.5.0",
+  "_shasum": "16f6f1f32cd051efb27f7dafe4f24683a8b43e46",
+  "_resolved": "file:../d-115511-11317-12s4tce/package.tgz",
+  "_from": "../d-115511-11317-12s4tce/package.tgz",
+  "_atomModuleCache": {
+    "version": 1,
+    "dependencies": [],
+    "extensions": {
+      ".json": [
+        "package.json"
+      ]
+    },
+    "folders": []
+  }
 }

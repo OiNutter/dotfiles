@@ -1,7 +1,29 @@
 # CHANGELOG
 
-## **v0.8.1** &mdash; *Released: 25 January 2015*
+## **v0.11.0** &mdash; *Released: 25 May 2015*
 
+* Stopped using undocumented interface
+* [#28](https://github.com/lee-dohm/tabs-to-spaces/issues/28) &mdash; Change the extension of the sample JavaScript file to prevent strange error message
+
+## **v0.10.0** &mdash; *Released: 1 May 2015*
+
+* Clean up for Deprecation Day
+
+## **v0.9.2** &mdash; *Released: 30 March 2015*
+
+* Added keywords to the `package.json`
+
+## **v0.9.1** &mdash; *Released: 29 March 2015*
+
+* [#27](https://github.com/lee-dohm/tabs-to-spaces/pull/27) by [@Hurtak](https://github.com/Hurtak) &mdash; Grouped context menu items into a submenu
+
+## **v0.9.0** &mdash; *Released: 18 March 2015*
+
+* [#21](https://github.com/lee-dohm/tabs-to-spaces/issues/21) &mdash; Added "Untabify All" command to convert *all* tabs in a document to spaces
+
+## **v0.8.1** &mdash; *Released: 2 February 2015*
+
+* Updated to only support post-API-freeze versions of Atom
 * Fixed all the latest deprecations
 
 ## **v0.8.0** &mdash; *Released: 7 December 2014*

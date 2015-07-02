@@ -10,6 +10,9 @@ editorUtils = require 'emmet/lib/utils/editor'
 insertSnippet = (snippet, editor) ->
   atom.packages.getLoadedPackage('snippets')?.mainModule?.insert(snippet, editor)
 
+  # Fetch expansions and assign to editor
+  editor.snippetExpansion = atom.packages.getLoadedPackage('snippets')?.mainModule?.getExpansions(editor)[0]
+
 visualize = (str) ->
   str
     .replace(/\t/g, '\\t')
@@ -149,7 +152,7 @@ module.exports =
   getCurrentLine: ->
     sel = @getSelectionBufferRange()
     row = sel.getRows()[0]
-    return @editor.lineForBufferRow(row)
+    return @editor.lineTextForBufferRow(row)
 
   # Returns the editor content.
   getContent: ->
@@ -197,15 +200,34 @@ module.exports =
     @_saveSelection(utils.splitByLines(value).length - utils.splitByLines(oldValue).length)
     value
 
+  getGrammar: ->
+    @editor.getGrammar().name.toLowerCase()
+
   # Returns the editor's syntax mode.
   getSyntax: ->
-    @editor.getGrammar().name.toLowerCase()
+    syntax = @getGrammar()
+
+    if /\b(javascript|jsx)\b/.test(syntax)
+      syntax = if @getCurrentScope().some((scope) -> /\bstring\b/.test scope) then 'html' else 'jsx'
+      
+    if syntax is 'html'
+      # HTML can contain embedded syntaxes
+      embedded = @getCurrentScope().filter((s) -> /\.embedded\./.test s).pop()
+      if embedded
+        m = embedded.match /source\.(.+?)\.embedded/
+        syntax = m[1] if m
+
+    return syntax
+
+  getCurrentScope: ->
+    range = @_selection.bufferRanges[@_selection.index]
+    @editor.scopeDescriptorForBufferPosition(range.start).getScopesArray()
 
   # Returns the current output profile name
   #
   # See emmet.setupProfile for more information.
   getProfileName: ->
-    'html'
+    return if @getCurrentScope().some((scope) -> /\bstring\.quoted\b/.test scope) then 'line' else 'html'
 
   # Returns the current editor's file path
   getFilePath: ->

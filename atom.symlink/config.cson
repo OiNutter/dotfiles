@@ -9,18 +9,19 @@
     userId: "8786426681610c19f7a7733ec10b1f73d29f4d4c"
   editor:
     fontFamily: "Inconsolata"
-    fontSize: 13
     showInvisibles: true
     showIndentGuide: true
     preferredLineLength: 100
     tabLength: 4
     invisibles: {}
+    fontSize: 13
   core:
     disabledPackages: [
       "atom-lint"
       "linter-scss-lint"
       "ScssBundle"
       "go-plus"
+      "go-format"
     ]
     themes: [
       "atom-soda-dark-ui"
@@ -37,4 +38,15 @@
     hideOnNoErrors: true
   "go-plus":
     showPanel: false
-  linter: {}
+  linter:
+    subtleLinterErrors: [
+      "shellcheck"
+      "pep8"
+    ]
+    showErrorPanel: false
+    ignoredLinterErrors: [
+      "scss-lint"
+    ]
+  "markdown-preview":
+    useGitHubStyle: true
+  react: {}

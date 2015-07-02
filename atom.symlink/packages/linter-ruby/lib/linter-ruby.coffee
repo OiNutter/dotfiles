@@ -23,10 +23,11 @@ class LinterRuby extends Linter
   constructor: (editor)->
     super(editor)
 
-    atom.config.observe 'linter-ruby.rubyExecutablePath', =>
+    @rubyLinter = atom.config.observe 'linter-ruby.rubyExecutablePath', =>
       @executablePath = atom.config.get 'linter-ruby.rubyExecutablePath'
 
   destroy: ->
-    atom.config.unobserve 'linter-ruby.rubyExecutablePath'
+    super
+    @rubyLinter.dispose()
 
 module.exports = LinterRuby

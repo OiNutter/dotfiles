@@ -12,3 +12,11 @@
 #   editor = editorView.getEditor()
 #   if path.extname(editor.getPath()) is '.md'
 #     editor.setSoftWrap(true)
+process.env.PATH = [
+    "/usr/bin",
+    "/usr/local/bin",
+    "/usr/local/opt/rbenv/bin",
+    "/usr/local/opt/pyenv/bin",
+    "~/.nodenv/bin/",
+    "~/.bin"
+].join(":")

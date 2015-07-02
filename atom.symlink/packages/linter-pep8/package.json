@@ -2,7 +2,7 @@
   "name": "linter-pep8",
   "linter-package": true,
   "main": "./lib/init",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Linter plugin for pep8",
   "repository": {
     "type": "git",
@@ -19,12 +19,10 @@
     "url": "https://github.com/AtomLinter/linter-pep8/issues"
   },
   "homepage": "https://github.com/AtomLinter/linter-pep8",
-  "_id": "linter-pep8@0.1.0",
-  "dist": {
-    "shasum": "7147dd4d044fa922b9fcb8cb1bb5c861b2a0c518"
-  },
-  "_resolved": "/private/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-1141119-94942-h7xcnp/package.tgz",
-  "_from": "/private/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-1141119-94942-h7xcnp/package.tgz",
+  "_id": "linter-pep8@0.2.0",
+  "_shasum": "58294b39857d0b8bef1f8c11faadbeece29bb26a",
+  "_resolved": "file:../d-11558-78486-s4phj/package.tgz",
+  "_from": "../d-11558-78486-s4phj/package.tgz",
   "_atomModuleCache": {
     "version": 1,
     "dependencies": [],

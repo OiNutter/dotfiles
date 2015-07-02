@@ -1,7 +1,7 @@
 {
   "name": "github-web",
   "theme": "syntax",
-  "version": "0.6.0",
+  "version": "1.1.0",
   "private": false,
   "description": "GitHub website style syntax theme.",
   "repository": {
@@ -18,12 +18,10 @@
     "url": "https://github.com/JonMidhir/github-web/issues"
   },
   "homepage": "https://github.com/JonMidhir/github-web",
-  "_id": "github-web@0.6.0",
-  "dist": {
-    "shasum": "85f1a9d08bccb044f1047016729c48b7c160a80d"
-  },
-  "_resolved": "/private/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-1141021-29219-1nkd4eq/package.tgz",
-  "_from": "/private/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-1141021-29219-1nkd4eq/package.tgz",
+  "_id": "github-web@1.1.0",
+  "_shasum": "6664e79d10211d29c171806b7103ec49e77dda3b",
+  "_resolved": "file:../d-115320-30876-1tmqc84/package.tgz",
+  "_from": "../d-115320-30876-1tmqc84/package.tgz",
   "_atomModuleCache": {
     "version": 1,
     "dependencies": [],

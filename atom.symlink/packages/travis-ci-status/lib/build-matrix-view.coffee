@@ -88,8 +88,14 @@ class BuildMatrixView extends View
 
     duration = ((finished - started) / 1000).toString()
 
+    domain = if atom.travis.pro
+      'magnum.travis-ci.com'
+    else
+      'travis-ci.org'
+
     @builds.append("""
       <li class='#{status}'>
-        #{build['number']} - #{duration.formattedDuration()} >>> <a target="_new" href="https://travis-ci.org/#{@nwo}/builds/#{build['build_id']}">Full Report...</a>
+        #{build['number']} - #{duration.formattedDuration()}
+        (<a target="_new" href="https://#{domain}/#{@nwo}/builds/#{build['build_id']}">details</a>)
       </li>
     """)

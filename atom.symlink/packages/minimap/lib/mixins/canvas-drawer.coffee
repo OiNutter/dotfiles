@@ -1,7 +1,16 @@
+_ = require 'underscore-plus'
 Mixin = require 'mixto'
 
+# Public: The {CanvasDrawer} mixin is responsible for the rendering of a
+# {Minimap} in a `canvas` element.
+#
+# This mixin is injected in the {MinimapElement} prototype, so all these methods
+# are available on any {MinimapElement} instance.
 module.exports =
 class CanvasDrawer extends Mixin
+  ### Public ###
+
+  # Initializes the canvas elements needed to perform the {Minimap} rendering.
   initializeCanvas: ->
     @canvas = document.createElement('canvas')
     @context = @canvas.getContext('2d')
@@ -11,9 +20,12 @@ class CanvasDrawer extends Mixin
     @offscreenCanvas = document.createElement('canvas')
     @offscreenContext = @offscreenCanvas.getContext('2d')
 
+  # Performs an update of the rendered {Minimap} based on the changes registered
+  # in the instance.
   updateCanvas: ->
     firstRow = @minimap.getFirstVisibleScreenRow()
     lastRow = @minimap.getLastVisibleScreenRow()
+
     intactRanges = @computeIntactRanges(firstRow, lastRow)
 
     @context.clearRect(0,0,@canvas.width, @canvas.height)
@@ -40,6 +52,9 @@ class CanvasDrawer extends Mixin
   #    ##    ## ##     ## ##       ##     ## ##    ##  ##    ##
   #     ######   #######  ########  #######  ##     ##  ######
 
+  # Returns the opacity value to use when rendering the {Minimap} text.
+  #
+  # Returns a {Number}.
   getTextOpacity: -> @textOpacity
 
   # Returns the default text color for an editor content.
@@ -60,10 +75,7 @@ class CanvasDrawer extends Mixin
   # token - A token {Object}.
   #
   # Returns a {String}.
-  getTokenColor: (token) ->
-    #Retrieve color from cache if available
-    flatScopes = (token.scopeDescriptor or token.scopes).join()
-    @retrieveTokenColorFromDom(token)
+  getTokenColor: (token) -> @retrieveTokenColorFromDom(token)
 
   # Returns the background color for the passed-in `decoration` object.
   #
@@ -134,19 +146,13 @@ class CanvasDrawer extends Mixin
     charWidth = @minimap.getCharWidth() * devicePixelRatio
     canvasWidth = @canvas.width
     displayCodeHighlights = @displayCodeHighlights
-    decorations = @minimap.decorationsForScreenRowRange(firstRow, lastRow)
+    decorations = @minimap.decorationsForScreenRowRangeByTypeThenRows(firstRow, lastRow)
 
     line = lines[0]
 
     # Whitespaces can be substituted by other characters so we need
     # to replace them when that's the case.
-    if line? and line.invisibles?
-      re = ///
-      #{line.invisibles.cr}|
-      #{line.invisibles.eol}|
-      #{line.invisibles.space}|
-      #{line.invisibles.tab}
-      ///g
+    invisibleRegExp = @getInvisibleRegExp(line)
 
     for line, row in lines
       x = 0
@@ -155,38 +161,61 @@ class CanvasDrawer extends Mixin
       y0 = y*lineHeight
 
       # Line decorations are first drawn on the canvas.
-      lineDecorations = @minimap.decorationsByTypesForRow(screenRow, 'line', decorations)
-      @drawLineDecorations(context, lineDecorations, y0, canvasWidth, lineHeight) if lineDecorations.length
+      lineDecorations = decorations['line']?[screenRow]
+
+      @drawLineDecorations(context, lineDecorations, y0, canvasWidth, lineHeight) if lineDecorations?.length
 
       # Then comes the highlight decoration with `highlight-under` type.
-      highlightDecorations = @minimap.decorationsByTypesForRow(firstRow + row, 'highlight-under', decorations)
-      for decoration in highlightDecorations
-        @drawHighlightDecoration(context, decoration, y, screenRow, lineHeight, charWidth, canvasWidth)
+      highlightDecorations = decorations['highlight-under']?[firstRow + row]
+      if highlightDecorations?.length
+        for decoration in highlightDecorations
+          @drawHighlightDecoration(context, decoration, y, screenRow, lineHeight, charWidth, canvasWidth)
 
       # Then the line tokens are drawn
-      for token in line.tokens
-        w = token.screenDelta
-        unless token.isOnlyWhitespace()
-          color = if displayCodeHighlights
-            @getTokenColor(token)
+      if line?.tokens?
+        for token in line.tokens
+          w = token.screenDelta
+          unless token.isOnlyWhitespace()
+            color = if displayCodeHighlights
+              @getTokenColor(token)
+            else
+              @getDefaultColor()
+
+            value = token.value
+            value = value.replace(invisibleRegExp, ' ') if invisibleRegExp?
+
+            x = @drawToken(context, value, color, x, y0, charWidth, charHeight)
           else
-            @getDefaultColor()
+            x += w * charWidth
 
-          value = token.value
-          value = value.replace(re, ' ') if re?
-
-          x = @drawToken(context, value, color, x, y0, charWidth, charHeight)
-        else
-          x += w * charWidth
-
-        break if x > canvasWidth
+          break if x > canvasWidth
 
       # Finally the highlight over decorations are drawn.
-      highlightDecorations = @minimap.decorationsByTypesForRow(firstRow + row, 'highlight', 'highlight-over', decorations)
-      for decoration in highlightDecorations
-        @drawHighlightDecoration(context, decoration, y, screenRow, lineHeight, charWidth, canvasWidth)
+      highlightDecorations = decorations['highlight-over']?[firstRow + row]
+      if highlightDecorations?.length
+        for decoration in highlightDecorations
+          @drawHighlightDecoration(context, decoration, y, screenRow, lineHeight, charWidth, canvasWidth)
+
+      # And the highlight box decorations are drawn.
+      highlightDecorations = decorations['highlight-outline']?[firstRow + row]
+      if highlightDecorations?.length
+        for decoration in highlightDecorations
+          @drawHighlightOutlineDecoration(context, decoration, y, screenRow, lineHeight, charWidth, canvasWidth)
 
     context.fill()
+
+  # Internal: Returns the regexp to replace invisibles substitution characters
+  # in editor lines.
+  #
+  # line - The screen line for which replacing the invisibles characters.
+  getInvisibleRegExp: (line) ->
+    if line? and line.invisibles?
+      ///
+      #{_.escapeRegExp line.invisibles.cr}|
+      #{_.escapeRegExp line.invisibles.eol}|
+      #{_.escapeRegExp line.invisibles.space}|
+      #{_.escapeRegExp line.invisibles.tab}
+      ///g
 
   # Internal: Draws a single token on the given context.
   #
@@ -216,11 +245,17 @@ class CanvasDrawer extends Mixin
 
     x
 
+  # Internal: Draws a line decoration on the passed-in context.
+  #
+  # context - The canvas context object.
+  # decoration - The `Decoration` object to render.
+  # y - The {Number} position on the y axis at which render the decoration.
+  # canvasWidth - The {Number} of the canvas width.
+  # lineHeight - The {Number} for the line height.
   drawLineDecorations: (context, decorations, y, canvasWidth, lineHeight) ->
     for decoration in decorations
       context.fillStyle = @getDecorationColor(decoration)
       context.fillRect(0,y,canvasWidth,lineHeight)
-
 
   # Internal: Draws a highlight decoration on the passed-in context.
   #
@@ -250,6 +285,94 @@ class CanvasDrawer extends Mixin
         context.fillRect(0,y*lineHeight,range.end.column * charWidth,lineHeight)
       else
         context.fillRect(0,y*lineHeight,canvasWidth,lineHeight)
+
+  # Internal: Draws a highlight outline decoration on the passed-in context.
+  #
+  # It renders only the part of the highlight corresponding to the specified
+  # row.
+  #
+  # context - The canvas context object.
+  # decoration - The `Decoration` object to render.
+  # y - The {Number} position on the y axis at which render the decoration.
+  # screenRow - The row {Number} corresponding to the rendered row.
+  # lineHeight - The {Number} for the line height.
+  # charWidth - The {Number} for the character width.
+  # canvasWidth - The {Number} of the canvas width.
+  drawHighlightOutlineDecoration: (context, decoration, y, screenRow, lineHeight, charWidth, canvasWidth) ->
+    context.fillStyle = @getDecorationColor(decoration)
+    range = decoration.getMarker().getScreenRange()
+    rowSpan = range.end.row - range.start.row
+
+    if rowSpan is 0
+      colSpan = range.end.column - range.start.column
+      width = colSpan * charWidth
+      xStart = range.start.column * charWidth
+      xEnd = xStart + width
+      yStart = y * lineHeight
+      yEnd = yStart + lineHeight
+
+      context.fillRect(xStart, yStart, width, 1)
+      context.fillRect(xStart, yEnd, width, 1)
+      context.fillRect(xStart, yStart, 1, lineHeight)
+      context.fillRect(xEnd, yStart, 1, lineHeight)
+
+    else if rowSpan is 1
+      xStart = range.start.column * charWidth
+      xEnd = range.end.column * charWidth
+      if screenRow is range.start.row
+        width = canvasWidth - xStart
+        yStart = y * lineHeight
+        yEnd = yStart + lineHeight
+        xBottomStart = Math.max(xStart, xEnd)
+        bottomWidth = canvasWidth - xBottomStart
+
+        context.fillRect(xStart, yStart, width, 1)
+        context.fillRect(xBottomStart, yEnd, bottomWidth, 1)
+        context.fillRect(xStart, yStart, 1, lineHeight)
+        context.fillRect(canvasWidth - 1, yStart, 1, lineHeight)
+      else
+        width = canvasWidth - xStart
+        yStart = y * lineHeight
+        yEnd = yStart + lineHeight
+        bottomWidth = canvasWidth - xEnd
+
+        context.fillRect(0, yStart, xStart, 1)
+        context.fillRect(0, yEnd, xEnd, 1)
+        context.fillRect(0, yStart, 1, lineHeight)
+        context.fillRect(xEnd, yStart, 1, lineHeight)
+    else
+      xStart = range.start.column * charWidth
+      xEnd = range.end.column * charWidth
+
+      if screenRow is range.start.row
+        width = canvasWidth - xStart
+        yStart = y * lineHeight
+        yEnd = yStart + lineHeight
+
+        context.fillRect(xStart, yStart, width, 1)
+        context.fillRect(xStart, yStart, 1, lineHeight)
+        context.fillRect(canvasWidth - 1, yStart, 1, lineHeight)
+
+      else if screenRow is range.end.row
+        width = canvasWidth - xStart
+        yStart = y * lineHeight
+        yEnd = yStart + lineHeight
+
+        context.fillRect(0, yEnd, xEnd, 1)
+        context.fillRect(0, yStart, 1, lineHeight)
+        context.fillRect(xEnd, yStart, 1, lineHeight)
+      else
+        yStart = y * lineHeight
+        yEnd = yStart + lineHeight
+
+        context.fillRect(0, yStart, 1, lineHeight)
+        context.fillRect(canvasWidth - 1, yStart, 1, lineHeight)
+
+        if screenRow is range.start.row + 1
+          context.fillRect(0, yStart, xStart, 1)
+
+        if screenRow is range.end.row - 1
+          context.fillRect(xEnd, yEnd, canvasWidth - xEnd, 1)
 
   # Internal: Copy a part of the offscreen bitmap into the onscreen one to
   # reduce the amount of rendered lines during scroll.
@@ -307,9 +430,6 @@ class CanvasDrawer extends Mixin
     for change in @pendingChanges
       newIntactRanges = []
       for range in intactRanges
-        if isNaN(change.screenDelta)
-          change.screenDelta = change.end - change.start
-
         if change.end < range.start and change.screenDelta != 0
           newIntactRanges.push(
             start: range.start + change.screenDelta
@@ -325,15 +445,16 @@ class CanvasDrawer extends Mixin
               end: change.start - 1
               domStart: range.domStart)
           if change.end < range.end
-            newIntactRanges.push(
-              start: change.end + change.screenDelta + 1
-              end: range.end + change.screenDelta
-              domStart: range.domStart + change.end + 1 - range.start
-            )
+            # If the bufferDelta is 0 then it's a change in the screen lines
+            # due to soft wrapping, we don't need to touch to the intact ranges
+            unless change.bufferDelta is 0
+              newIntactRanges.push(
+                start: change.end + change.screenDelta + 1
+                end: range.end + change.screenDelta
+                domStart: range.domStart + change.end + 1 - range.start
+              )
 
         intactRange = newIntactRanges[newIntactRanges.length - 1]
-        if intactRange? and (isNaN(intactRange.end) or isNaN(intactRange.start))
-          debugger
 
       intactRanges = newIntactRanges
 

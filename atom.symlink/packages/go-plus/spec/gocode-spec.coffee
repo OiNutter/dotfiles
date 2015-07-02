@@ -27,7 +27,7 @@ describe 'gocode', ->
       spyOn(goplusMain, 'setDispatch').andCallThrough()
       pack = atom.packages.loadPackage('autocomplete-plus')
       autocompleteMain = pack.mainModule
-      spyOn(autocompleteMain, 'consumeProviders').andCallThrough()
+      spyOn(autocompleteMain, 'consumeProvider').andCallThrough()
       jasmine.unspy(window, 'setTimeout')
 
     waitsForPromise -> atom.workspace.open('gocode.go').then (e) ->
@@ -41,7 +41,7 @@ describe 'gocode', ->
       autocompleteMain.autocompleteManager?.ready
 
     runs ->
-      autocompleteManager = autocompleteMain.autocompleteManager
+      autocompleteManager = autocompleteMain.getAutocompleteManager()
       spyOn(autocompleteManager, 'displaySuggestions').andCallThrough()
       spyOn(autocompleteManager, 'showSuggestionList').andCallThrough()
       spyOn(autocompleteManager, 'hideSuggestionList').andCallThrough()
@@ -60,7 +60,7 @@ describe 'gocode', ->
       goplusMain.provide.calls.length is 1
 
     waitsFor ->
-      autocompleteMain.consumeProviders.calls.length is 1
+      autocompleteMain.consumeProvider.calls.length is 1
 
     waitsFor ->
       goplusMain.dispatch?.ready
@@ -72,9 +72,10 @@ describe 'gocode', ->
       expect(goplusMain.provide).toHaveBeenCalled()
       expect(goplusMain.provider).toBeDefined()
       provider = goplusMain.provider
-      spyOn(provider, 'requestHandler').andCallThrough()
-      expect(_.size(autocompleteManager.providerManager.providersForScopeChain('.source.go'))).toEqual(2)
-      expect(autocompleteManager.providerManager.providersForScopeChain('.source.go')[0]).toEqual(provider)
+      spyOn(provider, 'getSuggestions').andCallThrough()
+      provider.onDidInsertSuggestion = jasmine.createSpy()
+      expect(_.size(autocompleteManager.providerManager.providersForScopeDescriptor('.source.go'))).toEqual(1)
+      expect(autocompleteManager.providerManager.providersForScopeDescriptor('.source.go')[0]).toEqual(provider)
       buffer = editor.getBuffer()
       dispatch = atom.packages.getLoadedPackage('go-plus').mainModule.dispatch
       dispatch.goexecutable.detect()
@@ -83,20 +84,19 @@ describe 'gocode', ->
     jasmine.unspy(goplusMain, 'provide')
     jasmine.unspy(goplusMain, 'setDispatch')
     jasmine.unspy(autocompleteManager, 'displaySuggestions')
-    jasmine.unspy(autocompleteMain, 'consumeProviders')
+    jasmine.unspy(autocompleteMain, 'consumeProvider')
     jasmine.unspy(autocompleteManager, 'hideSuggestionList')
     jasmine.unspy(autocompleteManager, 'showSuggestionList')
-    jasmine.unspy(provider, 'requestHandler')
+    jasmine.unspy(provider, 'getSuggestions')
 
   describe 'when the gocode autocomplete-plus provider is enabled', ->
 
     it 'displays suggestions from gocode', ->
       runs ->
         expect(provider).toBeDefined()
-        expect(provider.requestHandler).not.toHaveBeenCalled()
+        expect(provider.getSuggestions).not.toHaveBeenCalled()
         expect(autocompleteManager.displaySuggestions).not.toHaveBeenCalled()
         expect(editorView.querySelector('.autocomplete-plus')).not.toExist()
-
         editor.setCursorScreenPosition([5, 6])
         advanceClock(completionDelay)
 
@@ -108,17 +108,96 @@ describe 'gocode', ->
         advanceClock(completionDelay)
 
       waitsFor ->
-        autocompleteManager.displaySuggestions.calls.length is 1
+        autocompleteManager.showSuggestionList.calls.length is 1
+
+      waitsFor ->
+        editorView.querySelector('.autocomplete-plus span.word')?
 
       runs ->
-        expect(provider.requestHandler).toHaveBeenCalled()
-        expect(provider.requestHandler.calls.length).toBe(1)
+        expect(provider.getSuggestions).toHaveBeenCalled()
+        expect(provider.getSuggestions.calls.length).toBe(1)
         expect(editorView.querySelector('.autocomplete-plus')).toExist()
-        expect(editorView.querySelector('.autocomplete-plus span.word')).toHaveText('Print(')
-        expect(editorView.querySelector('.autocomplete-plus span.completion-label')).toHaveText('func(a ...interface{}) (n int, err error)')
+        expect(editorView.querySelector('.autocomplete-plus span.word').innerHTML).toBe('<span class="character-match">P</span>rint(<span class="snippet-completion">a ...interface{}</span>)')
+        expect(editorView.querySelector('.autocomplete-plus span.left-label').innerHTML).toBe('n int, err error')
         editor.backspace()
 
-    it 'does not display suggestions when no gocode suggestions exist', ->
+    it 'confirms a suggestion when the prefix case does not match', ->
+      runs ->
+        expect(provider).toBeDefined()
+        expect(provider.getSuggestions).not.toHaveBeenCalled()
+        expect(autocompleteManager.displaySuggestions).not.toHaveBeenCalled()
+        expect(editorView.querySelector('.autocomplete-plus')).not.toExist()
+        editor.setCursorScreenPosition([7, 0])
+        advanceClock(completionDelay)
+
+      waitsFor ->
+        autocompleteManager.hideSuggestionList.calls.length is 1
+
+      runs ->
+        editor.insertText('    fmt.')
+        editor.insertText('p')
+        advanceClock(completionDelay)
+
+      waitsFor ->
+        autocompleteManager.showSuggestionList.calls.length is 1
+
+      waitsFor ->
+        editorView.querySelector('.autocomplete-plus span.word')?
+
+      runs ->
+        expect(provider.getSuggestions).toHaveBeenCalled()
+        expect(provider.getSuggestions.calls.length).toBe(1)
+        expect(provider.onDidInsertSuggestion).not.toHaveBeenCalled()
+        expect(editorView.querySelector('.autocomplete-plus span.word').innerHTML).toBe('<span class="character-match">P</span>rint(<span class="snippet-completion">a ...interface{}</span>)')
+        suggestionListView = editorView.querySelector('.autocomplete-plus autocomplete-suggestion-list')
+        atom.commands.dispatch(suggestionListView, 'autocomplete-plus:confirm')
+
+      waitsFor ->
+        provider.onDidInsertSuggestion.calls.length is 1
+
+      runs ->
+        expect(provider.onDidInsertSuggestion).toHaveBeenCalled()
+        expect(buffer.getTextInRange([[7, 4], [7, 9]])).toBe('fmt.P')
+
+    it 'confirms a suggestion when the prefix case does not match', ->
+      runs ->
+        expect(provider).toBeDefined()
+        expect(provider.getSuggestions).not.toHaveBeenCalled()
+        expect(autocompleteManager.displaySuggestions).not.toHaveBeenCalled()
+        expect(editorView.querySelector('.autocomplete-plus')).not.toExist()
+        editor.setCursorScreenPosition([7, 0])
+        advanceClock(completionDelay)
+
+      waitsFor ->
+        autocompleteManager.hideSuggestionList.calls.length is 1
+
+      runs ->
+        editor.insertText('    fmt.p')
+        editor.insertText('r')
+        advanceClock(completionDelay)
+
+      waitsFor ->
+        autocompleteManager.showSuggestionList.calls.length is 1
+
+      waitsFor ->
+        editorView.querySelector('.autocomplete-plus span.word')?
+
+      runs ->
+        expect(provider.getSuggestions).toHaveBeenCalled()
+        expect(provider.getSuggestions.calls.length).toBe(1)
+        expect(provider.onDidInsertSuggestion).not.toHaveBeenCalled()
+        expect(editorView.querySelector('.autocomplete-plus span.word').innerHTML).toBe('<span class="character-match">P</span><span class="character-match">r</span>int(<span class="snippet-completion">a ...interface{}</span>)')
+        suggestionListView = editorView.querySelector('.autocomplete-plus autocomplete-suggestion-list')
+        atom.commands.dispatch(suggestionListView, 'autocomplete-plus:confirm')
+
+      waitsFor ->
+        provider.onDidInsertSuggestion.calls.length is 1
+
+      runs ->
+        expect(provider.onDidInsertSuggestion).toHaveBeenCalled()
+        expect(buffer.getTextInRange([[7, 4], [7, 10]])).toBe('fmt.Pr')
+
+    xit 'does not display suggestions when no gocode suggestions exist', ->
       runs ->
         expect(editorView.querySelector('.autocomplete-plus')).not.toExist()
 
@@ -148,8 +227,10 @@ describe 'gocode', ->
       waitsFor ->
         autocompleteManager.hideSuggestionList.calls.length is 1
 
+      waitsFor ->
+        autocompleteManager.displaySuggestions.calls.length is 0
+
       runs ->
-        editor.backspace()
         editor.insertText(')')
         advanceClock(completionDelay)
 
@@ -161,7 +242,7 @@ describe 'gocode', ->
         editor.insertText(';')
 
       waitsFor ->
-        autocompleteManager.displaySuggestions.calls.length is 2
+        autocompleteManager.displaySuggestions.calls.length is 1
         advanceClock(completionDelay)
 
       runs ->

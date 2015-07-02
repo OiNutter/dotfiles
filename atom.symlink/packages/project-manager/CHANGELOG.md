@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.15.10
+A issue with enabling project settings turned up with an updated to Atom.
+Did a fix that got rid of the error, but might need an improved fix.
+
+## 1.15.9
+- Fixes sorting when more than 10 projects are saved
+- Updated dependencies
+- Now shows an error notification if the projects file isn't valid
+
+## 1.15.8
+Updated the save project dialog
+
+## 1.15.7
+Here just because apm got messed up and thought it published 1.15.6
+but it did not and now I have to publish 1.15.7 instead. Weird and annoying.
+Anyone know how to fix this?
+
+## 1.15.6
+Bugfix
+
 ## 1.15.5
 Performance fix
 

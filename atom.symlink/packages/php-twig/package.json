@@ -1,6 +1,6 @@
 {
   "name": "php-twig",
-  "version": "3.0.0",
+  "version": "4.0.0",
   "private": true,
   "description": "Twig support for Atom.",
   "repository": {
@@ -18,10 +18,18 @@
     "url": "https://github.com/reesef/php-twig/issues"
   },
   "homepage": "https://github.com/reesef/php-twig",
-  "_id": "php-twig@3.0.0",
-  "dist": {
-    "shasum": "0c22571b2fa52b15f3c4f04c246e431ace594c05"
-  },
-  "_resolved": "/private/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-11496-2888-1y4f665/package.tgz",
-  "_from": "/private/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-11496-2888-1y4f665/package.tgz"
+  "_id": "php-twig@4.0.0",
+  "_shasum": "9d746076201b60d979c9f6ac19782cec349ffedf",
+  "_resolved": "file:../d-11558-78542-1sxal4g/package.tgz",
+  "_from": "../d-11558-78542-1sxal4g/package.tgz",
+  "_atomModuleCache": {
+    "version": 1,
+    "dependencies": [],
+    "extensions": {
+      ".json": [
+        "package.json"
+      ]
+    },
+    "folders": []
+  }
 }

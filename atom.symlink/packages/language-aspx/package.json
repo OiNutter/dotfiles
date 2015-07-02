@@ -1,6 +1,6 @@
 {
   "name": "language-aspx",
-  "version": "0.2.0",
+  "version": "0.4.0",
   "private": true,
   "description": "Language file for ASP.NET Web Forms files (aspx, ascx, ashx)",
   "repository": {
@@ -18,10 +18,10 @@
     "url": "https://github.com/jbalboni/atom-language-aspx/issues"
   },
   "homepage": "https://github.com/jbalboni/atom-language-aspx",
-  "_id": "language-aspx@0.2.0",
-  "_shasum": "06264d788b9d192e21e96aec4480531b9e41ff74",
-  "_resolved": "file:../d-11513-98452-hazu5h/package.tgz",
-  "_from": "../d-11513-98452-hazu5h/package.tgz",
+  "_id": "language-aspx@0.4.0",
+  "_shasum": "300a0ce5001117d86c79466090b8a8e87566c9e8",
+  "_resolved": "file:../d-115316-3469-dy82h4/package.tgz",
+  "_from": "../d-115316-3469-dy82h4/package.tgz",
   "_atomModuleCache": {
     "version": 1,
     "dependencies": [],

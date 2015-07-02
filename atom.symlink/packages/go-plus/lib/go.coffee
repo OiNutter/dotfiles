@@ -41,6 +41,7 @@ class Go
     result = @gopath if @gopath? and @gopath isnt ''
     result = gopathConfig if not environmentOverridesConfig and gopathConfig? and gopathConfig.trim() isnt ''
     result = gopathConfig if result is '' and gopathConfig? and gopathConfig.trim() isnt ''
+    result = result.replace('\n', '').replace('\r', '')
     return @pathexpander.expand(result, '')
 
   splitgopath: ->
@@ -80,6 +81,9 @@ class Go
 
   gocode: ->
     return @gopathBinOrPathItem('gocode')
+
+  godef: ->
+    return @goTooldirOrGopathBinOrPathItem('godef')
 
   oracle: ->
     return @gopathBinOrPathItem('oracle')
@@ -149,4 +153,5 @@ class Go
     return true if @oracle() is false
     return true if @git() is false
     return true if @hg() is false
+    return true if @godef() is false
     return false
