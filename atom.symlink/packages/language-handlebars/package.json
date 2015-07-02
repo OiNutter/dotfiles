@@ -1,0 +1,27 @@
+{
+  "name": "language-handlebars",
+  "version": "0.2.0",
+  "private": true,
+  "description": "A conversion of a [TextMate Handlebars package](https://github.com/drnic/Handlebars.tmbundle) for Atom",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alexlafroscia/language-handlebars"
+  },
+  "license": "MIT",
+  "engines": {
+    "atom": ">0.50.0"
+  },
+  "dependencies": {},
+  "readme": "# language-handlebars package\n\nOriginally a [conversion](http://atom.io/docs/v0.60.0/converting-a-text-mate-bundle) of\n[drnic's handlebars.tmbundle](https://github.com/drnic/Handlebars.tmbundle) for\nthe Atom editor\n\n## Snippets\n\nThe package comes with some built-in snippets to help you work more quickly in Handlebars.\nFeel free to submit issues or pull requests with suggestions for more\n\n### Generic Snippets\n\n#### bindAttr: `ba`\n\n```handlebars\n{{bindAttr ${1:class}=${2:\"${3:isSelected}\"}}}\n```\n\n#### checkbox: `chb`\n\n```handlebars\n{{view SC.Checkbox title=\"Title\" class=\"class\"\n  valueBinding=\"App.controller.property\"}}\n```\n#### collection: `coll`\n\n```handlebars\n{{#collection SC.TemplateCollectionView contentBinding=\"App.arrayListController\"}}\n\n{{/collection}}\n```\n\n#### content.field: `c`\n\n```handlebars\n{{content.${1:field}}}\n```\n\n#### if...end: `if`\n\n```handlebars\n{{#if condition}}\n\n{{/if}}\n```\n\n#### if...else...end: `ife`\n\n```handlebars\n{{#if condition}}\n\n{{else}}\n\n{{/if}}\n```\n\n#### unless: `unl`\n\n```handlebars\n{{#unless condition}}\n\n{{/unless}}\n```\n\n#### view: `view`\n\n```handlebars\n{{#view SC.TemplateView}}\n\n{{/view}}\n```\n\n### Ember Snippets\n\nI've also added some snippets that are particularly helpful for people\nworking with Ember.JS\n\n#### ember-action: `ema`\n\n```handlebars\n{{action 'name'}}\n```\n",
+  "readmeFilename": "README.md",
+  "bugs": {
+    "url": "https://github.com/alexlafroscia/language-handlebars/issues"
+  },
+  "homepage": "https://github.com/alexlafroscia/language-handlebars",
+  "_id": "language-handlebars@0.2.0",
+  "dist": {
+    "shasum": "f04dec4c21823235f5153677d05158b53056bc78"
+  },
+  "_resolved": "/var/folders/m7/z8yrf0_1493blj1bl9nb2fc40000gn/T/d-114228-30923-dzapjz/package.tgz",
+  "_from": "/var/folders/m7/z8yrf0_1493blj1bl9nb2fc40000gn/T/d-114228-30923-dzapjz/package.tgz"
+}

@@ -1,2 +1,10 @@
-id_rsa*
+*_rsa*
+ssh-symlink/config
+ssh-symlink/known_hosts
 environment-*
+.project
+atom.symlink/compile-cache/*
+atom.symlink/storage/editor-*
+atom.symlink/.node-gyp/*
+atom.symlink/projects.cson
+heroku.symlink/.npm-cache

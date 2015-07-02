@@ -1,0 +1,3 @@
+'.text.html.aspx':
+  'editor':
+    'foldEndPattern': '(</(?i:(head|table|div|style|script|ul|ol|form|dl))>|\\})'

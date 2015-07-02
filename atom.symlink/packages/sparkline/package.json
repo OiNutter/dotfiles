@@ -1,0 +1,29 @@
+{
+  "name": "sparkline",
+  "main": "./lib/sparkline",
+  "version": "0.1.2",
+  "description": "Generate Sparklines from number data",
+  "activationEvents": [
+    "sparkline:spark"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/remixz/sparkline"
+  },
+  "license": "MIT",
+  "engines": {
+    "atom": ">0.50.0"
+  },
+  "readme": "## Sparkline\n\nAn Atom package to generate Sparklines from comma-separated lines of numbers.\n\n![](http://i.imgur.com/iRM0EFt.gif)\n\n### Usage\n\nSelect a comma-separated line(s) of numbers (or leave the selection blank to use the whole file). Then, either type in `sparkline` in the Command Palette, press `Control-Shift-S`, or go to the `Edit` menu, choose `Text`, then choose `Convert to Sparkline`.\n\n### Credits\n\n* `range-finder.coffee` is via https://github.com/atom/sort-lines/blob/master/lib/range-finder.coffee\n* Sparkline algorithm based off of [spark](https://github.com/holman/spark).\n",
+  "readmeFilename": "README.md",
+  "bugs": {
+    "url": "https://github.com/remixz/sparkline/issues"
+  },
+  "homepage": "https://github.com/remixz/sparkline",
+  "_id": "sparkline@0.1.2",
+  "dist": {
+    "shasum": "bcc613e7dd6e8997dbb693c2b906e52705917148"
+  },
+  "_resolved": "/var/folders/m7/z8yrf0_1493blj1bl9nb2fc40000gn/T/d-114229-39778-ck63g1/package.tgz",
+  "_from": "/var/folders/m7/z8yrf0_1493blj1bl9nb2fc40000gn/T/d-114229-39778-ck63g1/package.tgz"
+}

@@ -1,0 +1,42 @@
+'menu': [
+  {
+    'label': 'Packages'
+    'submenu': [
+      'label': 'Laravel Facades'
+      'submenu': [
+        { 'label': 'App', 'command': 'laravel-facades:App' }
+        { 'label': 'Artisan', 'command': 'laravel-facades:Artisan' }
+        { 'label': 'Auth', 'command': 'laravel-facades:Auth' }
+        { 'label': 'Blade', 'command': 'laravel-facades:Blade' }
+        { 'label': 'Cache', 'command': 'laravel-facades:Cache' }
+        { 'label': 'Config', 'command': 'laravel-facades:Config' }
+        { 'label': 'Cookie', 'command': 'laravel-facades:Cookie' }
+        { 'label': 'Crypt', 'command': 'laravel-facades:Crypt' }
+        { 'label': 'Event', 'command': 'laravel-facades:Event' }
+        { 'label': 'File', 'command': 'laravel-facades:File' }
+        { 'label': 'Form', 'command': 'laravel-facades:Form' }
+        { 'label': 'Hash', 'command': 'laravel-facades:Hash' }
+        { 'label': 'HTML', 'command': 'laravel-facades:HTML' }
+        { 'label': 'Input', 'command': 'laravel-facades:Input' }
+        { 'label': 'Lang', 'command': 'laravel-facades:Lang' }
+        { 'label': 'Log', 'command': 'laravel-facades:Log' }
+        { 'label': 'Lang', 'command': 'laravel-facades:Lang' }
+        { 'label': 'Mail', 'command': 'laravel-facades:Mail' }
+        { 'label': 'Paginator', 'command': 'laravel-facades:Paginator' }
+        { 'label': 'Password', 'command': 'laravel-facades:Password' }
+        { 'label': 'Queue', 'command': 'laravel-facades:Queue' }
+        { 'label': 'Redirect', 'command': 'laravel-facades:Redirect' }
+        { 'label': 'Redis', 'command': 'laravel-facades:Redis' }
+        { 'label': 'Request', 'command': 'laravel-facades:Request' }
+        { 'label': 'Response', 'command': 'laravel-facades:Response' }
+        { 'label': 'Route', 'command': 'laravel-facades:Route' }
+        { 'label': 'Schema', 'command': 'laravel-facades:Schema' }
+        { 'label': 'Session', 'command': 'laravel-facades:Session' }
+        { 'label': 'SSH', 'command': 'laravel-facades:SSH' }
+        { 'label': 'URL', 'command': 'laravel-facades:URL' }
+        { 'label': 'Validator', 'command': 'laravel-facades:Validator' }
+        { 'label': 'View', 'command': 'laravel-facades:View' }
+      ]
+    ]
+  }
+]

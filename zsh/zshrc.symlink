@@ -25,13 +25,61 @@ ZSH_THEME="oinutter"
 
 # Which plugins would you like to load? (plugins can be found in ~/.oh-my-zsh/plugins/*)
 # Example format: plugins=(rails git textmate ruby lighthouse)
-plugins=(git ssh-agent capistrano heroku brew node)
+plugins=(git capistrano heroku brew node mercurial)
 
 source $ZSH/oh-my-zsh.sh
 
+export LC_CTYPE=en_GB.UTF-8
+export LC_ALL=en_GB.UTF-8
+
+export EDITOR=/usr/local/bin/vim
+
+export PATH="/usr/local/bin:$PATH"
+
 # Customize to your needs...
-export PATH="$HOME/.rbenv/bin:$PATH"
+export RBENV_ROOT=/usr/local/opt/rbenv
 eval "$(rbenv init -)"
-export CYGWIN="winsymlinks:$CYGWIN"
+export PYENV_ROOT=/usr/local/opt/pyenv
+eval "$(pyenv init -)"
 export PATH="$HOME/.bin:$PATH"
-cd /cygdrive/c/Users/Will/Documents/Projects	
+
+export LANG="en_GB.utf8"
+export NODENV_ROOT=$HOME/.nodenv
+export PATH="$HOME/.nodenv/bin:$PATH"
+eval "$(nodenv init -)"
+
+#export PATH="$HOME/.phpenv/bin:$PATH"
+#eval "$(phpenv init -)"
+
+### Added by the Heroku Toolbelt
+export PATH="/usr/local/heroku/bin:$PATH"
+
+### Add Postgress bin
+export PATH="/Applications/Postgres.app/Contents/MacOS/bin:$PATH"
+
+### Add Pebble SDK
+export PATH=$HOME/pebble-dev/PebbleSDK-2.0.1/bin:$PATH
+
+### Add Android SDK
+export PATH="$PATH:/Applications/Android Studio.app/sdk/tools"
+export PATH="$PATH:/Applications/Android Studio.app/sdk/platform-tools"
+
+### Add sbin (for varnish)
+export PATH=$PATH:/usr/local/sbin
+
+### Add ec2 command line tools
+export EC2_HOME=$HOME/.ec2
+export PATH="$PATH:$HOME/.ec2/bin"
+
+### Add composer global path
+export PATH="$PATH:$HOME/.composer/vendor/bin"
+
+PERL_MB_OPT="--install_base \"/Users/willmckenzie/perl5\""; export PERL_MB_OPT;
+PERL_MM_OPT="INSTALL_BASE=/Users/willmckenzie/perl5"; export PERL_MM_OPT;
+	
+export LIBCURL_CFLAGS=-I/usr/local/opt/curl/include
+export LIBCURL_LIBS=-L/usr/local/opt/curl/lib
+
+# Command for compiling ssh config
+alias compile-ssh-config='echo -n > ~/.ssh/config && cat ~/.ssh/config.d/*.config > ~/.ssh/config'
+alias ssh='compile-ssh-config && ssh'

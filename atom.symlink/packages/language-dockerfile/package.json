@@ -1,0 +1,27 @@
+{
+  "name": "language-dockerfile",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Dockerfile support for Atom.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/darron/language-dockerfile"
+  },
+  "license": "MIT",
+  "engines": {
+    "atom": ">0.50.0"
+  },
+  "dependencies": {},
+  "readme": "# language-dockerfile package\n\nDockerfile support for Atom.\n\nForked from [Docker contrib](https://github.com/dotcloud/docker/tree/master/contrib/syntax/textmate).\n",
+  "readmeFilename": "README.md",
+  "bugs": {
+    "url": "https://github.com/darron/language-dockerfile/issues"
+  },
+  "homepage": "https://github.com/darron/language-dockerfile",
+  "_id": "language-dockerfile@0.1.0",
+  "dist": {
+    "shasum": "e44330f9f380115fb5aa980a4869dce2c7af02dd"
+  },
+  "_resolved": "/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-114611-43974-1h6syvs/package.tgz",
+  "_from": "/var/folders/v3/lptvxvzx1tq80_lyp1ynxk600000gq/T/d-114611-43974-1h6syvs/package.tgz"
+}

@@ -1,0 +1,52 @@
+"*":
+  "exception-reporting":
+    userId: "93535cdb-5825-29b0-6ce2-cd1915af470d"
+  "release-notes":
+    viewedVersion: "0.95.0"
+  welcome:
+    showOnStartup: false
+  metrics:
+    userId: "8786426681610c19f7a7733ec10b1f73d29f4d4c"
+  editor:
+    fontFamily: "Inconsolata"
+    showInvisibles: true
+    showIndentGuide: true
+    preferredLineLength: 100
+    tabLength: 4
+    invisibles: {}
+    fontSize: 13
+  core:
+    disabledPackages: [
+      "atom-lint"
+      "linter-scss-lint"
+      "ScssBundle"
+      "go-plus"
+      "go-format"
+    ]
+    themes: [
+      "atom-soda-dark-ui"
+      "monokai-soda"
+    ]
+    projectHome: "/Users/will/projects/"
+  "git-diff":
+    showIconsInEditorGutter: true
+  "travis-ci-status":
+    personalAccessToken: "BgNxxWjJPSUR2eqW5L5s"
+  "atom-jshint":
+    hintOnModify: false
+  jsonlint:
+    hideOnNoErrors: true
+  "go-plus":
+    showPanel: false
+  linter:
+    subtleLinterErrors: [
+      "shellcheck"
+      "pep8"
+    ]
+    showErrorPanel: false
+    ignoredLinterErrors: [
+      "scss-lint"
+    ]
+  "markdown-preview":
+    useGitHubStyle: true
+  react: {}

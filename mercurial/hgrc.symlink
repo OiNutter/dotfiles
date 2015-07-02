@@ -1,0 +1,30 @@
+[ui]
+username = Will McKenzie <will@komododigital.co.uk>
+editor = vim
+
+[alias]
+nukethesitefromorbit = revert --no-backup --all
+
+[extensions]
+shelve=
+hggit=
+hgext.convert=
+strip=
+hgext.extdiff=
+
+#[hostfingerprints]
+#bitbucket.org = 45:ad:ae:1a:cf:0e:73:47:06:07:e0:88:f5:cc:10:e5:fa:1c:f7:99
+
+[mergetool]
+keepBackup = false
+
+[extdiff]
+cmd.ksdiff = /usr/local/bin/ksdiff
+opts.ksdiff = --changeset --wait --filelist
+
+[ui]
+merge = Kaleidoscope
+
+[merge-tools]
+Kaleidoscope.executable = /usr/local/bin/ksdiff
+Kaleidoscope.args = --merge --output $output --base $base -- $local $other
