@@ -1,4 +1,20 @@
-require "readline"
+begin
+  require "readline"
+rescue LoadError
+  module Readline
+    def self.readline(prompt)
+      print prompt
+      $stdout.flush
+      gets
+    end
+
+    module HISTORY
+      def self.push(cmd)
+        # dummy
+      end
+    end
+  end
+end
 require "heroku/command/base"
 require "heroku/helpers/log_displayer"
 
@@ -11,6 +27,7 @@ class Heroku::Command::Run < Heroku::Command::Base
   # run an attached dyno
   #
   # -s, --size SIZE      # specify dyno size
+  # --exit-code          # return exit code from process
   #
   #Example:
   #
@@ -18,9 +35,18 @@ class Heroku::Command::Run < Heroku::Command::Base
   # Running `bash` attached to terminal... up, run.1
   # ~ $
   #
+  # $ heroku run -s hobby -- myscript.sh -a arg1 -s arg2
+  # Running `myscript.sh -a arg1 -s arg2` attached to terminal... up, run.1
+  #
   def index
+    if ARGV.include?('--') || ARGV.include?('--exit-code')
+      Heroku::JSPlugin.install('heroku-run')
+      Heroku::JSPlugin.run('run', nil, ARGV[1..-1])
+      return
+    end
     command = args.join(" ")
     error("Usage: heroku run COMMAND") if command.empty?
+    warn_if_using_jruby
     run_attached(command)
   end
 
@@ -56,7 +82,7 @@ class Heroku::Command::Run < Heroku::Command::Base
       log_displayer = ::Heroku::Helpers::LogDisplayer.new(heroku, app, opts)
       log_displayer.display_logs
     else
-      display("Use `heroku logs -p #{process_data['process']}` to view the output.")
+      display("Use `heroku logs -p #{process_data['process']} -a #{app_name}` to view the output.")
     end
   end
 
@@ -81,7 +107,7 @@ class Heroku::Command::Run < Heroku::Command::Base
 
   alias_command "rake", "run:rake"
 
-  # run:console [COMMAND]
+  # HIDDEN: run:console [COMMAND]
   #
   # open a remote console session
   #
@@ -131,11 +157,11 @@ protected
       rendezvous.on_connect(&on_connect)
       rendezvous.start
     rescue Timeout::Error, Errno::ETIMEDOUT
-      error "\nTimeout awaiting process"
+      error "\nTimeout awaiting dyno, see https://devcenter.heroku.com/articles/one-off-dynos#timeout-awaiting-process"
     rescue OpenSSL::SSL::SSLError
-      error "Authentication error"
+      error "\nSSL error connecting to dyno."
     rescue Errno::ECONNREFUSED, Errno::ECONNRESET
-      error "\nError connecting to process"
+      error "\nError connecting to dyno, see https://devcenter.heroku.com/articles/one-off-dynos#timeout-awaiting-process"
     rescue Interrupt
     ensure
       set_buffer(true)
@@ -174,7 +200,7 @@ protected
     end
     history.each { |cmd| Readline::HISTORY.push(cmd) }
   rescue Errno::ENOENT
-  rescue Exception => ex
+  rescue => ex
     display "Error reading your console history: #{ex.message}"
     if confirm("Would you like to clear it? (y/N):")
       FileUtils.rm(console_history_file(app)) rescue nil
@@ -185,5 +211,4 @@ protected
     Readline::HISTORY.push(cmd)
     File.open(console_history_file(app), "a") { |f| f.puts cmd + "\n" }
   end
-
 end

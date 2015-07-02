@@ -4,18 +4,31 @@ require "heroku/client/heroku_postgresql"
 require "heroku/command/base"
 require "heroku/helpers/heroku_postgresql"
 require "heroku/helpers/pg_dump_restore"
+require "heroku/helpers/addons/resolve"
+require "heroku/helpers/addons/api"
+require "heroku/helpers/pg_diagnose"
 
 # manage heroku-postgresql databases
 #
 class Heroku::Command::Pg < Heroku::Command::Base
+  module Hooks
+    extend self
+    def set_commands(shorthand)
+      ''
+    end
+  end
 
   include Heroku::Helpers::HerokuPostgresql
+  include Heroku::Helpers::PgDiagnose
+  include Heroku::Helpers::Addons::Resolve
+  include Heroku::Helpers::Addons::API
 
   # pg
   #
   # list databases for an app
   #
   def index
+    requires_preauth
     validate_arguments!
 
     if hpg_databases_with_info.empty?
@@ -38,6 +51,7 @@ class Heroku::Command::Pg < Heroku::Command::Base
   def info
     db = shift_argument
     validate_arguments!
+    requires_preauth
 
     if db
       @resolver = generate_resolver
@@ -48,20 +62,57 @@ class Heroku::Command::Pg < Heroku::Command::Base
     end
   end
 
+  # pg:diagnose [DATABASE|REPORT_ID]
+  #
+  # run diagnostics report on DATABASE
+  #
+  # defaults to DATABASE_URL databases if no DATABASE is specified
+  # if REPORT_ID is specified instead, a previous report is displayed
+  def diagnose
+    requires_preauth
+    db_id = shift_argument
+    run_diagnose(db_id)
+  end
+
   # pg:promote DATABASE
   #
   # sets DATABASE as your DATABASE_URL
   #
   def promote
+    requires_preauth
     unless db = shift_argument
       error("Usage: heroku pg:promote DATABASE\nMust specify DATABASE to promote.")
     end
     validate_arguments!
 
-    attachment = generate_resolver.resolve(db)
+    db = db.sub(/_URL$/, '') # allow promoting with a var name
+    addon = resolve_addon!(db) { |addon| addon['addon_service']['name'] == 'heroku-postgresql' }
 
-    action "Promoting #{attachment.display_name} to DATABASE_URL" do
-      hpg_promote(attachment.url)
+    promoted_name = 'DATABASE'
+
+    action "Ensuring an alternate alias for existing #{promoted_name}" do
+      backup = find_or_create_non_database_attachment(app)
+
+      if backup
+        @status = backup['name']
+      else
+        @status = "not needed"
+      end
+
+    end
+
+    action "Promoting #{addon['name']} to #{promoted_name}_URL on #{app}" do
+      request(
+        :body     => json_encode({
+          "app"     => {"name" => app},
+          "addon"   => {"name" => addon['name']},
+          "confirm" => app,
+          "name"    => promoted_name
+        }),
+        :expects  => 201,
+        :method   => :post,
+        :path     => "/addon-attachments"
+      )
     end
   end
 
@@ -74,6 +125,7 @@ class Heroku::Command::Pg < Heroku::Command::Base
   # defaults to DATABASE_URL databases if no DATABASE is specified
   #
   def psql
+    requires_preauth
     attachment = generate_resolver.resolve(shift_argument, "DATABASE_URL")
     validate_arguments!
 
@@ -81,15 +133,17 @@ class Heroku::Command::Pg < Heroku::Command::Base
     begin
       ENV["PGPASSWORD"] = uri.password
       ENV["PGSSLMODE"]  = 'require'
+      ENV["PGAPPNAME"]  = "#{pgappname} interactive"
       if command = options[:command]
-        command = "-c '#{command}'"
+        command = %Q(-c "#{command}")
       end
 
       shorthand = "#{attachment.app}::#{attachment.name.sub(/^HEROKU_POSTGRESQL_/,'').gsub(/\W+/, '-')}"
+      set_commands = Hooks.set_commands(shorthand)
       prompt_expr = "#{shorthand}%R%# "
       prompt_flags = %Q(--set "PROMPT1=#{prompt_expr}" --set "PROMPT2=#{prompt_expr}")
       puts "---> Connecting to #{attachment.display_name}"
-      exec "psql -U #{uri.user} -h #{uri.host} -p #{uri.port || 5432} #{prompt_flags} #{command} #{uri.path[1..-1]}"
+      exec "psql -U #{uri.user} -h #{uri.host} -p #{uri.port || 5432} #{set_commands} #{prompt_flags} #{command} #{uri.path[1..-1]}"
     rescue Errno::ENOENT
       output_with_bang "The local psql command could not be located"
       output_with_bang "For help installing psql, see http://devcenter.heroku.com/articles/local-postgresql"
@@ -102,6 +156,7 @@ class Heroku::Command::Pg < Heroku::Command::Base
   # delete all data in DATABASE
   #
   def reset
+    requires_preauth
     unless db = shift_argument
       error("Usage: heroku pg:reset DATABASE\nMust specify DATABASE to reset.")
     end
@@ -123,6 +178,7 @@ class Heroku::Command::Pg < Heroku::Command::Base
   # stop a replica from following and make it a read/write database
   #
   def unfollow
+    requires_preauth
     unless db = shift_argument
       error("Usage: heroku pg:unfollow REPLICA\nMust specify REPLICA to unfollow.")
     end
@@ -155,15 +211,20 @@ class Heroku::Command::Pg < Heroku::Command::Base
   #
   # defaults to all databases if no DATABASE is specified
   #
+  # --wait-interval SECONDS      # how frequently to poll (to avoid rate-limiting)
+  #
   def wait
+    requires_preauth
     db = shift_argument
     validate_arguments!
+    interval = options[:wait_interval].to_i
+    interval = 1 if interval < 1
 
     if db
-      wait_for generate_resolver.resolve(db)
+      wait_for(generate_resolver.resolve(db), interval)
     else
       generate_resolver.all_databases.values.each do |attach|
-        wait_for(attach)
+        wait_for(attach, interval)
       end
     end
   end
@@ -175,6 +236,7 @@ class Heroku::Command::Pg < Heroku::Command::Base
   #   --reset  # Reset credentials on the specified database.
   #
   def credentials
+    requires_preauth
     unless db = shift_argument
       error("Usage: heroku pg:credentials DATABASE\nMust specify DATABASE to display credentials.")
     end
@@ -206,7 +268,10 @@ class Heroku::Command::Pg < Heroku::Command::Base
   #
   # view active queries with execution time
   #
+  #   -v,--verbose # also show idle connections
+  #
   def ps
+    requires_preauth
     sql = %Q(
     SELECT
       #{pid_column},
@@ -219,11 +284,15 @@ class Heroku::Command::Pg < Heroku::Command::Base
      WHERE
        #{query_column} <> '<insufficient privilege>'
        #{
-          if nine_two?
-            "AND state <> 'idle'"
-          else
-            "AND current_query <> '<IDLE>'"
-          end
+      # Apply idle-backend filter appropriate to versions and options.
+      case
+      when options[:verbose]
+        ''
+      when nine_two?
+        "AND state <> 'idle'"
+      else
+        "AND current_query <> '<IDLE>'"
+      end
        }
        AND #{pid_column} <> pg_backend_pid()
        ORDER BY query_start DESC
@@ -239,6 +308,7 @@ class Heroku::Command::Pg < Heroku::Command::Base
   # -f,--force  # terminates the connection in addition to cancelling the query
   #
   def kill
+    requires_preauth
     procpid = shift_argument
     output_with_bang "procpid to kill is required" unless procpid && procpid.to_i != 0
     procpid = procpid.to_i
@@ -254,6 +324,15 @@ class Heroku::Command::Pg < Heroku::Command::Base
   # terminates ALL connections
   #
   def killall
+    requires_preauth
+    db = args.first
+    attachment = generate_resolver.resolve(db, "DATABASE_URL")
+    client = hpg_client(attachment)
+    client.connection_reset
+    display "Connections terminated"
+  rescue StandardError
+    # fall back to original mechanism if calling the reset endpoint
+    # fails
     sql = %Q(
       SELECT pg_terminate_backend(#{pid_column})
       FROM pg_stat_activity
@@ -265,61 +344,171 @@ class Heroku::Command::Pg < Heroku::Command::Base
   end
 
 
-  # pg:push <LOCAL_SOURCE_DATABASE> <REMOTE_TARGET_DATABASE>
+  # pg:push <SOURCE_DATABASE> <REMOTE_TARGET_DATABASE>
   #
-  # push from LOCAL_SOURCE_DATABASE to REMOTE_TARGET_DATABASE
+  # push from SOURCE_DATABASE to REMOTE_TARGET_DATABASE
   # REMOTE_TARGET_DATABASE must be empty.
+  #
+  # SOURCE_DATABASE must be either the name of a database
+  # existing on your localhost or the fully qualified URL of
+  # a remote database.
   def push
+    requires_preauth
     local, remote = shift_argument, shift_argument
     unless [remote, local].all?
       Heroku::Command.run(current_command, ['--help'])
       exit(1)
     end
-    if local =~ %r(://)
-      error "LOCAL_SOURCE_DATABASE is not a valid database name"
-    end
 
-    remote_uri = generate_resolver.resolve(remote).url
-    local_uri = "postgres:///#{local}"
+    target_uri = resolve_heroku_url(remote)
+    source_uri = parse_db_url(local)
 
     pgdr = PgDumpRestore.new(
-      local_uri,
-      remote_uri,
+      source_uri,
+      target_uri,
       self)
 
     pgdr.execute
   end
 
-  # pg:pull <REMOTE_SOURCE_DATABASE> <LOCAL_TARGET_DATABASE>
+  # pg:pull <REMOTE_SOURCE_DATABASE> <TARGET_DATABASE>
   #
-  # pull from REMOTE_SOURCE_DATABASE to LOCAL_TARGET_DATABASE
-  # LOCAL_TARGET_DATABASE must not already exist.
+  # pull from REMOTE_SOURCE_DATABASE to TARGET_DATABASE
+  # TARGET_DATABASE must not already exist.
+  #
+  # TARGET_DATABASE will be created locally if it's a database name
+  # or remotely if it's a fully qualified URL.
   def pull
+    requires_preauth
     remote, local = shift_argument, shift_argument
     unless [remote, local].all?
       Heroku::Command.run(current_command, ['--help'])
       exit(1)
     end
-    if local =~ %r(://)
-      error "LOCAL_TARGET_DATABASE is not a valid database name"
-    end
 
-    remote_uri = generate_resolver.resolve(remote).url
-    local_uri = "postgres:///#{local}"
+    source_uri = resolve_heroku_url(remote)
+    target_uri = parse_db_url(local)
 
     pgdr = PgDumpRestore.new(
-      remote_uri,
-      local_uri,
+      source_uri,
+      target_uri,
       self)
 
     pgdr.execute
   end
 
+
+  # pg:maintenance <info|run|set-window> <DATABASE>
+  #
+  #  manage maintenance for <DATABASE>
+  #  info               # show current maintenance information
+  #  run                # start maintenance
+  #    -f, --force      #   run pg:maintenance without entering application maintenance mode
+  #  window="<window>"  # set weekly UTC maintenance window for DATABASE
+  #                     # eg: `heroku pg:maintenance window="Sunday 14:30"`
+  def maintenance
+    requires_preauth
+    mode_with_argument = shift_argument || ''
+    mode, mode_argument = mode_with_argument.split('=')
+
+    db   = shift_argument
+    no_maintenance = options[:force]
+    if mode.nil? || db.nil? || !(%w[info run window].include? mode)
+      Heroku::Command.run(current_command, ["--help"])
+      exit(1)
+    end
+
+    resolver = generate_resolver
+    attachment = resolver.resolve(db)
+    if attachment.starter_plan?
+      error("pg:maintenance is not available for hobby-tier databases")
+    end
+
+    case mode
+    when 'info'
+      response = hpg_client(attachment).maintenance_info
+      display response[:message]
+    when 'run'
+      if in_maintenance?(resolver.app_name) || no_maintenance
+        response = hpg_client(attachment).maintenance_run
+        display response[:message]
+      else
+        error("Application must be in maintenance mode or --force flag must be used")
+      end
+    when 'window'
+      unless mode_argument =~ /\A[A-Za-z]{3,10} \d\d?:[03]0\z/
+      error('Maintenance windows must be "Day HH:MM", where MM is 00 or 30.')
+      end
+
+      response = hpg_client(attachment).maintenance_window_set(mode_argument)
+      display "Maintenance window for #{attachment.display_name} set for #{response[:window]}."
+    end
+  end
+
+
+  # pg:upgrade REPLICA
+  #
+  # unfollow a database and upgrade it to the latest PostgreSQL version
+  #
+  def upgrade
+    requires_preauth
+    unless db = shift_argument
+      error("Usage: heroku pg:upgrade REPLICA\nMust specify REPLICA to upgrade.")
+    end
+    validate_arguments!
+
+    resolver = generate_resolver
+    replica = resolver.resolve(db)
+    @app = resolver.app_name if @app.nil?
+
+    replica_info = hpg_info(replica)
+
+    if replica.starter_plan?
+      error("pg:upgrade is only available for follower production databases.")
+    end
+
+    upgrade_status = hpg_client(replica).upgrade_status
+
+    if upgrade_status[:error]
+      output_with_bang "There were problems upgrading #{replica.resource_name}"
+      output_with_bang upgrade_status[:error]
+    else
+      origin_url = replica_info[:following]
+      origin_name = resolver.database_name_from_url(origin_url)
+
+      output_with_bang "#{replica.resource_name} will be upgraded to a newer PostgreSQL version,"
+      output_with_bang "stop following #{origin_name}, and become writable."
+      output_with_bang "Use `heroku pg:wait` to track status"
+      output_with_bang "\nThis cannot be undone."
+      return unless confirm_command
+
+      action "Requesting upgrade" do
+        hpg_client(replica).upgrade
+      end
+    end
+  end
+
+
+
 private
+
+  def resolve_heroku_url(remote)
+    generate_resolver.resolve(remote).url
+  end
 
   def generate_resolver
     app_name = app rescue nil # will raise if no app, but calling app reads in arguments
     Resolver.new(app_name, api)
+  end
+
+  # Parse string database parameter and return string database URL.
+  #
+  # @param db_string [String] The local database name or a full connection URL, e.g. `my_db` or `postgres://user:pass@host:5432/my_db`
+  # @return [String] A full database connection URL.
+  def parse_db_url(db_string)
+    return db_string if db_string =~ %r(://)
+
+    "postgres:///#{db_string}"
   end
 
   def display_db(name, db)
@@ -339,6 +528,10 @@ private
     display
   end
 
+  def in_maintenance?(app)
+    api.get_app_maintenance(app).body['maintenance']
+  end
+
   def hpg_client(attachment)
     Heroku::Client::HerokuPostgresql.new(attachment)
   end
@@ -349,7 +542,8 @@ private
     @resolver = generate_resolver
     dbs = @resolver.all_databases
 
-    unique_dbs = dbs.reject { |config, att| 'DATABASE_URL' == config }.map{|config, att| att}.compact
+    has_promoted = dbs.any? { |_, att| att.primary_attachment? }
+    unique_dbs = dbs.reject { |var, _| has_promoted && 'DATABASE_URL' == var }.map{|_, att| att}.compact
 
     db_infos = {}
     mutex = Mutex.new
@@ -387,17 +581,17 @@ private
     end
   end
 
-  def ticking
+  def ticking(interval)
     ticks = 0
     loop do
       yield(ticks)
       ticks +=1
-      sleep 1
+      sleep interval
     end
   end
 
-  def wait_for(attach)
-    ticking do |ticks|
+  def wait_for(attach, interval)
+    ticking(interval) do |ticks|
       status = hpg_client(attach).get_wait_status
       error status[:message] if status[:error?]
       break if !status[:waiting?] && ticks.zero?
@@ -425,7 +619,9 @@ private
 
   def version
     return @version if defined? @version
-    @version = exec_sql("select version();").match(/PostgreSQL (\d+\.\d+\.\d+) on/)[1]
+    result = exec_sql("select version();").match(/PostgreSQL (\d+\.\d+\.\d+) on/)
+    fail("Unable to determine Postgres version") unless result
+    @version = result[1]
   end
 
   def nine_two?
@@ -456,9 +652,15 @@ private
 
   def exec_sql_on_uri(sql,uri)
     begin
-      sslmode = (uri.host == 'localhost' ?  'prefer' : 'require' )
+      ENV["PGPASSWORD"] = uri.password
+      ENV["PGSSLMODE"]  = (uri.host == 'localhost' ?  'prefer' : 'require' )
+      ENV["PGAPPNAME"]  = "#{pgappname} non-interactive"
       user_part = uri.user ? "-U #{uri.user}" : ""
-      `env PGPASSWORD=#{uri.password} PGSSLMODE=#{sslmode} psql -c "#{sql}" #{user_part} -h #{uri.host} -p #{uri.port || 5432} #{uri.path[1..-1]}`
+      output = `#{psql_cmd} -c "#{sql}" #{user_part} -h #{uri.host} -p #{uri.port || 5432} #{uri.path[1..-1]}`
+      if (! $?.success?) || output.nil? || output.empty?
+        raise "psql failed. exit status #{$?.to_i}, output: #{output.inspect}"
+      end
+      output
     rescue Errno::ENOENT
       output_with_bang "The local psql command could not be located"
       output_with_bang "For help installing psql, see https://devcenter.heroku.com/articles/heroku-postgresql#local-setup"
@@ -466,4 +668,53 @@ private
     end
   end
 
+  def pgappname
+    if running_on_windows?
+      'psql (windows)'
+    else
+      "psql #{`whoami`.chomp.gsub(/\W/,'')}"
+    end
+  end
+
+  def psql_cmd
+    # some people alais psql, so we need to find the real psql
+    # but windows doesn't have the command command
+    running_on_windows? ? 'psql' : 'command psql'
+  end
+
+  # Finds or creates a non-DATABASE attachment for the DB currently
+  # attached as DATABASE.
+  #
+  # If current DATABASE is attached by other names, return one of them.
+  # If current DATABASE is only attachment, create a new one and return it.
+  # If no current DATABASE, return nil.
+  def find_or_create_non_database_attachment(app)
+    attachments = get_attachments(:app => app)
+
+    current_attachment = attachments.detect { |att| att['name'] == 'DATABASE' }
+    current_addon      = current_attachment && current_attachment['addon']
+
+    if current_addon
+      existing = attachments.
+        select { |att| att['addon']['id'] == current_addon['id'] }.
+        detect { |att| att['name'] != 'DATABASE' }
+
+      return existing if existing
+
+      # The current add-on occupying the DATABASE attachment has no
+      # other attachments. In order to promote this database without
+      # error, we can create a secondary attachment, just-in-time.
+      request(
+        # Note: no attachment name provided; let the API choose one
+        :body     => json_encode({
+          "app"     => {"name" => app},
+          "addon"   => {"name" => current_addon['name']},
+          "confirm" => app
+        }),
+        :expects  => 201,
+        :method   => :post,
+        :path     => "/addon-attachments"
+      )
+    end
+  end
 end

@@ -1,4 +1,3 @@
-require 'heroku-api'
 require "heroku/client"
 
 class Heroku::Client::Organizations
@@ -57,7 +56,7 @@ class Heroku::Client::Organizations
       if response.body && !response.body.empty?
         decompress_response!(response)
         begin
-          response.body = Heroku::OkJson.decode(response.body)
+          response.body = MultiJson.load(response.body)
         rescue
           # leave non-JSON body as is
         end
@@ -83,24 +82,6 @@ class Heroku::Client::Organizations
       rescue Heroku::API::Errors::NotFound
         Excon::Response.new(:body => { 'user' => {:not_found => true} })
       end
-    end
-
-    def remove_default_org
-      api.request(
-        :expects => 204,
-        :method => :delete,
-        :path => "/v1/user/default-organization"
-      )
-    end
-
-    def set_default_org(org)
-      api.request(
-        :expects => 200,
-        :method => :post,
-        :path => "/v1/user/default-organization",
-        :body => Heroku::Helpers.json_encode( { "default_organization" => org } ),
-        :headers => {"Content-Type" => "application/json"}
-      )
     end
 
     # Apps
@@ -231,7 +212,7 @@ class Heroku::Client::Organizations
     end
 
     def manager_url
-      ENV['HEROKU_MANAGER_URL'] || "https://manager-api.heroku.com"
+      Heroku::Auth.full_host
     end
 
   end

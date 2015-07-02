@@ -1,4 +1,6 @@
 require "heroku/command/base"
+require "shellwords"
+
 
 # manage app config vars
 #
@@ -23,14 +25,25 @@ class Heroku::Command::Config < Heroku::Command::Base
   def index
     validate_arguments!
 
-    vars = api.get_config_vars(app).body
+    vars = if options[:shell]
+             api.get_config_vars(app).body
+           else
+             api.request(
+               :expects  => 200,
+               :method   => :get,
+               :path     => "/apps/#{app}/config_vars",
+               :query    => { "symbolic" => true }
+             ).body
+           end
+
     if vars.empty?
       display("#{app} has no config vars.")
     else
       vars.each {|key, value| vars[key] = value.to_s}
       if options[:shell]
         vars.keys.sort.each do |key|
-          display(%{#{key}=#{vars[key]}})
+          out = $stdout.tty? ? Shellwords.shellescape(vars[key]) : vars[key]
+          display(%{#{key}=#{out}})
         end
       else
         styled_header("#{app} Config Vars")
@@ -55,6 +68,7 @@ class Heroku::Command::Config < Heroku::Command::Base
   # B: two
   #
   def set
+    requires_preauth
     unless args.size > 0 and args.all? { |a| a.include?('=') }
       error("Usage: heroku config:set KEY1=VALUE1 [KEY2=VALUE2 ...]\nMust specify KEY and VALUE to set.")
     end
@@ -86,6 +100,8 @@ class Heroku::Command::Config < Heroku::Command::Base
   #
   # display a config value for an app
   #
+  # -s, --shell  # output config var in shell format
+  #
   #Examples:
   #
   # $ heroku config:get A
@@ -99,7 +115,12 @@ class Heroku::Command::Config < Heroku::Command::Base
 
     vars = api.get_config_vars(app).body
     key, value = vars.detect {|k,v| k == key}
-    display(value.to_s)
+    if options[:shell] && value
+      out = $stdout.tty? ? Shellwords.shellescape(value) : value
+      display("#{key}=#{out}")
+    else
+      display(value.to_s)
+    end
   end
 
   # config:unset KEY1 [KEY2 ...]

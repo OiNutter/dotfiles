@@ -1,4 +1,3 @@
-require 'rexml/document'
 require 'uri'
 require 'time'
 require 'heroku/auth'
@@ -32,7 +31,6 @@ class Heroku::Client
   attr_accessor :host, :user, :password
 
   def initialize(user, password, host=Heroku::Auth.host)
-    require 'rest_client'
     @user = user
     @password = password
     @host = host
@@ -225,7 +223,7 @@ class Heroku::Client
     delete("/user/keys").to_s
   end
 
-  # Retreive ps list for the given app name.
+  # Retrieve ps list for the given app name.
   def ps(app_name)
     deprecate # 07/31/2012
     json_decode get("/apps/#{app_name}/ps", :accept => 'application/json').to_s
@@ -349,7 +347,6 @@ class Heroku::Client
     attr_accessor :attached
 
     def initialize(client, app)
-      require 'rest_client'
       @client = client
       @app = app
     end
@@ -435,7 +432,6 @@ class Heroku::Client
   # support for console sessions
   class ConsoleSession
     def initialize(id, app, client)
-      require 'rest_client'
       @id = id; @app = app; @client = client
     end
     def run(cmd)
@@ -453,7 +449,7 @@ class Heroku::Client
     else
       run_console_command("/apps/#{app_name}/console", cmd)
     end
-  rescue RestClient::BadGateway => e
+  rescue RestClient::BadGateway
     raise(AppCrashed, <<-ERROR)
 Unable to attach to a dyno to open a console session.
 Your application may have crashed.
@@ -482,6 +478,7 @@ Check the output of "heroku ps" and "heroku logs" for more information.
   def read_logs(app_name, options=[])
     query = "&" + options.join("&") unless options.empty?
     url = get("/apps/#{app_name}/logs?logplex=true#{query}").to_s
+    debug "Reading logs from: #{url}"
     if url == 'Use old logs'
       puts get("/apps/#{app_name}/logs").to_s
     else
@@ -528,7 +525,8 @@ Check the output of "heroku ps" and "heroku logs" for more information.
             end
           end
         end
-      rescue Errno::ECONNREFUSED, Errno::ETIMEDOUT, SocketError
+      rescue Errno::ECONNREFUSED, Errno::ETIMEDOUT, SocketError => exception
+        debug "Error connecting to logging service: #{exception}"
         error("Could not connect to logging service")
       rescue Timeout::Error, EOFError
         error("\nRequest timed out")
@@ -589,7 +587,11 @@ Check the output of "heroku ps" and "heroku logs" for more information.
     when "https"
       https_proxy
     end
-    RestClient::Resource.new(realize_full_uri(uri), options.merge(:user => user, :password => password))
+    resource_options = options.merge(:user => user, :password => password)
+    if ENV["HEROKU_SSL_VERIFY"] == "disable"
+      resource_options.merge!(:verify_ssl => OpenSSL::SSL::VERIFY_NONE)
+    end
+    RestClient::Resource.new(realize_full_uri(uri), resource_options)
   end
 
   def get(uri, extra_headers={})    # :nodoc:
@@ -619,7 +621,7 @@ Check the output of "heroku ps" and "heroku logs" for more information.
     rescue Errno::ECONNREFUSED, Errno::ETIMEDOUT, SocketError
       host = URI.parse(realize_full_uri(uri)).host
       error "Unable to connect to #{host}"
-    rescue RestClient::SSLCertificateNotVerified => ex
+    rescue RestClient::SSLCertificateNotVerified
       host = URI.parse(realize_full_uri(uri)).host
       error "WARNING: Unable to verify SSL certificate for #{host}\nTo disable SSL verification, run with HEROKU_SSL_VERIFY=disable"
     end
@@ -650,6 +652,7 @@ Check the output of "heroku ps" and "heroku logs" for more information.
   end
 
   def xml(raw)   # :nodoc:
+    require 'rexml/document'
     REXML::Document.new(raw)
   end
 

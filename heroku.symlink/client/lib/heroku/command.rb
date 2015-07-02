@@ -1,7 +1,12 @@
 require 'heroku/helpers'
 require 'heroku/plugin'
 require 'heroku/version'
-require "optparse"
+require 'heroku/http_instrumentor'
+require 'heroku/git'
+require 'heroku-api'
+require 'optparse'
+require 'rest_client'
+require 'multi_json'
 
 module Heroku
   module Command
@@ -9,7 +14,12 @@ module Heroku
 
     extend Heroku::Helpers
 
+    class << self
+      attr_accessor :requires_preauth
+    end
+
     def self.load
+      Heroku::JSPlugin.load!
       Dir[File.join(File.dirname(__FILE__), "command", "*.rb")].each do |file|
         require file
       end
@@ -99,7 +109,7 @@ module Heroku
 
     def self.display_warnings
       unless warnings.empty?
-        $stderr.puts(warnings.map {|warning| " !    #{warning}"}.join("\n"))
+        $stderr.puts(warnings.uniq.map {|warning| " !    #{warning}"}.join("\n"))
       end
     end
 
@@ -141,7 +151,7 @@ module Heroku
       opts = {}
       invalid_options = []
 
-      parser = OptionParser.new do |parser|
+      p = OptionParser.new do |parser|
         # remove OptionParsers Officious['version'] to avoid conflicts
         # see: https://github.com/ruby/ruby/blob/trunk/lib/optparse.rb#L814
         parser.base.long.delete('version')
@@ -159,7 +169,7 @@ module Heroku
       end
 
       begin
-        parser.order!(args) do |nonopt|
+        p.order!(args) do |nonopt|
           invalid_options << nonopt
           @anonymized_args << '!'
           @normalized_args << '!'
@@ -178,26 +188,11 @@ module Heroku
       @invalid_arguments = invalid_options
 
       @anonymous_command = [ARGV.first, *@anonymized_args].join(' ')
-      begin
-        usage_directory = "#{home_directory}/.heroku/usage"
-        FileUtils.mkdir_p(usage_directory)
-        usage_file = usage_directory << "/#{Heroku::VERSION}"
-        usage = if File.exists?(usage_file)
-          json_decode(File.read(usage_file))
-        else
-          {}
-        end
-        usage[@anonymous_command] ||= 0
-        usage[@anonymous_command] += 1
-        File.write(usage_file, json_encode(usage) + "\n")
-      rescue
-        # usage writing is not important, allow failures
-      end
 
       if command
         command_instance = command[:klass].new(args.dup, opts.dup)
 
-        if !@normalized_args.include?('--app _') && (implied_app = command_instance.app rescue nil)
+        if !@normalized_args.include?('--app _') && (command_instance.app rescue nil)
           @normalized_args << '--app _'
         end
         @normalized_command = [ARGV.first, @normalized_args.sort_by {|arg| arg.gsub('-', '')}].join(' ')
@@ -213,27 +208,11 @@ module Heroku
     end
 
     def self.run(cmd, arguments=[])
-      begin
-        object, method = prepare_run(cmd, arguments.dup)
-        object.send(method)
-      rescue Interrupt, StandardError, SystemExit => error
-        # load likely error classes, as they may not be loaded yet due to defered loads
-        require 'heroku-api'
-        require 'rest_client'
-        raise(error)
-      end
+      object, method = prepare_run(cmd, arguments.dup)
+      object.send(method)
     rescue Heroku::API::Errors::Unauthorized, RestClient::Unauthorized => e
-      if ENV['HEROKU_API_KEY']
-        puts "Authentication failure"
-        exit 1
-      end
-      if wrong_two_factor_code?(e)
-        puts "Invalid two-factor code"
-      else
-        puts "Authentication failure"
-        run "login"
-        retry
-      end
+      retry_login = handle_auth_error(e)
+      retry if retry_login
     rescue Heroku::API::Errors::VerificationRequired, RestClient::PaymentRequired => e
       retry if Heroku::Helpers.confirm_billing
     rescue Heroku::API::Errors::NotFound => e
@@ -245,7 +224,7 @@ module Heroku
         e.http_body =~ /^([\w\s]+ not found).?$/ ? $1 : "Resource not found"
       }
     rescue Heroku::API::Errors::Locked => e
-      app = e.response.headers[:x_confirmation_required]
+      app = e.response.headers["X-Confirmation-Required"]
       if confirm_command(app, extract_error(e.response.body))
         arguments << '--confirm' << app
         retry
@@ -260,7 +239,11 @@ module Heroku
       error "API request timed out. Please try again, or contact support@heroku.com if this issue persists."
     rescue Heroku::API::Errors::Forbidden => e
       if e.response.headers.has_key?("Heroku-Two-Factor-Required")
-        Heroku::Auth.ask_for_second_factor
+        if requires_preauth
+          Heroku::Auth.preauth
+        else
+          Heroku::Auth.ask_for_second_factor
+        end
         retry
       else
         error extract_error(e.response.body)
@@ -268,9 +251,14 @@ module Heroku
     rescue Heroku::API::Errors::ErrorWithResponse => e
       error extract_error(e.response.body)
     rescue RestClient::RequestFailed => e
-      error extract_error(e.http_body)
+      if e.response.code == 403 && e.response.headers.has_key?(:heroku_two_factor_required)
+        Heroku::Auth.preauth
+        retry
+      else
+        error extract_error(e.http_body)
+      end
     rescue CommandFailed => e
-      error e.message
+      error e.message, false
     rescue OptionParser::ParseError
       commands[cmd] ? run("help", [cmd]) : run("help")
     rescue Excon::Errors::SocketError, SocketError => e
@@ -279,20 +267,35 @@ module Heroku
       display_warnings
     end
 
+    def self.handle_auth_error(e)
+      if ENV['HEROKU_API_KEY']
+        puts "Authentication failure with HEROKU_API_KEY"
+        exit 1
+      elsif wrong_two_factor_code?(e)
+        puts "Invalid two-factor code"
+        false
+      else
+        puts "Authentication failure"
+        run "login"
+        true
+      end
+    end
+
     def self.parse(cmd)
       commands[cmd] || commands[command_aliases[cmd]]
     end
 
     def self.extract_error(body, options={})
       default_error = block_given? ? yield : "Internal server error.\nRun `heroku status` to check for known platform issues."
-      parse_error_xml(body) || parse_error_json(body) || parse_error_plain(body) || default_error
+      parse_error_json(body) || parse_error_xml(body) || parse_error_plain(body) || default_error
     end
 
     def self.parse_error_xml(body)
+      require 'rexml/document'
       xml_errors = REXML::Document.new(body).elements.to_a("//errors/error")
       msg = xml_errors.map { |a| a.text }.join(" / ")
       return msg unless msg.empty?
-    rescue Exception
+    rescue
     end
 
     def self.parse_error_json(body)
@@ -314,7 +317,10 @@ module Heroku
 
     def self.wrong_two_factor_code?(e)
       error = json_decode(e.response.body)
-      error["id"] == "invalid_two_factor_code"
+
+      # the server could have responded with XML, in which case `error` will be
+      # `nil`
+      error && error["id"] == "invalid_two_factor_code"
     end
   end
 end

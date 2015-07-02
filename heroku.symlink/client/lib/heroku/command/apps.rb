@@ -1,4 +1,5 @@
 require "heroku/command/base"
+require "heroku/command/stack"
 
 # manage apps (create, destroy)
 #
@@ -84,24 +85,25 @@ class Heroku::Command::Apps < Heroku::Command::Base
   #
   # $ heroku apps:info
   # === example
-  # Git URL:   git@heroku.com:example.git
+  # Git URL:   https://git.heroku.com/example.git
   # Repo Size: 5M
   # ...
   #
   # $ heroku apps:info --shell
-  # git_url=git@heroku.com:example.git
+  # git_url=https://git.heroku.com/example.git
   # repo_size=5000000
   # ...
   #
   def info
     validate_arguments!
+    requires_preauth
     app_data = api.get_app(app).body
 
     unless options[:shell]
       styled_header(app_data["name"])
     end
 
-    addons_data = api.get_addons(app).body.map {|addon| addon['name']}.sort
+    addons_data = api.get_addons(app).body.map {|addon| addon['name']}.sort rescue {}
     collaborators_data = api.get_collaborators(app).body.map {|collaborator| collaborator["email"]}.sort
     collaborators_data.reject! {|email| email == app_data["owner_email"]}
 
@@ -111,6 +113,7 @@ class Heroku::Command::Apps < Heroku::Command::Base
     end
 
     if options[:shell]
+      app_data['git_url'] = git_url(app_data['name'])
       if app_data['domain_name']
         app_data['domain_name'] = app_data['domain_name']['domain']
       end
@@ -152,7 +155,7 @@ class Heroku::Command::Apps < Heroku::Command::Base
         data["Database Size"] = format_bytes(app_data["database_size"])
       end
 
-      data["Git URL"] = app_data["git_url"]
+      data["Git URL"] = git_url(app_data['name'])
 
       if app_data["database_tables"]
         data["Database Size"].gsub!('(empty)', '0K') + " in #{quantify("table", app_data["database_tables"])}"
@@ -171,16 +174,12 @@ class Heroku::Command::Apps < Heroku::Command::Base
       data["Slug Size"] = format_bytes(app_data["slug_size"]) if app_data["slug_size"]
       data["Cache Size"] = format_bytes(app_data["cache_size"]) if app_data["cache_size"]
 
-      data["Stack"] = app_data["stack"]
-      if data["Stack"] != "cedar"
+      data["Stack"] = Heroku::Command::Stack::Codex.out(app_data["stack"])
+      if data["Stack"] != "cedar-10"
         data.merge!("Dynos" => app_data["dynos"], "Workers" => app_data["workers"])
       end
 
       data["Web URL"] = app_data["web_url"]
-
-      if app_data["tier"]
-        data["Tier"] = app_data["tier"].capitalize
-      end
 
       styled_hash(data)
     end
@@ -199,22 +198,25 @@ class Heroku::Command::Apps < Heroku::Command::Base
   # -s, --stack STACK          # the stack on which to create the app
   #     --region REGION        # specify region for this app to run in
   # -l, --locked               # lock the app
+  #     --ssh-git              # Use SSH git protocol
   # -t, --tier TIER            # HIDDEN: the tier for this app
+  #     --http-git             # HIDDEN: Use HTTP git protocol
   #
   #Examples:
   #
   # $ heroku apps:create
   # Creating floating-dragon-42... done, stack is cedar
-  # http://floating-dragon-42.heroku.com/ | git@heroku.com:floating-dragon-42.git
+  # http://floating-dragon-42.heroku.com/ | https://git.heroku.com/floating-dragon-42.git
   #
-  # $ heroku apps:create -s bamboo
-  # Creating floating-dragon-42... done, stack is bamboo-mri-1.9.2
-  # http://floating-dragon-42.herokuapp.com/ | git@heroku.com:floating-dragon-42.git
+  # # specify a stack
+  # $ heroku create -s cedar
+  # Creating stormy-garden-5052... done, stack is cedar
+  # https://stormy-garden-5052.herokuapp.com/ | https://git.heroku.com/stormy-garden-5052.git
   #
   # # specify a name
   # $ heroku apps:create example
   # Creating example... done, stack is cedar
-  # http://example.heroku.com/ | git@heroku.com:example.git
+  # http://example.heroku.com/ | https://git.heroku.com/example.git
   #
   # # create a staging app
   # $ heroku apps:create example-staging --remote staging
@@ -230,7 +232,7 @@ class Heroku::Command::Apps < Heroku::Command::Base
     params = {
       "name" => name,
       "region" => options[:region],
-      "stack" => options[:stack],
+      "stack" => Heroku::Command::Stack::Codex.in(options[:stack]),
       "locked" => options[:locked]
     }
 
@@ -254,7 +256,7 @@ class Heroku::Command::Apps < Heroku::Command::Base
           status("region is #{region_from_app(info)}")
         else
           stack = (info['stack'].is_a?(Hash) ? info['stack']["name"] : info['stack'])
-          status("stack is #{stack}")
+          status("stack is #{Heroku::Command::Stack::Codex.out(stack)}")
         end
       end
 
@@ -266,30 +268,33 @@ class Heroku::Command::Apps < Heroku::Command::Base
       end
 
       if buildpack = options[:buildpack]
-        api.put_config_vars(info["name"], "BUILDPACK_URL" => buildpack)
-        display("BUILDPACK_URL=#{buildpack}")
+        api.put_app_buildpacks_v3(info['name'], {:updates => [{:buildpack => buildpack}]})
+        display "Buildpack set. Next release on #{info['name']} will use #{buildpack}."
       end
 
-      hputs([ info["web_url"], info["git_url"] ].join(" | "))
+      hputs([ info["web_url"], git_url(info['name']) ].join(" | "))
     rescue Timeout::Error
       hputs("Timed Out! Run `heroku status` to check for known platform issues.")
     end
 
     unless options[:no_remote].is_a? FalseClass
-      create_git_remote(options[:remote] || "heroku", info["git_url"])
+      create_git_remote(options[:remote] || "heroku", git_url(info['name']))
     end
   end
 
   alias_command "create", "apps:create"
 
-  # apps:rename NEWNAME
+  # apps:rename NEWNAME --app APP
   #
   # rename the app
+  #
+  #     --ssh-git              # Use SSH git protocol
+  #     --http-git             # HIDDEN: Use HTTP git protocol
   #
   #Example:
   #
   # $ heroku apps:rename example-newname
-  # http://example-newname.herokuapp.com/ | git@heroku.com:example-newname.git
+  # http://example-newname.herokuapp.com/ | https://git.heroku.com/example-newname.git
   # Git remote heroku updated
   #
   def rename
@@ -304,13 +309,13 @@ class Heroku::Command::Apps < Heroku::Command::Base
     end
 
     app_data = api.get_app(newname).body
-    hputs([ app_data["web_url"], app_data["git_url"] ].join(" | "))
+    hputs([ app_data["web_url"], git_url(newname) ].join(" | "))
 
     if remotes = git_remotes(Dir.pwd)
       remotes.each do |remote_name, remote_app|
         next if remote_app != app
         git "remote rm #{remote_name}"
-        git "remote add #{remote_name} #{app_data["git_url"]}"
+        git "remote add #{remote_name} #{git_url(newname)}"
         hputs("Git remote #{remote_name} updated")
       end
     else
@@ -320,7 +325,7 @@ class Heroku::Command::Apps < Heroku::Command::Base
 
   alias_command "rename", "apps:rename"
 
-  # apps:open
+  # apps:open --app APP
   #
   # open the app in a web browser
   #
@@ -341,7 +346,7 @@ class Heroku::Command::Apps < Heroku::Command::Base
 
   alias_command "open", "apps:open"
 
-  # apps:destroy
+  # apps:destroy --app APP
   #
   # permanently destroy an app
   #
@@ -413,7 +418,7 @@ class Heroku::Command::Apps < Heroku::Command::Base
 
   alias_command "leave", "apps:leave"
 
-  # apps:lock
+  # apps:lock --app APP
   #
   # lock an organization app to restrict access
   #
@@ -430,7 +435,7 @@ class Heroku::Command::Apps < Heroku::Command::Base
 
   alias_command "lock", "apps:lock"
 
-  # apps:unlock
+  # apps:unlock --app APP
   #
   # unlock an organization app so that any org member can join it
   #
@@ -447,7 +452,7 @@ class Heroku::Command::Apps < Heroku::Command::Base
 
   alias_command "unlock", "apps:unlock"
 
-  # apps:upgrade TIER
+  # apps:upgrade TIER --app APP
   #
   # HIDDEN: upgrade an app's pricing tier
   #
@@ -463,7 +468,7 @@ class Heroku::Command::Apps < Heroku::Command::Base
 
   alias_command "upgrade", "apps:upgrade"
 
-  # apps:downgrade TIER
+  # apps:downgrade TIER --app APP
   #
   # HIDDEN: downgrade an app's pricing tier
   #

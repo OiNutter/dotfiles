@@ -20,7 +20,7 @@ class Heroku::Command::Base
   end
 
   def app
-    @app ||= if options[:confirm].is_a?(String)
+    @app ||= Heroku.app_name = if options[:confirm].is_a?(String)
       if options[:app] && (options[:app] != options[:confirm])
         error("Mismatch between --app and --confirm")
       end
@@ -41,26 +41,17 @@ class Heroku::Command::Base
     @nil = false
     options[:ignore_no_app] = true
 
-    @org ||= if skip_org?
-      nil
-    elsif options[:org].is_a?(String)
+    @org ||= if options[:org].is_a?(String)
       options[:org]
     elsif options[:personal] || @nil
       nil
-    elsif org_from_app = extract_org_from_app
-      org_from_app
+    elsif ENV['HEROKU_ORGANIZATION'] && ENV['HEROKU_ORGANIZATION'].strip != ""
+      ENV['HEROKU_ORGANIZATION']
+    elsif options[:ignore_no_org]
+      nil
     else
-      response = org_api.get_orgs.body
-      default = response['user']['default_organization']
-      if default
-        options[:using_default_org] = true
-        default
-      elsif options[:ignore_no_org]
-        nil
-      else
-        # raise instead of using error command to enable rescuing when app is optional
-        raise Heroku::Command::CommandFailed.new("No org specified.\nRun this command from an app folder which belongs to an org or specify which org to use with --org ORG.")
-      end
+      # raise instead of using error command to enable rescuing when app is optional
+      raise Heroku::Command::CommandFailed.new("No org specified.\nRun this command from an app folder which belongs to an org or specify which org to use with --org ORG.")
     end
 
     @nil = true if @org == nil
@@ -217,7 +208,7 @@ protected
 
     if remote = options[:remote]
       remotes[remote]
-    elsif remote = extract_app_from_git_config
+    elsif remote = extract_remote_from_git_config
       remotes[remote]
     else
       apps = remotes.values.uniq
@@ -229,7 +220,7 @@ protected
     end
   end
 
-  def extract_app_from_git_config
+  def extract_remote_from_git_config
     remote = git("config heroku.remote")
     remote == "" ? nil : remote
   end
@@ -254,10 +245,15 @@ protected
     options[:personal] = true unless options[:org]
   end
 
-  def skip_org?
-    return false if ENV['HEROKU_CLOUD'].nil? || ENV['HEROKU_MANAGER_URL']
-
-    !%w{default production prod}.include? ENV['HEROKU_CLOUD']
+  def git_url(app_name)
+    if options[:ssh_git]
+      "git@#{Heroku::Auth.git_host}:#{app_name}.git"
+    else
+      unless has_http_git_entry_in_netrc
+        warn "WARNING: Incomplete credentials detected, git may not work with Heroku. Run `heroku login` to update your credentials. See documentation for details: https://devcenter.heroku.com/articles/http-git#authentication"
+      end
+      "https://#{Heroku::Auth.http_git_host}/#{app_name}.git"
+    end
   end
 
   def git_remotes(base_dir=Dir.pwd)
@@ -267,8 +263,9 @@ protected
 
     return unless File.exists?(".git")
     git("remote -v").split("\n").each do |remote|
-      name, url, method = remote.split(/\s/)
-      if url =~ /^git@#{Heroku::Auth.git_host}(?:[\.\w]*):([\w\d-]+)\.git$/
+      name, url, _ = remote.split(/\s/)
+      if url =~ /^git@#{Heroku::Auth.git_host}(?:[\.\w]*):([\w\d-]+)\.git$/ ||
+         url =~ /^https:\/\/#{Heroku::Auth.http_git_host}\/([\w\d-]+)\.git$/
         remotes[name] = $1
       end
     end
@@ -283,6 +280,10 @@ protected
 
   def escape(value)
     heroku.escape(value)
+  end
+
+  def requires_preauth
+    Heroku::Command.requires_preauth = true
   end
 end
 

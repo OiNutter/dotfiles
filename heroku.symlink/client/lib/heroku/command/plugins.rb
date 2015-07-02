@@ -13,12 +13,13 @@ module Heroku::Command
     #
     # $ heroku plugins
     # === Installed Plugins
-    # heroku-accounts
+    # heroku-production-check@0.2.0
     #
     def index
       validate_arguments!
 
-      plugins = ::Heroku::Plugin.list
+      plugins = ::Heroku::JSPlugin.plugins.map { |p| "#{p[:name]}@#{p[:version]}" }
+      plugins.concat(::Heroku::Plugin.list)
 
       if plugins.length > 0
         styled_header("Installed Plugins")
@@ -34,22 +35,18 @@ module Heroku::Command
     #
     #Example:
     #
-    # $ heroku plugins:install https://github.com/ddollar/heroku-accounts.git
-    # Installing heroku-accounts... done
+    # $ heroku plugins:install heroku-production-check
+    # Installing heroku-production-check... done
     #
     def install
-      plugin = Heroku::Plugin.new(shift_argument)
+      name = shift_argument
       validate_arguments!
-
-      action("Installing #{plugin.name}") do
-        if plugin.install
-          unless Heroku::Plugin.load_plugin(plugin.name)
-            plugin.uninstall
-            exit(1)
-          end
-        else
-          error("Could not install #{plugin.name}. Please check the URL and try again.")
-        end
+      if name =~ /\./
+        # if it contains a '.' then we are assuming it is a URL
+        # and we should install it as a ruby plugin
+        ruby_plugin_install(name)
+      else
+        js_plugin_install(name)
       end
     end
 
@@ -59,15 +56,18 @@ module Heroku::Command
     #
     #Example:
     #
-    # $ heroku plugins:uninstall heroku-accounts
-    # Uninstalling heroku-accounts... done
+    # $ heroku plugins:uninstall heroku-production-check
+    # Uninstalling heroku-production-check... done
     #
     def uninstall
       plugin = Heroku::Plugin.new(shift_argument)
       validate_arguments!
-
-      action("Uninstalling #{plugin.name}") do
-        plugin.uninstall
+      if Heroku::Plugin.list.include? plugin.name
+        action("Uninstalling #{plugin.name}") do
+          plugin.uninstall
+        end
+      elsif Heroku::JSPlugin.setup?
+        Heroku::JSPlugin.uninstall(plugin.name)
       end
     end
 
@@ -78,10 +78,10 @@ module Heroku::Command
     #Example:
     #
     # $ heroku plugins:update
-    # Updating heroku-accounts... done
+    # Updating heroku-production-check... done
     #
-    # $ heroku plugins:update heroku-accounts
-    # Updating heroku-accounts... done
+    # $ heroku plugins:update heroku-production-check
+    # Updating heroku-production-check... done
     #
     def update
       plugins = if plugin = shift_argument
@@ -106,5 +106,37 @@ module Heroku::Command
       end
     end
 
+    # plugins:link [PATH]
+    # Links a local plugin into CLI.
+    # This is useful when developing plugins locally.
+    # It simply symlinks the specified path into ~/.heroku/node_modules
+
+    #Example:
+    # $ heroku plugins:link .
+    #
+    def link
+      Heroku::JSPlugin.setup
+      Heroku::JSPlugin.run('plugins', 'link', ARGV[1..-1])
+    end
+
+    private
+
+    def js_plugin_install(name)
+      Heroku::JSPlugin.install(name, force: true)
+    end
+
+    def ruby_plugin_install(name)
+      action("Installing #{name}") do
+        plugin = Heroku::Plugin.new(name)
+        if plugin.install
+          unless Heroku::Plugin.load_plugin(plugin.name)
+            plugin.uninstall
+            exit(1)
+          end
+        else
+          error("Could not install #{plugin.name}. Please check the URL and try again.")
+        end
+      end
+    end
   end
 end

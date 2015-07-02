@@ -80,6 +80,11 @@ module Heroku::Helpers::HerokuPostgresql
       end
     end
 
+    def app_config_vars
+      protect_missing_app
+      @app_config_vars ||= api.get_config_vars(app_name).body
+    end
+
     private
 
     def protect_missing_app
@@ -87,11 +92,6 @@ module Heroku::Helpers::HerokuPostgresql
       unless app_name
         error("No app specified.\nRun this command from an app folder or specify which app to use with --app APP.")
       end
-    end
-
-    def app_config_vars
-      protect_missing_app
-      @app_config_vars ||= api.get_config_vars(app_name).body
     end
 
     def app_attachments
@@ -108,7 +108,8 @@ module Heroku::Helpers::HerokuPostgresql
         }
       @hpg_databases = Hash[ pairs ]
 
-      if find_database_url_real_attachment
+      # TODO: don't bother doing this if DATABASE_URL is already present in hash!
+      if !@hpg_databases.key?('DATABASE_URL') && find_database_url_real_attachment
         @hpg_databases['DATABASE_URL'] = find_database_url_real_attachment
       end
 
@@ -197,7 +198,7 @@ module Heroku::Helpers::HerokuPostgresql
           else
             attachment = resolver.resolve(val)
             if attachment.starter_plan?
-              error("#{opt.tr 'f', 'F'} is only available on production databases.")
+              error("#{opt.capitalize} is only available on production databases.")
             end
             argument_url = attachment.url
           end

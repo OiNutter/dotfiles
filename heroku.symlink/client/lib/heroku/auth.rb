@@ -9,11 +9,11 @@ class Heroku::Auth
   class << self
     include Heroku::Helpers
 
-    attr_accessor :credentials, :two_factor_code
+    attr_accessor :credentials
 
     def api
       @api ||= begin
-        require("heroku-api")
+        debug "Using API with key: #{password[0,6]}..."
         api = Heroku::API.new(default_params.merge(:api_key => password))
 
         def api.request(params, &block)
@@ -54,12 +54,20 @@ class Heroku::Auth
       "heroku.com"
     end
 
+    def http_git_host
+      ENV['HEROKU_HTTP_GIT_HOST'] || "git.#{host}"
+    end
+
     def git_host
       ENV['HEROKU_GIT_HOST'] || host
     end
 
     def host
       ENV['HEROKU_HOST'] || default_host
+    end
+
+    def subdomains
+      %w(api git)
     end
 
     def reauthorize
@@ -74,10 +82,16 @@ class Heroku::Auth
       get_credentials[1]
     end
 
-    def api_key(user = get_credentials[0], password = get_credentials[1])
-      require("heroku-api")
-      api = Heroku::API.new(default_params)
-      api.post_login(user, password).body["api_key"]
+    def api_key(user=get_credentials[0], password=get_credentials[1])
+      @api ||= Heroku::API.new(default_params)
+      api_key = @api.post_login(user, password).body["api_key"]
+      @api = nil
+      api_key
+    rescue Heroku::API::Errors::Forbidden => e
+      if e.response.headers.has_key?("Heroku-Two-Factor-Required")
+        ask_for_second_factor
+        retry
+      end
     rescue Heroku::API::Errors::Unauthorized => e
       id = json_decode(e.response.body)["id"]
       raise if id != "invalid_two_factor_code"
@@ -86,11 +100,6 @@ class Heroku::Auth
       display "Please check your code was typed correctly and that your"
       display "authenticator's time keeping is accurate."
       exit 1
-    rescue Heroku::API::Errors::Forbidden => e
-      if e.response.headers.has_key?("Heroku-Two-Factor-Required")
-        ask_for_second_factor
-        retry
-      end
     end
 
     def get_credentials    # :nodoc:
@@ -102,8 +111,9 @@ class Heroku::Auth
         FileUtils.rm_f(legacy_credentials_path)
       end
       if netrc
-        netrc.delete("api.#{host}")
-        netrc.delete("code.#{host}")
+        subdomains.each do |sub|
+          netrc.delete("#{sub}.#{host}")
+        end
         netrc.save
       end
       @api, @client, @credentials = nil, nil
@@ -131,11 +141,13 @@ class Heroku::Auth
       @netrc ||= begin
         File.exists?(netrc_path) && Netrc.read(netrc_path)
       rescue => error
-        if error.message =~ /^Permission bits for/
-          perm = File.stat(netrc_path).mode & 0777
-          abort("Permissions #{perm} for '#{netrc_path}' are too open. You should run `chmod 0600 #{netrc_path}` so that your credentials are NOT accessible by others.")
+        case error.message
+        when /^Permission bits for/
+          abort("#{error.message}.\nYou should run `chmod 0600 #{netrc_path}` so that your credentials are NOT accessible by others.")
+        when /EACCES/
+          error("Error reading #{netrc_path}\n#{error.message}\nMake sure this user can read/write this file.")
         else
-          raise error
+          error("Error reading #{netrc_path}\n#{error.message}\nYou may need to delete this file and run `heroku login` to recreate it.")
         end
       end
     end
@@ -154,15 +166,17 @@ class Heroku::Auth
 
         # read netrc credentials if they exist
         if netrc
+          netrc_host = full_host_uri.host
+
           # force migration of long api tokens (80 chars) to short ones (40)
           # #write_credentials rewrites both api.* and code.*
-          credentials = netrc["api.#{host}"]
+          credentials = netrc[netrc_host]
           if credentials && credentials[1].length > 40
             @credentials = [ credentials[0], credentials[1][0,40] ]
             write_credentials
           end
 
-          netrc["api.#{host}"]
+          netrc[netrc_host]
         end
       end
     end
@@ -173,8 +187,9 @@ class Heroku::Auth
       unless running_on_windows?
         FileUtils.chmod(0600, netrc_path)
       end
-      netrc["api.#{host}"] = self.credentials
-      netrc["code.#{host}"] = self.credentials
+      subdomains.each do |sub|
+        netrc["#{sub}.#{host}"] = self.credentials
+      end
       netrc.save
     end
 
@@ -198,16 +213,23 @@ class Heroku::Auth
 
       print "Password (typing will be hidden): "
       password = running_on_windows? ? ask_for_password_on_windows : ask_for_password
+      HTTPInstrumentor.filter_parameter(password)
 
       [user, api_key(user, password)]
     end
 
     def ask_for_second_factor
-      print "Two-factor code: "
-      @two_factor_code = ask
-      @two_factor_code = nil if @two_factor_code == ""
-      @api = nil # reset it
-      @two_factor_code
+      $stderr.print "Two-factor code: "
+      api.second_factor = ask
+    end
+
+    def preauth
+      if Heroku.app_name
+        second_factor = ask_for_second_factor
+        api.request(:method => :put,
+                    :path => "/apps/#{Heroku.app_name}/pre-authorizations",
+                    :headers => {"Heroku-Two-Factor-Code" => second_factor})
+      end
     end
 
     def ask_for_password_on_windows
@@ -240,45 +262,49 @@ class Heroku::Auth
     end
 
     def ask_for_and_save_credentials
-      require("heroku-api") # for the errors
-      begin
-        @credentials = ask_for_credentials
-        write_credentials
-        check
-      rescue Heroku::API::Errors::NotFound, Heroku::API::Errors::Unauthorized => e
-        delete_credentials
-        display "Authentication failed."
-        retry if retry_login?
-        exit 1
-      rescue Exception => e
-        delete_credentials
-        raise e
-      end
-      check_for_associated_ssh_key unless Heroku::Command.current_command == "keys:add"
+      warn "WARNING: heroku-accounts plugin is installed. This plugin is known to have problems with HTTP Git." if defined?(Heroku::Command::Accounts)
+      @credentials = ask_for_credentials
+      debug "Logged in as #{@credentials[0]} with key: #{@credentials[1][0,6]}..."
+      write_credentials
+      check
       @credentials
-    end
-
-    def check_for_associated_ssh_key
-      if api.get_keys.body.empty?
-        associate_or_generate_ssh_key
-      end
+    rescue Heroku::API::Errors::NotFound, Heroku::API::Errors::Unauthorized => e
+      delete_credentials
+      display "Authentication failed."
+      warn "WARNING: HEROKU_API_KEY is set to an invalid key." if ENV['HEROKU_API_KEY']
+      retry if retry_login?
+      exit 1
+    rescue => e
+      delete_credentials
+      raise e
     end
 
     def associate_or_generate_ssh_key
-      public_keys = Dir.glob("#{home_directory}/.ssh/*.pub").sort
-
-      case public_keys.length
-      when 0 then
-        display "Could not find an existing public key."
+      unless File.exists?("#{home_directory}/.ssh/id_rsa.pub")
+        display "Could not find an existing public key at ~/.ssh/id_rsa.pub"
         display "Would you like to generate one? [Yn] ", false
-        unless ask.strip.downcase == "n"
+        unless ask.strip.downcase =~ /^n/
           display "Generating new SSH public key."
-          generate_ssh_key("id_rsa")
+          generate_ssh_key("#{home_directory}/.ssh/id_rsa")
           associate_key("#{home_directory}/.ssh/id_rsa.pub")
+          return
         end
-      when 1 then
-        display "Found existing public key: #{public_keys.first}"
-        associate_key(public_keys.first)
+      end
+
+      chosen = ssh_prompt
+      associate_key(chosen) if chosen
+    end
+
+    def ssh_prompt
+      public_keys = Dir.glob("#{home_directory}/.ssh/*.pub").sort
+      case public_keys.length
+      when 0
+        error("No SSH keys found")
+        return nil
+      when 1
+        display "Found an SSH public key at #{public_keys.first}"
+        display "Would you like to upload it to Heroku? [Yn] ", false
+        return ask.strip.downcase =~ /^n/ ? nil : public_keys.first
       else
         display "Found the following SSH public keys:"
         public_keys.each_with_index do |key, index|
@@ -290,19 +316,14 @@ class Heroku::Auth
         if choice == -1 || chosen.nil?
           error("Invalid choice")
         end
-        associate_key(chosen)
+        return chosen
       end
     end
 
     def generate_ssh_key(keyfile)
-      ssh_dir = File.join(home_directory, ".ssh")
-      unless File.exists?(ssh_dir)
-        FileUtils.mkdir_p ssh_dir
-        unless running_on_windows?
-          File.chmod(0700, ssh_dir)
-        end
-      end
-      output = `ssh-keygen -t rsa -N "" -f \"#{home_directory}/.ssh/#{keyfile}\" 2>&1`
+      ssh_dir = File.dirname(keyfile)
+      FileUtils.mkdir_p ssh_dir, :mode => 0700
+      output = `ssh-keygen -t rsa -N "" -f \"#{keyfile}\" 2>&1`
       if ! $?.success?
         error("Could not generate key: #{output}")
       end
@@ -324,42 +345,41 @@ class Heroku::Auth
       @login_attempts < 3
     end
 
-    def verified_hosts
-      %w( heroku.com heroku-shadow.com )
-    end
-
     def base_host(host)
       parts = URI.parse(full_host(host)).host.split(".")
       return parts.first if parts.size == 1
       parts[-2..-1].join(".")
     end
 
-    def full_host(host)
-      (host =~ /^http/) ? host : "https://api.#{host}"
+    def full_host(*args)
+      # backwards compat for when this took an arg
+      h = args.first || host
+      (h =~ /^http/) ? h : "https://api.#{h}"
+    end
+
+    def full_host_uri
+      URI.parse(full_host)
     end
 
     def verify_host?(host)
-      hostname = base_host(host)
-      verified = verified_hosts.include?(hostname)
-      verified = false if ENV["HEROKU_SSL_VERIFY"] == "disable"
-      verified
+      return false if ENV["HEROKU_SSL_VERIFY"] == "disable"
+      base_host(host) == "heroku.com"
     end
 
     protected
 
     def default_params
-      uri = URI.parse(full_host(host))
-      headers = { 'User-Agent' => Heroku.user_agent }
-      if two_factor_code
-        headers.merge!("Heroku-Two-Factor-Code" => two_factor_code)
-      end
-      {
-        :headers          => headers,
+      uri = full_host_uri
+      params = {
+        :headers          => {'User-Agent' => Heroku.user_agent},
         :host             => uri.host,
         :port             => uri.port.to_s,
         :scheme           => uri.scheme,
         :ssl_verify_peer  => verify_host?(host)
       }
+      params[:instrumentor] = HTTPInstrumentor if debugging?
+
+      params
     end
   end
 end

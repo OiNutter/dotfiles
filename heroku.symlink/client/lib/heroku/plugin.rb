@@ -8,27 +8,31 @@ module Heroku
     class ErrorUpdatingSymlinkPlugin < StandardError; end
 
     DEPRECATED_PLUGINS = %w(
+      heroku-addon-attachments
       heroku-cedar
       heroku-certs
       heroku-credentials
       heroku-dyno-size
+      heroku-dyno-types
+      heroku-fork
       heroku-kill
       heroku-labs
       heroku-logging
       heroku-netrc
+      heroku-orgs
       heroku-pgdumps
       heroku-postgresql
+      heroku-push
       heroku-releases
       heroku-shared-postgresql
       heroku-sql-console
       heroku-status
       heroku-stop
       heroku-suggest
+      heroku-symbol
       heroku-two-factor
       pgbackups-automate
       pgcmd
-      heroku-fork
-      heroku-orgs
     )
 
     attr_reader :name, :uri
@@ -49,20 +53,6 @@ module Heroku
         next if skip_plugins.include?(plugin)
         load_plugin(plugin)
       end
-      # check to see if we are using ddollar/heroku-accounts
-      if list.include?('heroku-accounts') && Heroku::Auth.methods.include?(:fetch_from_account)
-        # setup netrc to match the default, if one exists
-        if default_account = %x{ git config heroku.account }.chomp
-          account = Heroku::Auth.extract_account rescue nil
-          if account && Heroku::Auth.read_credentials != [Heroku::Auth.user, Heroku::Auth.password]
-            Heroku::Auth.credentials = [Heroku::Auth.user, Heroku::Auth.password]
-            Heroku::Auth.write_credentials
-            load("#{File.dirname(__FILE__)}/command/accounts.rb")
-            # kill memoization in case '--account' was passed
-            Heroku::Auth.instance_variable_set(:@account, nil)
-          end
-        end
-      end
     end
 
     def self.load_plugin(plugin)
@@ -72,6 +62,13 @@ module Heroku
         load "#{folder}/init.rb" if File.exists?  "#{folder}/init.rb"
       rescue ScriptError, StandardError => error
         styled_error(error, "Unable to load plugin #{plugin}.")
+        action("Updating #{plugin}") do
+          begin
+            Heroku::Plugin.new(plugin).update
+          rescue => e
+            $stderr.puts(format_with_bang(e.to_s))
+          end
+        end
         false
       end
     end
@@ -136,10 +133,10 @@ module Heroku
           unless git('config --get branch.master.remote').empty?
             message = git("pull")
             unless $?.success?
-              error("Unable to update #{name}.\n" + message)
+              raise "Unable to update #{name}.\n" + message
             end
           else
-            error(<<-ERROR)
+            raise <<-ERROR
 #{name} is a legacy plugin installation.
 Enable updating by reinstalling with `heroku plugins:install`.
 ERROR

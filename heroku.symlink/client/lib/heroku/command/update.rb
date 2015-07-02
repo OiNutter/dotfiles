@@ -12,11 +12,14 @@ class Heroku::Command::Update < Heroku::Command::Base
   # Example:
   #
   # $ heroku update
-  # Updating from v1.2.3... done, updated to v2.3.4
+  # Updating... done, v1.2.3 updated to v2.3.4
   #
   def index
     validate_arguments!
-    update_from_url("https://toolbelt.heroku.com/download/zip")
+    update_from_url(false)
+    if Heroku::JSPlugin.setup?
+      Heroku::JSPlugin.update
+    end
   end
 
   # update:beta
@@ -24,24 +27,17 @@ class Heroku::Command::Update < Heroku::Command::Base
   # update to the latest beta client
   #
   # $ heroku update
-  # Updating from v1.2.3... done, updated to v2.3.4.pre
+  # Updating... done, v1.2.3 updated to v2.3.4.pre
   #
   def beta
     validate_arguments!
-    update_from_url("https://toolbelt.heroku.com/download/beta-zip")
+    update_from_url(true)
   end
 
-private
+  private
 
-  def update_from_url(url)
+  def update_from_url(prerelease)
     Heroku::Updater.check_disabled!
-    action("Updating from #{Heroku::VERSION}") do
-      if new_version = Heroku::Updater.update(url)
-        status("updated to #{new_version}")
-      else
-        status("nothing to update")
-      end
-    end
+    Heroku::Updater.update(prerelease)
   end
-
 end

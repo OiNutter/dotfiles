@@ -1,47 +1,43 @@
+if RUBY_VERSION < '1.9.0' # this is a string comparison, but it should work for any old ruby version
+  $stderr.puts "Heroku Toolbelt requires Ruby 1.9+."
+  exit 1
+end
+
 load('heroku/helpers.rb') # reload helpers after possible inject_loadpath
 load('heroku/updater.rb') # reload updater after possible inject_loadpath
 
-require "heroku"
-require "heroku/command"
-require "heroku/helpers"
-
-# workaround for rescue/reraise to define errors in command.rb failing in 1.8.6
-if RUBY_VERSION =~ /^1.8.6/
-  require('heroku-api')
-  require('rest_client')
-end
-
-begin
-  # attempt to load the JSON parser bundled with ruby for multi_json
-  # we're doing this because several users apparently have gems broken
-  # due to OS upgrades. see: https://github.com/heroku/heroku/issues/932
-  require 'json'
-rescue LoadError
-  # let multi_json fallback to yajl/oj/okjson
-end
+require 'heroku'
+require 'heroku/jsplugin'
+require 'heroku/rollbar'
+require 'json'
 
 class Heroku::CLI
 
   extend Heroku::Helpers
 
   def self.start(*args)
-    begin
-      if $stdin.isatty
-        $stdin.sync = true
-      end
-      if $stdout.isatty
-        $stdout.sync = true
-      end
-      command = args.shift.strip rescue "help"
-      Heroku::Command.load
-      Heroku::Command.run(command, args)
-    rescue Interrupt
-      `stty icanon echo`
-      error("Command cancelled.")
-    rescue => error
-      styled_error(error)
-      exit(1)
+    $stdin.sync = true if $stdin.isatty
+    $stdout.sync = true if $stdout.isatty
+    Heroku::Updater.warn_if_updating
+    command = args.shift.strip rescue "help"
+    Heroku::JSPlugin.try_takeover(command, args) if Heroku::JSPlugin.setup?
+    require 'heroku/command'
+    Heroku::Git.check_git_version
+    Heroku::Command.load
+    Heroku::Command.run(command, args)
+    Heroku::Updater.autoupdate
+  rescue Errno::EPIPE => e
+    error(e.message)
+  rescue Interrupt => e
+    `stty icanon echo` unless running_on_windows?
+    if ENV["HEROKU_DEBUG"]
+      styled_error(e)
+    else
+      error("Command cancelled.", false)
     end
+  rescue => error
+    styled_error(error)
+    exit(1)
   end
 
 end
