@@ -1,7 +1,7 @@
 {CompositeDisposable, Disposable} = require 'atom'
 
 contentCheckRegex = null
-defaultDetectReactFilePattern = '/((require\\([\'"]react(?:-native)?[\'"]\\)))|(import\\s+\\w+\\s+from\\s+[\'"]react(?:-native)?[\'"])/'
+defaultDetectReactFilePattern = '/((require\\([\'"]react(?:(-native|\\/addons))?[\'"]\\)))|(import\\s+[\\w{},\\s]+\\s+from\\s+[\'"]react(?:(-native|\\/addons))?[\'"])/'
 autoCompleteTagStartRegex = /(<)([a-zA-Z0-9\.:$_]+)/g
 autoCompleteTagCloseRegex = /(<\/)([^>]+)(>)/g
 
@@ -13,9 +13,14 @@ decreaseIndentForNextLinePattern = '(?x)
 
 class AtomReact
   config:
+    enabledForAllJavascriptFiles:
+      type: 'boolean'
+      default: false
+      description: 'Enable grammar, snippets and other features automatically for all .js files.'
     disableAutoClose:
       type: 'boolean'
       default: false
+      description: 'Disabled tag autocompletion'
     detectReactFilePattern:
       type: 'string'
       default: defaultDetectReactFilePattern
@@ -101,13 +106,16 @@ class AtomReact
     @patchEditorLangModeAutoDecreaseIndentForBufferRow(editor)?.jsxPatch = true
 
   isReact: (text) ->
+    return true if atom.config.get('react.enabledForAllJavascriptFiles')
+
+
     if not contentCheckRegex?
       match = (atom.config.get('react.detectReactFilePattern') || defaultDetectReactFilePattern).match(new RegExp('^/(.*?)/([gimy]*)$'));
       contentCheckRegex = new RegExp(match[1], match[2])
     return text.match(contentCheckRegex)?
 
   isReactEnabledForEditor: (editor) ->
-    return editor? && editor.getGrammar().scopeName == "source.js.jsx"
+    return editor? && editor.getGrammar().scopeName in ["source.js.jsx", "source.coffee.jsx"]
 
   autoSetGrammar: (editor) ->
     return if @isReactEnabledForEditor editor
@@ -205,6 +213,9 @@ class AtomReact
     return if not @isReactEnabledForEditor(editor) or editor != atom.workspace.getActiveTextEditor()
 
     if eventObj?.newText is '>' and !eventObj.oldText
+      # auto closing multiple cursors is a little bit tricky so lets disable it for now
+      return if editor.getCursorBufferPositions().length > 1;
+
       tokenizedLine = editor.displayBuffer?.tokenizedBuffer?.tokenizedLineForRow(eventObj.newRange.end.row)
       return if not tokenizedLine?
 

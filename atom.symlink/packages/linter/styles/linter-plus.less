@@ -1,22 +1,69 @@
 @import "ui-variables";
 @import 'octicon-utf-codes';
 
+@spacing: 3px;
+
 linter-message {
-  display: block;
-  padding: 2px;
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
   font-size: @font-size;
-  span {
-    padding: 0 6px;
+  line-height: 1.2;
+  & > .badge {
+    align-self: flex-start;
   }
 }
 
-#linter-panel {
+.linter-message-item {
+  margin: @spacing;
+  height: 1.8em;
+  white-space: nowrap;
+}
+
+linter-multiline-message {
   display: block;
-  overflow-y: scroll;
+  pointer-events: auto;
+  linter-message-line {
+    display: block;
+    white-space: pre;
+  }
+  linter-message-line:not(:first-child) {
+    display: none;
+    margin-left: 1.1em;
+  }
+  linter-message-line:first-child:not(:nth-last-of-type(1))::before {
+    font-family: 'Octicons Regular';
+    content: @triangle-right;
+    display: inline-block;
+    width: 1em;
+    margin-right: 0.1em;
+    text-align: center;
+    height: 1em;
+  }
+  &:focus, &.expanded {
+    linter-message-line:first-child:not(:nth-last-of-type(1))::before {
+      content: @triangle-down;
+    }
+    linter-message-line:not(:first-child) {
+      display: block;
+    }
+  }
+}
+
+linter-panel {
+  display: block;
+  overflow-y: auto;
   max-height: 150px;
-  padding: 4px 8px;
   &[hidden]{
     display: none;
+  }
+  padding-left: @spacing;
+  padding-right: @spacing;
+  linter-message:first-child {
+    padding-top: @spacing;
+  }
+  linter-message:last-child {
+    padding-bottom: @spacing;
   }
 }
 
@@ -25,7 +72,7 @@ linter-message {
   @linter-inline-fg: @base-background-color;
   @linter-inline-bg: @text-color;
   margin-top: 4px;
-  padding: 4px;
+  padding: @spacing;
   color: @linter-inline-fg;
   border-radius: @component-border-radius * 1.5;
   border-top-left-radius: 0;
@@ -48,10 +95,9 @@ linter-message {
   }
   a {
     color: @linter-inline-link;
-    margin-right: 4px;
-  }
-  .badge {
-    margin-top: -2px;
+    &:last-of-type {
+      padding-right: @spacing * 1.5; // a bit extra space for visual pleasing
+    }
   }
 }
 
@@ -60,11 +106,13 @@ linter-bottom-tab {
   margin-right: -1px; // hide left border
   padding: 0 .6em;
   line-height: 1.8em;
-  vertical-align: middle;
   color: @text-color-subtle;
   border: 1px solid @button-border-color;
   background: fade(@button-background-color, 33%);
   cursor: pointer;
+  vertical-align: middle;
+  position: relative;
+  top: -2px;
   &:first-of-type {
     border-top-left-radius: @component-border-radius;
     border-bottom-left-radius: @component-border-radius;
@@ -92,13 +140,14 @@ atom-text-editor::shadow .linter-highlight .icon-right{
   visibility: visible;
   &::before{
     content: @primitive-dot;
-    font-size: 1.1em;
   }
 }
 // Styling Error Types
 atom-text-editor::shadow .linter-highlight, .linter-highlight{
   &.badge {
     border-radius: @component-border-radius;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   &.error {
     &:not(.line-number){

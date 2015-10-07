@@ -24,9 +24,6 @@ class Main
 
   ### Public ###
 
-  # The minimap package version
-  version: require('../package.json').version
-
   # The default minimap settings
   config:
     plugins:
@@ -99,45 +96,41 @@ class Main
   constructor: ->
     @emitter = new Emitter
 
+  # Activates the minimap package.
+  activate: ->
+    return if @active
+    MinimapElement ?= require './minimap-element'
+    MinimapElement.registerViewProvider()
+
     # Commands Subscriptions
-    @subscriptionsOfCommands = new CompositeDisposable
-    @subscriptionsOfCommands.add atom.commands.add 'atom-workspace',
+    @subscriptionsOfCommands = atom.commands.add 'atom-workspace',
       'minimap:toggle': => @toggle()
-      'minimap:generate-plugin': => @generatePlugin()
+      'minimap:generate-coffee-plugin': => @generatePlugin('coffee')
+      'minimap:generate-javascript-plugin': => @generatePlugin('javascript')
+      'minimap:generate-babel-plugin': => @generatePlugin('babel')
 
     # Other Subscriptions
     @subscriptions = new CompositeDisposable
 
-    MinimapElement ?= require './minimap-element'
-    MinimapElement.registerViewProvider()
-
-  # Activates the minimap package.
-  activate: ->
     @active = true
     @toggle() if atom.config.get 'minimap.autoToggle'
 
   # Deactivates the minimap package.
   deactivate: ->
+    return unless @active
+
     @deactivateAllPlugins()
-    @subscriptions.dispose()
     @editorsMinimaps?.forEach (value, key) =>
       value.destroy()
       @editorsMinimaps.delete(key)
+
+    @subscriptions.dispose()
+    @subscriptions = null
+    @subscriptionsOfCommands.dispose()
+    @subscriptionsOfCommands = null
     @editorsMinimaps = undefined
     @toggled = false
     @active = false
-
-  # Verifies that the passed-in version expression is satisfied by
-  # the current minimap version.
-  #
-  # expectedVersion - A [semver](https://github.com/npm/node-semver)
-  #                   compatible expression to match agains the minimap
-  #                   version.
-  #
-  # Returns a {Boolean}.
-  versionMatch: (expectedVersion) ->
-    semver ?= require 'semver'
-    semver.satisfies(@version, expectedVersion)
 
   # Toggles the minimap display.
   toggle: ->
@@ -153,9 +146,10 @@ class Main
       @initSubscriptions()
 
   # Opens the plugin generation view.
-  generatePlugin: ->
+  generatePlugin: (template) ->
     MinimapPluginGeneratorElement ?= require './minimap-plugin-generator-element'
     view = new MinimapPluginGeneratorElement()
+    view.template = template
     view.attach()
 
   # Calls the `callback` when the minimap package have been activated.
@@ -227,6 +221,11 @@ class Main
   onDidDeactivatePlugin: (callback) ->
     @emitter.on 'did-deactivate-plugin', callback
 
+  # Returns the {Minimap} class.
+  #
+  # Returns a {Function}.
+  minimapClass: -> Minimap ?= require './minimap'
+
   # Returns the {Minimap} object associated to the
   # passed-in `TextEditorElement`.
   #
@@ -258,6 +257,20 @@ class Main
         editorSubscription.dispose()
 
     minimap
+
+  # Returns a new stand-alone {Minimap} for the passed-in `TextEditor`.
+  #
+  # editorView - An `Editor` instance
+  #
+  # Returns a {Minimap}.
+  standAloneMinimapForEditor: (textEditor) ->
+    return unless textEditor?
+
+    Minimap ?= require './minimap'
+    new Minimap({
+      textEditor: textEditor
+      standAlone: true
+    })
 
   # Returns the {Minimap} of the active `TextEditor`.
   #

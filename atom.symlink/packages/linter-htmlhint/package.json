@@ -1,8 +1,14 @@
 {
   "name": "linter-htmlhint",
-  "linter-package": true,
+  "providedServices": {
+    "linter": {
+      "versions": {
+        "1.0.0": "provideLinter"
+      }
+    }
+  },
   "main": "./lib/init",
-  "version": "0.0.16",
+  "version": "0.1.1",
   "description": "Linter plugin for HTML, using htmlhint",
   "repository": {
     "type": "git",
@@ -13,21 +19,27 @@
     "atom": ">0.50.0"
   },
   "dependencies": {
+    "atom-linter": "^3.1.1",
     "htmlhint": "^0.9.6"
   },
-  "readme": "linter-htmlhint\n=========================\n\nThis linter plugin for [Linter](https://github.com/AtomLinter/Linter) provides an interface to [htmlhint](https://github.com/yaniswang/HTMLHint). It will be used with files that have the syntax.\n\n## Installation\nLinter package must be installed in order to use this plugin. If Linter is not installed, please follow the instructions [here](https://github.com/AtomLinter/Linter).\n\n### Plugin installation\n```\n$ apm install linter-htmlhint\n```\n\n## Settings\nYou can configure linter-htmlhint by editing ~/.atom/config.cson (choose Open Your Config in Atom menu):\n```\n'linter-htmlhint':\n  'htmlhintExecutablePath': null #htmlhint path. run 'which htmlhint' to find the path\n  'htmlHintRcFilePath': #OPTIONAL custom path to the htmlhintrc file (which can be used to customize rulesets that are run against the HTML)\n  'htmlHintRcFileName': #OPTIONAL filename of the htmlhintrc file (defaults to '.htmlhintrc', but can be overridden)\n```\n\n## Contributing\nIf you would like to contribute enhancements or fixes, please do the following:\n\n1. Fork the plugin repository.\n1. Hack on a separate topic branch created from the latest `master`.\n1. Commit and push the topic branch.\n1. Make a pull request.\n1. welcome to the club\n\nPlease note that modifications should follow these coding guidelines:\n\n- Indent is 2 spaces.\n- Code should pass coffeelint linter.\n- Vertical whitespace helps readability, don’t be afraid to use it.\n\nThank you for helping out!\n\n## Donation\n[![Share the love!](https://chewbacco-stuff.s3.amazonaws.com/donate.png)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=KXUYS4ARNHCN8)\n",
+  "readme": "linter-htmlhint\n=========================\n\nThis linter plugin for [Linter](https://github.com/AtomLinter/Linter) provides an interface to [htmlhint](https://github.com/yaniswang/HTMLHint). It will be used with files that have the syntax.\n\n## Installation\nLinter package must be installed in order to use this plugin. If Linter is not installed, please follow the instructions [here](https://github.com/AtomLinter/Linter).\n\n### Plugin installation\n```\n$ apm install linter-htmlhint\n```\n\n### .htmlhintrc\nThis plugin will search for a htmlhint configuration file called `.htmlhintrc` and use that file if it exists anywhere in the directory tree.  It will stop at the first `.htmlhintrc` file found.\n\n### Development and Testing\nIf you are developing or testing this plugin, it's easy to load using `apm link`\n\nFirst make sure you don't have linter-htmlhint installed.\n```bash\napm uninstall linter-htmlhint\n```\n\nClone this repository and then from the linter-htmlhint directory:\n```bash\nnpm install\napm link\n```\n\nYou can reload Atom with `ctrl+opt+cmd+l` and to open the inspector `opt+cmd+i`.\n\nTo put it all back:\n```bash\napm unlink\napm install linter-htmlhint\n```\n\n## Settings\nYou can configure linter-htmlhint by editing ~/.atom/config.cson (choose Open Your Config in Atom menu):\n```\n'linter-htmlhint':\n  'htmlhintExecutablePath': null #htmlhint path. run 'which htmlhint' to find the path\n```\n\n## Contributing\nIf you would like to contribute enhancements or fixes, please do the following:\n\n1. Fork the plugin repository.\n1. Hack on a separate topic branch created from the latest `master`.\n1. Commit and push the topic branch.\n1. Make a pull request.\n1. welcome to the club\n\nPlease note that modifications should follow these coding guidelines:\n\n- Indent is 2 spaces.\n- Code should pass coffeelint linter.\n- Vertical whitespace helps readability, don’t be afraid to use it.\n\nThank you for helping out!\n\n## Donation\n[![Share the love!](https://chewbacco-stuff.s3.amazonaws.com/donate.png)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=KXUYS4ARNHCN8)\n",
   "readmeFilename": "README.md",
   "bugs": {
     "url": "https://github.com/AtomLinter/linter-htmlhint/issues"
   },
   "homepage": "https://github.com/AtomLinter/linter-htmlhint",
-  "_id": "linter-htmlhint@0.0.16",
-  "_shasum": "5213073a7ae19c9eafb1dccee40469439c34c70d",
-  "_resolved": "file:../d-11558-78479-1hft9ib/package.tgz",
-  "_from": "../d-11558-78479-1hft9ib/package.tgz",
+  "_id": "linter-htmlhint@0.1.1",
+  "_shasum": "f3426cb8e9bc40151bbd1d067c2c841c054be771",
+  "_resolved": "file:../d-115713-75108-1es5ccm/package.tgz",
+  "_from": "../d-115713-75108-1es5ccm/package.tgz",
   "_atomModuleCache": {
     "version": 1,
     "dependencies": [
+      {
+        "name": "xregexp",
+        "version": "2.0.0",
+        "path": "node_modules/atom-linter/node_modules/xregexp/xregexp-all.js"
+      },
       {
         "name": "htmlhint",
         "version": "0.9.7",
@@ -80,7 +92,7 @@
       },
       {
         "name": "lru-cache",
-        "version": "2.6.4",
+        "version": "2.6.5",
         "path": "node_modules/htmlhint/node_modules/jshint/node_modules/cli/node_modules/glob/node_modules/minimatch/node_modules/lru-cache/lib/lru-cache.js"
       },
       {
@@ -175,7 +187,7 @@
       },
       {
         "name": "lru-cache",
-        "version": "2.6.4",
+        "version": "2.6.5",
         "path": "node_modules/htmlhint/node_modules/jshint/node_modules/minimatch/node_modules/lru-cache/lib/lru-cache.js"
       },
       {
@@ -190,7 +202,7 @@
       },
       {
         "name": "strip-json-comments",
-        "version": "1.0.2",
+        "version": "1.0.4",
         "path": "node_modules/htmlhint/node_modules/jshint/node_modules/strip-json-comments/strip-json-comments.js"
       },
       {
@@ -202,10 +214,62 @@
     "extensions": {
       ".coffee": [
         "lib/init.coffee",
-        "lib/linter-htmlhint.coffee",
+        "node_modules/atom-linter/lib/helpers.coffee",
         "node_modules/htmlhint/node_modules/jshint/node_modules/cli/examples/static.coffee"
       ],
+      ".json": [
+        "node_modules/atom-linter/node_modules/xregexp/package.json",
+        "node_modules/atom-linter/package.json",
+        "node_modules/htmlhint/node_modules/colors/package.json",
+        "node_modules/htmlhint/node_modules/commander/package.json",
+        "node_modules/htmlhint/node_modules/csslint/node_modules/parserlib/package.json",
+        "node_modules/htmlhint/node_modules/csslint/package.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/cli/node_modules/glob/node_modules/inherits/package.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/cli/node_modules/glob/node_modules/minimatch/node_modules/lru-cache/package.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/cli/node_modules/glob/node_modules/minimatch/node_modules/sigmund/package.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/cli/node_modules/glob/node_modules/minimatch/package.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/cli/node_modules/glob/package.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/cli/package.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/console-browserify/.testem.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/console-browserify/node_modules/date-now/.testem.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/console-browserify/node_modules/date-now/package.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/console-browserify/package.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/exit/package.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/htmlparser2/node_modules/domelementtype/package.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/htmlparser2/node_modules/domhandler/package.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/htmlparser2/node_modules/domutils/node_modules/dom-serializer/node_modules/domelementtype/package.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/htmlparser2/node_modules/domutils/node_modules/dom-serializer/node_modules/entities/maps/decode.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/htmlparser2/node_modules/domutils/node_modules/dom-serializer/node_modules/entities/maps/entities.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/htmlparser2/node_modules/domutils/node_modules/dom-serializer/node_modules/entities/maps/legacy.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/htmlparser2/node_modules/domutils/node_modules/dom-serializer/node_modules/entities/maps/xml.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/htmlparser2/node_modules/domutils/node_modules/dom-serializer/node_modules/entities/package.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/htmlparser2/node_modules/domutils/node_modules/dom-serializer/package.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/htmlparser2/node_modules/domutils/package.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/htmlparser2/node_modules/entities/maps/decode.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/htmlparser2/node_modules/entities/maps/entities.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/htmlparser2/node_modules/entities/maps/legacy.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/htmlparser2/node_modules/entities/maps/xml.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/htmlparser2/node_modules/entities/package.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/htmlparser2/node_modules/readable-stream/node_modules/core-util-is/package.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/htmlparser2/node_modules/readable-stream/node_modules/inherits/package.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/htmlparser2/node_modules/readable-stream/node_modules/isarray/component.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/htmlparser2/node_modules/readable-stream/node_modules/isarray/package.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/htmlparser2/node_modules/readable-stream/node_modules/string_decoder/package.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/htmlparser2/node_modules/readable-stream/package.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/htmlparser2/package.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/minimatch/node_modules/lru-cache/package.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/minimatch/node_modules/sigmund/package.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/minimatch/package.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/shelljs/.documentup.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/shelljs/package.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/strip-json-comments/package.json",
+        "node_modules/htmlhint/node_modules/jshint/node_modules/underscore/package.json",
+        "node_modules/htmlhint/node_modules/jshint/package.json",
+        "node_modules/htmlhint/package.json",
+        "package.json"
+      ],
       ".js": [
+        "node_modules/atom-linter/node_modules/xregexp/xregexp-all.js",
         "node_modules/htmlhint/Gruntfile.js",
         "node_modules/htmlhint/index.js",
         "node_modules/htmlhint/lib/htmlhint.js",
@@ -387,55 +451,6 @@
         "node_modules/htmlhint/src/rules/tag-pair.js",
         "node_modules/htmlhint/src/rules/tag-self-close.js",
         "node_modules/htmlhint/src/rules/tagname-lowercase.js"
-      ],
-      ".json": [
-        "node_modules/htmlhint/node_modules/colors/package.json",
-        "node_modules/htmlhint/node_modules/commander/package.json",
-        "node_modules/htmlhint/node_modules/csslint/node_modules/parserlib/package.json",
-        "node_modules/htmlhint/node_modules/csslint/package.json",
-        "node_modules/htmlhint/node_modules/jshint/node_modules/cli/node_modules/glob/node_modules/inherits/package.json",
-        "node_modules/htmlhint/node_modules/jshint/node_modules/cli/node_modules/glob/node_modules/minimatch/node_modules/lru-cache/package.json",
-        "node_modules/htmlhint/node_modules/jshint/node_modules/cli/node_modules/glob/node_modules/minimatch/node_modules/sigmund/package.json",
-        "node_modules/htmlhint/node_modules/jshint/node_modules/cli/node_modules/glob/node_modules/minimatch/package.json",
-        "node_modules/htmlhint/node_modules/jshint/node_modules/cli/node_modules/glob/package.json",
-        "node_modules/htmlhint/node_modules/jshint/node_modules/cli/package.json",
-        "node_modules/htmlhint/node_modules/jshint/node_modules/console-browserify/.testem.json",
-        "node_modules/htmlhint/node_modules/jshint/node_modules/console-browserify/node_modules/date-now/.testem.json",
-        "node_modules/htmlhint/node_modules/jshint/node_modules/console-browserify/node_modules/date-now/package.json",
-        "node_modules/htmlhint/node_modules/jshint/node_modules/console-browserify/package.json",
-        "node_modules/htmlhint/node_modules/jshint/node_modules/exit/package.json",
-        "node_modules/htmlhint/node_modules/jshint/node_modules/htmlparser2/node_modules/domelementtype/package.json",
-        "node_modules/htmlhint/node_modules/jshint/node_modules/htmlparser2/node_modules/domhandler/package.json",
-        "node_modules/htmlhint/node_modules/jshint/node_modules/htmlparser2/node_modules/domutils/node_modules/dom-serializer/node_modules/domelementtype/package.json",
-        "node_modules/htmlhint/node_modules/jshint/node_modules/htmlparser2/node_modules/domutils/node_modules/dom-serializer/node_modules/entities/maps/decode.json",
-        "node_modules/htmlhint/node_modules/jshint/node_modules/htmlparser2/node_modules/domutils/node_modules/dom-serializer/node_modules/entities/maps/entities.json",
-        "node_modules/htmlhint/node_modules/jshint/node_modules/htmlparser2/node_modules/domutils/node_modules/dom-serializer/node_modules/entities/maps/legacy.json",
-        "node_modules/htmlhint/node_modules/jshint/node_modules/htmlparser2/node_modules/domutils/node_modules/dom-serializer/node_modules/entities/maps/xml.json",
-        "node_modules/htmlhint/node_modules/jshint/node_modules/htmlparser2/node_modules/domutils/node_modules/dom-serializer/node_modules/entities/package.json",
-        "node_modules/htmlhint/node_modules/jshint/node_modules/htmlparser2/node_modules/domutils/node_modules/dom-serializer/package.json",
-        "node_modules/htmlhint/node_modules/jshint/node_modules/htmlparser2/node_modules/domutils/package.json",
-        "node_modules/htmlhint/node_modules/jshint/node_modules/htmlparser2/node_modules/entities/maps/decode.json",
-        "node_modules/htmlhint/node_modules/jshint/node_modules/htmlparser2/node_modules/entities/maps/entities.json",
-        "node_modules/htmlhint/node_modules/jshint/node_modules/htmlparser2/node_modules/entities/maps/legacy.json",
-        "node_modules/htmlhint/node_modules/jshint/node_modules/htmlparser2/node_modules/entities/maps/xml.json",
-        "node_modules/htmlhint/node_modules/jshint/node_modules/htmlparser2/node_modules/entities/package.json",
-        "node_modules/htmlhint/node_modules/jshint/node_modules/htmlparser2/node_modules/readable-stream/node_modules/core-util-is/package.json",
-        "node_modules/htmlhint/node_modules/jshint/node_modules/htmlparser2/node_modules/readable-stream/node_modules/inherits/package.json",
-        "node_modules/htmlhint/node_modules/jshint/node_modules/htmlparser2/node_modules/readable-stream/node_modules/isarray/component.json",
-        "node_modules/htmlhint/node_modules/jshint/node_modules/htmlparser2/node_modules/readable-stream/node_modules/isarray/package.json",
-        "node_modules/htmlhint/node_modules/jshint/node_modules/htmlparser2/node_modules/readable-stream/node_modules/string_decoder/package.json",
-        "node_modules/htmlhint/node_modules/jshint/node_modules/htmlparser2/node_modules/readable-stream/package.json",
-        "node_modules/htmlhint/node_modules/jshint/node_modules/htmlparser2/package.json",
-        "node_modules/htmlhint/node_modules/jshint/node_modules/minimatch/node_modules/lru-cache/package.json",
-        "node_modules/htmlhint/node_modules/jshint/node_modules/minimatch/node_modules/sigmund/package.json",
-        "node_modules/htmlhint/node_modules/jshint/node_modules/minimatch/package.json",
-        "node_modules/htmlhint/node_modules/jshint/node_modules/shelljs/.documentup.json",
-        "node_modules/htmlhint/node_modules/jshint/node_modules/shelljs/package.json",
-        "node_modules/htmlhint/node_modules/jshint/node_modules/strip-json-comments/package.json",
-        "node_modules/htmlhint/node_modules/jshint/node_modules/underscore/package.json",
-        "node_modules/htmlhint/node_modules/jshint/package.json",
-        "node_modules/htmlhint/package.json",
-        "package.json"
       ]
     },
     "folders": [
@@ -445,6 +460,7 @@
           ""
         ],
         "dependencies": {
+          "atom-linter": "^3.1.1",
           "htmlhint": "^0.9.6"
         }
       },

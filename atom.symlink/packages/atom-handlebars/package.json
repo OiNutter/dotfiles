@@ -1,6 +1,6 @@
 {
   "name": "atom-handlebars",
-  "version": "0.5.0",
+  "version": "1.2.0",
   "description": "Handlebars support in Atom",
   "engines": {
     "atom": "*",
@@ -9,7 +9,7 @@
   "homepage": "https://github.com/Sneagan/atom-handlebars",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Sneagan/atom-handlebars.git"
+    "url": "git+https://github.com/Sneagan/atom-handlebars.git"
   },
   "license": "MIT",
   "bugs": {
@@ -20,25 +20,28 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
-    "atom",
-    "handlebars"
+    "handlebars",
+    "ember",
+    "grammar",
+    "snippets"
   ],
   "author": {
     "name": "Jackson Egan",
     "email": "jackson@sneagan.com",
     "url": "http://sneagan.com/"
   },
-  "readme": "# Handlebars support in Atom\n\nAdds syntax highlighting and snippets to Handlebars files in Atom.\n\nModified from [HTML Language Support in Atom](https://github.com/atom/language-html).\n\nContributions are greatly appreciated. Please fork this repository and open a pull request to add snippets, make grammar tweaks, etc.\n",
+  "readme": "# Handlebars support in Atom\n\nAdds syntax highlighting and snippets to Handlebars files in Atom.\n\n## Install\n\n```bash\n$ apm install atom-handlebars\n```\n\nOr Settings ➔ Packages ➔ Search for `atom-handlebars`\n\n## Snippets\n\n- `each` ⇥\n- `eachas` ⇥\n- `eachin` ⇥\n- `get` ⇥\n- `list` ⇥\n- `if` ⇥\n- `ifelse` ⇥\n- `unless` ⇥\n- `unelse` ⇥\n- `else` ⇥\n- `with` ⇥\n- `log` ⇥\n- `dbg` ⇥\n- `escape` ⇥\n\n## Contributions\n\nContributions are greatly appreciated. Please fork this repository and open a pull request to add snippets, make grammar tweaks, etc.\n",
   "readmeFilename": "README.md",
-  "_id": "atom-handlebars@0.5.0",
-  "_shasum": "40ba3c57e263a6840e1cab850cabc32f27c7e629",
-  "_resolved": "file:../d-115316-3429-1spzze8/package.tgz",
-  "_from": "../d-115316-3429-1spzze8/package.tgz",
+  "_id": "atom-handlebars@1.2.0",
+  "_shasum": "9ec1085d569863fee710f376a453fab56d0d8fec",
+  "_resolved": "file:../d-115817-77907-1b0we7i/package.tgz",
+  "_from": "../d-115817-77907-1b0we7i/package.tgz",
   "_atomModuleCache": {
     "version": 1,
     "dependencies": [],
     "extensions": {
       ".json": [
+        "coffeelint.json",
         "package.json"
       ]
     },

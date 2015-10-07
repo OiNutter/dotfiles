@@ -18,9 +18,7 @@
   core:
     disabledPackages: [
       "atom-lint"
-      "linter-scss-lint"
       "ScssBundle"
-      "go-plus"
       "go-format"
     ]
     themes: [
@@ -50,3 +48,5 @@
   "markdown-preview":
     useGitHubStyle: true
   react: {}
+  "linter-scss-lint":
+    executablePath: "/usr/local/opt/rbenv/shims/scss-lint"

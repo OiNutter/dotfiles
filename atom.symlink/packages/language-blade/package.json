@@ -1,10 +1,10 @@
 {
   "name": "language-blade",
-  "version": "0.14.0",
+  "version": "0.16.0",
   "description": "Syntax highlighter for the blade templating engine used in laravel",
   "repository": {
     "type": "git",
-    "url": "https://github.com/jawee/language-blade"
+    "url": "git+https://github.com/jawee/language-blade.git"
   },
   "engines": {
     "atom": ">0.50.0"
@@ -14,11 +14,11 @@
   "bugs": {
     "url": "https://github.com/jawee/language-blade/issues"
   },
-  "homepage": "https://github.com/jawee/language-blade",
-  "_id": "language-blade@0.14.0",
-  "_shasum": "34b16f29e67234e9764995e4897a0dca5e1b786c",
-  "_resolved": "file:../d-11558-78458-1dekc32/package.tgz",
-  "_from": "../d-11558-78458-1dekc32/package.tgz",
+  "homepage": "https://github.com/jawee/language-blade#readme",
+  "_id": "language-blade@0.16.0",
+  "_shasum": "683e8394d9ac46843eeb8b9611f60704c8a8f6d4",
+  "_resolved": "file:../d-115817-77913-1o4oukf/package.tgz",
+  "_from": "../d-115817-77913-1o4oukf/package.tgz",
   "_atomModuleCache": {
     "version": 1,
     "dependencies": [],

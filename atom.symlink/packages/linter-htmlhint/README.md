@@ -11,13 +11,36 @@ Linter package must be installed in order to use this plugin. If Linter is not i
 $ apm install linter-htmlhint
 ```
 
+### .htmlhintrc
+This plugin will search for a htmlhint configuration file called `.htmlhintrc` and use that file if it exists anywhere in the directory tree.  It will stop at the first `.htmlhintrc` file found.
+
+### Development and Testing
+If you are developing or testing this plugin, it's easy to load using `apm link`
+
+First make sure you don't have linter-htmlhint installed.
+```bash
+apm uninstall linter-htmlhint
+```
+
+Clone this repository and then from the linter-htmlhint directory:
+```bash
+npm install
+apm link
+```
+
+You can reload Atom with `ctrl+opt+cmd+l` and to open the inspector `opt+cmd+i`.
+
+To put it all back:
+```bash
+apm unlink
+apm install linter-htmlhint
+```
+
 ## Settings
 You can configure linter-htmlhint by editing ~/.atom/config.cson (choose Open Your Config in Atom menu):
 ```
 'linter-htmlhint':
   'htmlhintExecutablePath': null #htmlhint path. run 'which htmlhint' to find the path
-  'htmlHintRcFilePath': #OPTIONAL custom path to the htmlhintrc file (which can be used to customize rulesets that are run against the HTML)
-  'htmlHintRcFileName': #OPTIONAL filename of the htmlhintrc file (defaults to '.htmlhintrc', but can be overridden)
 ```
 
 ## Contributing
