@@ -7,7 +7,7 @@ nukethesitefromorbit = revert --no-backup --all
 
 [extensions]
 shelve=
-hggit=
+#hggit=
 hgext.convert=
 strip=
 hgext.extdiff=
@@ -28,3 +28,4 @@ merge = Kaleidoscope
 [merge-tools]
 Kaleidoscope.executable = /usr/local/bin/ksdiff
 Kaleidoscope.args = --merge --output $output --base $base -- $local $other
+keepBackup = false
