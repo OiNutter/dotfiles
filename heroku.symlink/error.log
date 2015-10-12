@@ -3,3 +3,45 @@
 2015/05/15 13:56:11 setting up iojs 2.0.1
 2015/05/15 13:56:17 Installing plugin heroku-git... 
 2015/05/15 13:56:21 done
+2015/10/09 09:36:56 updating v4 CLI to 4.25.2-beb750a (master)... 
+2015/10/09 09:36:57 done
+2015/10/09 09:36:57 updating plugins... 
+2015/10/09 09:38:07 done
+2015/10/09 09:40:39 running from /Users/willmckenzie/.heroku/heroku-cli
+2015/10/09 09:40:39 Setting up node-v4.1.2...
+2015/10/09 09:40:43  done
+2015/10/09 09:40:43 Installing core plugins heroku-cli-addons, heroku-apps, heroku-fork, heroku-local, heroku-run, heroku-status...
+2015/10/09 09:40:53 running from /Users/willmckenzie/.heroku/heroku-cli
+2015/10/09 09:42:55 running from /Users/willmckenzie/.heroku/heroku-cli
+2015/10/09 09:43:01 running from /Users/willmckenzie/.heroku/heroku-cli
+2015/10/09 09:43:20 running from /Users/willmckenzie/.heroku/heroku-cli
+2015/10/09 09:45:27 running from /Users/willmckenzie/.heroku/heroku-cli
+2015/10/09 09:45:34 running from /Users/willmckenzie/.heroku/heroku-cli
+2015/10/09 09:53:21 running from /Users/willmckenzie/.heroku/heroku-cli
+2015/10/09 09:54:27 running from /Users/willmckenzie/.heroku/heroku-cli
+2015/10/09 12:35:39 running from /Users/willmckenzie/.heroku/heroku-cli
+2015/10/09 12:35:50 running from /Users/willmckenzie/.heroku/heroku-cli
+2015/10/09 14:13:26 running from /Users/willmckenzie/.heroku/heroku-cli
+2015/10/09 14:13:28 running from /Users/willmckenzie/.heroku/heroku-cli
+2015/10/09 14:13:28 running from /Users/willmckenzie/.heroku/heroku-cli
+2015/10/09 14:13:29 Updating plugins... 
+2015/10/09 14:13:38 done
+2015/10/09 14:13:38 rebuilding plugins cache... 
+2015/10/09 14:13:39 done
+2015/10/09 14:14:39 running from /Users/willmckenzie/.heroku/heroku-cli
+2015/10/09 14:17:02 running from /Users/willmckenzie/.heroku/heroku-cli
+2015/10/09 14:33:28 running from /Users/willmckenzie/.heroku/heroku-cli
+2015/10/09 14:33:59 running from /Users/willmckenzie/.heroku/heroku-cli
+2015/10/09 14:34:24 running from /Users/willmckenzie/.heroku/heroku-cli
+2015/10/09 14:36:37 running from /Users/willmckenzie/.heroku/heroku-cli
+2015/10/09 14:41:20 running from /Users/willmckenzie/.heroku/heroku-cli
+2015/10/09 14:42:15 running from /Users/willmckenzie/.heroku/heroku-cli
+2015/10/09 14:44:52 running from /Users/willmckenzie/.heroku/heroku-cli
+2015/10/09 14:56:37 running from /Users/willmckenzie/.heroku/heroku-cli
+2015/10/09 15:01:57 running from /Users/willmckenzie/.heroku/heroku-cli
+2015/10/09 15:31:03 running from /Users/willmckenzie/.heroku/heroku-cli
+2015/10/09 15:31:54 running from /Users/willmckenzie/.heroku/heroku-cli
+2015/10/09 15:32:13 running from /Users/willmckenzie/.heroku/heroku-cli
+2015/10/09 15:32:45 running from /Users/willmckenzie/.heroku/heroku-cli
+2015/10/09 15:33:08 running from /Users/willmckenzie/.heroku/heroku-cli
+2015/10/09 17:03:24 running from /Users/willmckenzie/.heroku/heroku-cli
